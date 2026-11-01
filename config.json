@@ -23,6 +23,8 @@
   "sound": true,
   "voice": true,
   "voiceJoin": true,
+  "voiceEngine": "auto",
+  "captions": true,
   "music": true,
   "musicFile": "",
   "musicVolume": 0.25,

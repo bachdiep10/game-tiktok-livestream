@@ -126,8 +126,49 @@ function pickVoice() {
 }
 
 // priority: 2 = quà lớn (luôn đọc), 1 = follow/quà, 0 = chào hỏi (bỏ nếu hàng đợi dài)
+// Chọn bộ đọc: 'auto' = giọng tiếng Việt của máy nếu có, không thì giọng online qua máy chủ;
+// 'system' = chỉ giọng của máy; 'online' = luôn dùng giọng online.
+let voiceEngine = 'auto';
+let onSpeakStart = null;
+export function setVoiceEngine(e) {
+  voiceEngine = e || 'auto';
+}
+export function setOnSpeakStart(fn) {
+  onSpeakStart = fn;
+}
+
+function useSystemVoice() {
+  if (voiceEngine === 'online') return false;
+  if (voiceEngine === 'system') return Boolean(window.speechSynthesis);
+  return Boolean(window.speechSynthesis && pickVoice());
+}
+
+// cắt câu dài thành các đoạn ngắn (giọng online giới hạn ~200 ký tự)
+function chunks(text, max = 180) {
+  const parts = [];
+  for (const sentence of text.split(/(?<=[.!?,])\s+/)) {
+    if (!parts.length || (parts[parts.length - 1] + ' ' + sentence).length > max) parts.push(sentence);
+    else parts[parts.length - 1] += ` ${sentence}`;
+  }
+  return parts.map((p) => p.slice(0, max));
+}
+
+function speakOnline(text, done) {
+  const list = chunks(text);
+  const next = () => {
+    const part = list.shift();
+    if (!part) return done();
+    const audio = new Audio(`/tts?text=${encodeURIComponent(part)}`);
+    audio.volume = 1;
+    audio.onended = next;
+    audio.onerror = next;
+    audio.play().catch(next);
+  };
+  next();
+}
+
 export function speak(text, priority = 0) {
-  if (!voiceEnabled || !enabled || !window.speechSynthesis) return;
+  if (!voiceEnabled || !enabled) return;
   if (priority === 0 && speechQueue.length >= 2) return;
   if (speechQueue.length >= 6) {
     const idx = speechQueue.findIndex((s) => s.priority < priority);
@@ -142,22 +183,30 @@ export function speak(text, priority = 0) {
 function pump() {
   if (speaking || !speechQueue.length) return;
   const { text } = speechQueue.shift();
+  speaking = true;
+  if (onSpeakStart) onSpeakStart(text);
+  let finished = false;
+  const done = () => {
+    if (finished) return;
+    finished = true;
+    speaking = false;
+    setTimeout(pump, 150);
+  };
+  // phòng trường hợp trình duyệt không báo đọc xong
+  setTimeout(done, 15000);
+  if (!useSystemVoice()) {
+    speakOnline(text, done);
+    return;
+  }
   const u = new SpeechSynthesisUtterance(text);
   const v = pickVoice();
   if (v) u.voice = v;
   u.lang = 'vi-VN';
   u.rate = 1.0;
   u.pitch = 1.0;
-  speaking = true;
-  const done = () => {
-    speaking = false;
-    setTimeout(pump, 150);
-  };
   u.onend = done;
   u.onerror = done;
   window.speechSynthesis.speak(u);
-  // phòng trường hợp trình duyệt không gọi onend
-  setTimeout(() => speaking && done(), 12000);
 }
 
 // ------------------------------------------------------------- Nhạc nền

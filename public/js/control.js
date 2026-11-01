@@ -69,6 +69,7 @@ const actions = {
   like: () => sim({ type: 'like', user: namedUser(), count: 1 + Math.floor(Math.random() * 5) }),
   follow: () => sim({ type: 'follow', user: namedUser() }),
   share: () => sim({ type: 'share', user: namedUser() }),
+  voiceTest: () => sim({ type: 'voiceTest' }),
   gift1: () => sim({ type: 'gift', user: namedUser(), giftName: 'Hoa hồng', diamonds: 1, repeatCount: 1, coins: 1 }),
   gift10: () => sim({ type: 'gift', user: namedUser(), giftName: 'Bánh Donut', diamonds: 30, repeatCount: 1, coins: 30 }),
   gift100: () => sim({ type: 'gift', user: namedUser(), giftName: 'Đèn hoa đăng', diamonds: 199, repeatCount: 1, coins: 199 }),

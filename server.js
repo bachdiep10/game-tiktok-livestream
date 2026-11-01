@@ -37,6 +37,10 @@ const server = http.createServer((req, res) => {
   const url = new URL(req.url, 'http://localhost');
   let pathname = decodeURIComponent(url.pathname);
   if (pathname === '/') pathname = '/game.html';
+  if (pathname === '/tts') {
+    handleTts(url, res);
+    return;
+  }
   if (pathname === '/config.json') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(loadConfig()));
@@ -59,6 +63,36 @@ const server = http.createServer((req, res) => {
     res.end(data);
   });
 });
+
+// ---------------------------------------------------------------- Giọng đọc online
+// Dùng khi máy không có giọng tiếng Việt (hoặc trong OBS). Lấy giọng đọc của Google Dịch
+// (dịch vụ không chính thức, cần Internet), có lưu tạm để câu lặp lại không phải tải lại.
+const ttsCache = new Map();
+async function handleTts(url, res) {
+  const text = String(url.searchParams.get('text') || '').slice(0, 200).trim();
+  const lang = String(url.searchParams.get('lang') || 'vi').replace(/[^a-zA-Z-]/g, '') || 'vi';
+  if (!text) {
+    res.writeHead(400).end();
+    return;
+  }
+  const key = `${lang}|${text}`;
+  try {
+    let buf = ttsCache.get(key);
+    if (!buf) {
+      const target = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${encodeURIComponent(text)}`;
+      const r = await fetch(target, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: 'https://translate.google.com/' } });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      buf = Buffer.from(await r.arrayBuffer());
+      ttsCache.set(key, buf);
+      if (ttsCache.size > 300) ttsCache.delete(ttsCache.keys().next().value);
+    }
+    res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Content-Length': buf.length, 'Cache-Control': 'max-age=86400' });
+    res.end(buf);
+  } catch (err) {
+    console.warn('[tts] Không lấy được giọng đọc online:', err.message);
+    res.writeHead(502).end();
+  }
+}
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });

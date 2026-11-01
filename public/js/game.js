@@ -19,6 +19,8 @@ const DEFAULTS = {
   sound: true,
   voice: true,
   voiceJoin: true,
+  voiceEngine: 'auto',
+  captions: true,
   music: true,
   musicFile: '',
   musicVolume: 0.25,
@@ -57,6 +59,54 @@ const DEFAULTS = {
     ],
   },
 };
+
+// Lời chúc: đọc thành tiếng + hiện chữ trên màn hình
+const captions = [];
+let caption = null;
+function announce(text, priority = 0) {
+  if (!text) return;
+  sfx.speak(text, priority);
+  if (config.captions === false) return;
+  if (priority === 0 && captions.length >= 2) return;
+  captions.push({ text, priority });
+  captions.sort((a, b) => b.priority - a.priority);
+  if (captions.length > 4) captions.length = 4;
+}
+
+function drawCaption(now) {
+  if ((!caption || now > caption.until) && captions.length) {
+    const c = captions.shift();
+    caption = { ...c, born: now, until: now + Math.min(7000, 2500 + c.text.length * 55) };
+  }
+  if (!caption) return;
+  if (now > caption.until) {
+    caption = null;
+    return;
+  }
+  const a = clamp(Math.min((now - caption.born) / 250, (caption.until - now) / 400), 0, 1);
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.font = '600 30px system-ui, "Segoe UI", sans-serif';
+  const lines = wrapText(caption.text, 38, 3);
+  const w = Math.min(1000, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 70);
+  const lh = 40;
+  const h = lines.length * lh + 26;
+  const y = bgImage ? 1040 : 980;
+  const g = ctx.createLinearGradient(0, y, 0, y + h);
+  g.addColorStop(0, 'rgba(110,20,8,0.95)');
+  g.addColorStop(1, 'rgba(55,8,3,0.95)');
+  ctx.fillStyle = g;
+  roundRect(ctx, 540 - w / 2, y, w, h, 22);
+  ctx.fill();
+  ctx.strokeStyle = '#f0c35a';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = '#fff3c9';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  lines.forEach((l, i) => ctx.fillText(l, 540, y + 13 + lh / 2 + i * lh));
+  ctx.restore();
+}
 
 // chọn ngẫu nhiên một câu, tránh lặp lại câu vừa dùng
 const lastLine = {};
@@ -543,7 +593,7 @@ function ensureCharacter(user, { greet = false } = {}) {
   joinCount++;
   sfx.pop();
   addTicker(`🙏 ${truncate(user.name, 18)} đã vào chánh điện`);
-  if (greet && config.voiceJoin) sfx.speak(line('join', { name: speakName(user.name) }), 0);
+  if (greet && config.voiceJoin) announce(line('join', { name: speakName(user.name) }), 0);
   c.queueAction('raise');
   return c;
 }
@@ -618,7 +668,7 @@ function startGrand(g) {
   flash = 0.7;
   sfx.bell(130.8, 0.7, 7);
   setTimeout(() => sfx.bell(196, 0.5, 5), 900);
-  sfx.speak(line('bigGift', { name: speakName(g.user.name), gift: g.giftName }), 2);
+  announce(line('bigGift', { name: speakName(g.user.name), gift: g.giftName }), 2);
 }
 
 // ------------------------------------------------------------------ UI
@@ -700,14 +750,14 @@ function handleEvent(ev) {
       spawnSparkles(c.x, c.y - 80 * c.scale, 18);
       addTicker(`✨ ${truncate(ev.user.name, 18)} đã theo dõi, nhận hào quang`);
       sfx.chime();
-      sfx.speak(line('follow', { name: speakName(ev.user.name) }), 1);
+      announce(line('follow', { name: speakName(ev.user.name) }), 1);
       break;
     }
     case 'share': {
       const c = ensureCharacter(ev.user);
       if (c) c.queueAction('raise');
       addTicker(`📿 ${truncate(ev.user.name, 18)} đã chia sẻ phiên LIVE`);
-      sfx.speak(line('share', { name: speakName(ev.user.name) }), 1);
+      announce(line('share', { name: speakName(ev.user.name) }), 1);
       break;
     }
     case 'giftStreak': {
@@ -731,12 +781,16 @@ function handleEvent(ev) {
         effectGrand(ev.user, ev.giftName, count);
       } else if (coins >= tiers.bell) {
         effectBell();
-        sfx.speak(line('gift', { name: speakName(ev.user.name), gift: ev.giftName }), 1);
+        announce(line('gift', { name: speakName(ev.user.name), gift: ev.giftName }), 1);
       } else {
         const n = Math.min(count, 5);
         for (let i = 0; i < n; i++) setTimeout(() => effectLotus(ev.user), i * 250);
-        sfx.speak(line('gift', { name: speakName(ev.user.name), gift: ev.giftName }), 0);
+        announce(line('gift', { name: speakName(ev.user.name), gift: ev.giftName }), 0);
       }
+      break;
+    }
+    case 'voiceTest': {
+      announce(line('join', { name: 'Phật tử thử nghiệm' }) || 'A Di Đà Phật', 2);
       break;
     }
     case 'reset': {
@@ -1207,6 +1261,7 @@ function frame(now) {
     ctx.fillRect(0, 0, W, H);
   }
   drawUI(now);
+  drawCaption(now);
   requestAnimationFrame(frame);
 }
 
@@ -1268,6 +1323,7 @@ async function boot() {
   }
   sfx.setSoundEnabled(config.sound !== false);
   sfx.setVoiceEnabled(config.voice !== false);
+  sfx.setVoiceEngine(params.get('engine') || config.voiceEngine);
   rebuildScene();
   loadBuddhaImage();
   const startMusic = () => {
@@ -1286,7 +1342,7 @@ async function boot() {
       const text = line('reminder');
       if (!text) return;
       addTicker(`📢 ${truncate(text, 40)}`);
-      sfx.speak(text, 1);
+      announce(text, 1);
     }, Number(config.reminderMinutes) * 60 * 1000);
   }
   connectWs();

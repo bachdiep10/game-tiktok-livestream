@@ -50,7 +50,7 @@ Ngoài ra mở `http://127.0.0.1:3000/game.html?demo=1` để game tự sinh s�
    - Có thể ghi sẵn username vào `config.json` (`"tiktokUsername"`) để tự kết nối khi chạy.
 4. Âm thanh: trong OBS bật "Control audio via OBS" cho nguồn trình duyệt để tiếng chuông, mõ, giọng đọc lên sóng.
 
-**Giọng đọc tiếng Việt** dùng giọng có sẵn của Windows. Nếu không nghe thấy, vào *Settings → Time & Language → Speech* và cài giọng **Tiếng Việt (Microsoft An)**. Tắt giọng đọc: thêm `?voice=0` vào cuối địa chỉ game, hoặc đặt `"voice": false` trong `config.json`. Tắt hết âm thanh: `?sound=0`.
+**Giọng đọc tiếng Việt**: mỗi lời chúc vừa được đọc thành tiếng vừa hiện chữ giữa màn hình. Nếu Windows có giọng tiếng Việt (*Settings → Time & Language → Speech*, cài **Tiếng Việt (Microsoft An)*) thì game dùng giọng đó. Nếu không có (hoặc chạy trong OBS) thì game tự dùng giọng đọc online của Google Dịch qua máy chủ, cần có Internet. Bấm nút **🔊 Thử giọng đọc** trên trang điều khiển để nghe thử. Đặt `"voiceEngine"` là `"system"` (chỉ giọng của máy) hoặc `"online"` (luôn dùng giọng online), mặc định `"auto"`. Tắt giọng đọc: thêm `?voice=0` vào cuối địa chỉ game, hoặc đặt `"voice": false`. Tắt chữ lời chúc: `"captions": false`. Tắt hết âm thanh: `?sound=0`.
 
 ## Nhạc nền và lời chào
 
