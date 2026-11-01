@@ -20,6 +20,8 @@
   "music": true,
   "musicFile": "",
   "musicFiles": [],
+  "musicLabel": "DJ đang chơi nhạc",
+  "djImage": "",
   "musicVolume": 0.35,
   "bpm": 124,
   "voice": true,

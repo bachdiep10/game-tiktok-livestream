@@ -8,6 +8,7 @@ import {
   lookFor, shadowLook, drawDancer, DANCES, fallPose, landPose, cheerPose, wavePose, roundRectPath,
 } from './dancer.js';
 import * as sfx from './barAudio.js';
+import { drawStageDJ, drawBooth, drawDJPortrait } from './dj.js';
 import * as voice from '../audio.js';
 
 const TAU = Math.PI * 2;
@@ -90,6 +91,7 @@ const DEFAULTS = {
   },
 };
 let config = { ...DEFAULTS };
+let djImage = null;
 
 const lastLine = {};
 function line(kind, vars = {}) {
@@ -796,8 +798,32 @@ function drawLED() {
   ctx.fillStyle = 'rgba(0,0,0,0.35)';
   for (let y = LED.y; y < LED.y + LED.h; y += 6) ctx.fillRect(LED.x, y, LED.w, 2);
 
+  // DJ phía sau sân khấu: ảnh riêng (djImage) hoặc DJ vẽ sẵn
+  const djMode = now < dropUntil ? 'hype' : 'mix';
+  if (djImage) {
+    const ih = LED.h;
+    const iw = (djImage.naturalWidth / djImage.naturalHeight) * ih;
+    const ix = LED.x + LED.w - Math.min(iw, 330);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(ix, LED.y, LED.w, LED.h);
+    ctx.clip();
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(djImage, ix + Math.min(iw, 330) / 2 - iw / 2, LED.y, iw, ih);
+    ctx.restore();
+    // mờ dần mép trái để chữ dễ đọc
+    const fg = ctx.createLinearGradient(ix, 0, ix + 90, 0);
+    fg.addColorStop(0, 'rgba(7,3,18,1)');
+    fg.addColorStop(1, 'rgba(7,3,18,0)');
+    ctx.fillStyle = fg;
+    ctx.fillRect(ix, LED.y, 90, LED.h);
+  } else {
+    drawDJPortrait(ctx, LED.x + LED.w - 150, LED.y + LED.h + 60, 2.9, beat, now / 1000, hue, djMode);
+  }
+
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  const tx = LED.x + 265;
   const d = show && dancers.get(show.id);
   if (d && (d.state === 'stage' || d.state === 'toStage')) {
     ctx.font = `900 24px ${FONT}`;
@@ -808,22 +834,37 @@ function drawLED() {
     ctx.font = `900 46px ${FONT}`;
     ctx.fillText(truncate(d.user.name, 16), W / 2, LED.y + 115);
   } else if (now < dropUntil) {
-    ctx.font = `900 80px ${FONT}`;
+    ctx.font = `900 72px ${FONT}`;
     ctx.fillStyle = Math.floor(beat * 2) % 2 ? '#fff' : hsl(hue + 180, 100, 65);
     ctx.shadowColor = hsl(hue, 100, 60);
     ctx.shadowBlur = 30;
-    ctx.fillText('BÙNG NỔ!', W / 2, LED.y + 130);
+    ctx.fillText('BÙNG NỔ!', tx, LED.y + 130);
   } else {
-    ctx.font = `900 46px ${FONT}`;
+    ctx.font = `900 42px ${FONT}`;
     ctx.fillStyle = '#fff';
     ctx.shadowColor = hsl(hue + 200, 100, 60);
     ctx.shadowBlur = 18;
-    ctx.fillText('SÂN KHẤU VIP', W / 2, LED.y + 62);
-    ctx.font = `700 30px ${FONT}`;
+    ctx.fillText('SÂN KHẤU VIP', tx, LED.y + 62);
+    ctx.font = `700 26px ${FONT}`;
     ctx.shadowBlur = 8;
-    ctx.fillText('❤️ Thả tim nhiều  •  🎁 Tặng quà', W / 2, LED.y + 118);
-    ctx.fillText('để được lên đây nhảy!', W / 2, LED.y + 158);
+    ctx.fillText('❤️ Thả tim nhiều • 🎁 Tặng quà', tx, LED.y + 114);
+    ctx.fillText('để được lên đây nhảy!', tx, LED.y + 150);
   }
+  // tên bài đang phát (ẩn khi có người trên sân khấu)
+  if (d) {
+    ctx.restore();
+    return;
+  }
+  const song = sfx.currentTrack();
+  ctx.shadowBlur = 0;
+  ctx.font = `700 20px ${FONT}`;
+  ctx.fillStyle = 'rgba(0,0,0,0.55)';
+  const label = `🎵 ${truncate(song || config.musicLabel || 'DJ đang chơi nhạc', 30)}`;
+  const lw = ctx.measureText(label).width + 24;
+  roundRectPath(ctx, tx - lw / 2, LED.y + LED.h - 46, lw, 32, 16);
+  ctx.fill();
+  ctx.fillStyle = '#9dfcff';
+  ctx.fillText(label, tx, LED.y + LED.h - 29);
   ctx.restore();
 }
 
@@ -1070,6 +1111,11 @@ function drawWorld() {
   const onStage = sd && sd.state === 'stage';
   if (onStage) drawStageSpot(sd);
   drawStageTop(ctx, beat, hue, onStage);
+  // DJ đứng sau bàn trên bục, góc phải sân khấu
+  const djX = STAGE.x + 168;
+  const djY = STAGE.y - 8;
+  drawStageDJ(ctx, djX, djY, 1.4, beat, now / 1000, now < dropUntil ? 'hype' : 'mix');
+  drawBooth(ctx, djX, djY + 6, 1.4, beat, now / 1000, hue);
   if (onStage) {
     const info = drawBody(sd, STAGE.x, STAGE.y, 1.55);
     drawTag(sd, STAGE.x, info.headY, 1.3);
@@ -1436,6 +1482,13 @@ async function boot() {
     /* chạy không có server */
   }
   config.messages = { ...DEFAULTS.messages, ...(config.messages || {}) };
+  if (config.djImage) {
+    const img = new Image();
+    img.onload = () => {
+      djImage = img;
+    };
+    img.src = config.djImage;
+  }
   if (params.get('sound') === '0') config.sound = false;
   if (params.get('voice') === '0') config.voice = false;
   if (params.get('music') === '0') config.music = false;

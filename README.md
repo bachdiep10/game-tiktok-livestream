@@ -149,6 +149,7 @@ Sàn còn có vài bóng người nhảy **không tên** cho đỡ vắng; mỗi
 - `stageSeconds` / `stageSecondsBig`: thời gian trên sân khấu; `cameraZoom`: độ zoom camera.
 - `hypeMax`: lượng tim cần để "BÙNG NỔ"; `ambientCrowd`: số bóng người không tên.
 - **Nhạc riêng**: chép file `.mp3`/`.m4a` vào thư mục `public/assets/nhac-bar/`. Game phát lần lượt theo tên file (đặt `01 ...`, `02 ...` để chọn thứ tự), hết bài cuối quay lại bài đầu. Thư mục trống thì dùng nhạc sàn tự tạo (không bản quyền). Lưu ý: nhạc có bản quyền có thể bị TikTok tắt tiếng hoặc cảnh cáo LIVE.
+- **DJ**: có sẵn nhân vật DJ vẽ bằng code (tóc vàng, yếm ánh kim) ở màn LED sau sân khấu và đứng sau bàn DJ trên bục. Muốn dùng ảnh DJ riêng trên màn LED: chép ảnh vào `public/assets` rồi ghi `"djImage": "assets/ten-anh.jpg"` (chỉ dùng ảnh bạn có quyền sử dụng). `musicLabel`: chữ hiện dưới màn LED khi không có tên bài.
 - `ttsVoice`: giọng MC, mặc định giọng nam `vi-VN-NamMinhNeural` (đổi `vi-VN-HoaiMyNeural` nếu muốn giọng nữ).
 - `messages`: các câu MC đọc.
 
