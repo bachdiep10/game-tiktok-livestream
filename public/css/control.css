@@ -18,3 +18,5 @@ button.on { background: #2e7d32; }
 code { display: block; padding: 10px; background: #120805; border-radius: 8px; color: #9fe3ff; user-select: all; word-break: break-all; }
 .preview { flex: 0 0 auto; }
 .preview iframe { width: 405px; height: 720px; border: 2px solid #5a3220; border-radius: 16px; background: #000; }
+.toggle { display: flex; gap: 8px; align-items: center; margin: 10px 0 4px; font-size: 15px; cursor: pointer; }
+.toggle input { width: 18px; height: 18px; flex: none; }

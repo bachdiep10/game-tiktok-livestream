@@ -6,6 +6,18 @@ const gameUrl = `${location.origin}/game.html`;
 $('#gameUrl').textContent = gameUrl;
 $('#username').value = localStorage.getItem('tiktokUsername') || '';
 
+// khung xem trước: có thể bật/tắt tiếng (mặc định bật)
+const previewSound = $('#previewSound');
+previewSound.checked = localStorage.getItem('previewSound') !== '0';
+function loadPreview() {
+  $('#preview').src = previewSound.checked ? 'game.html' : 'game.html?sound=0';
+}
+previewSound.addEventListener('change', () => {
+  localStorage.setItem('previewSound', previewSound.checked ? '1' : '0');
+  loadPreview();
+});
+loadPreview();
+
 let ws;
 const queue = [];
 function connect() {
