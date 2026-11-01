@@ -775,6 +775,70 @@ function poseFor(d) {
   return DANCES[style](b, 0.9);
 }
 
+// ------------------------------------------------------------------ trình chiếu ảnh trên màn LED
+let slides = []; // [{ src, img }]
+let slideIdx = 0;
+let slideSince = 0;
+async function loadSlides() {
+  try {
+    const r = await fetch('/bar-led.json', { cache: 'no-store' });
+    if (!r.ok) return;
+    const list = await r.json();
+    const old = new Map(slides.map((s) => [s.src, s]));
+    slides = list.map((src) => {
+      if (old.has(src)) return old.get(src);
+      const img = new Image();
+      img.src = src;
+      return { src, img };
+    });
+    if (slideIdx >= slides.length) slideIdx = 0;
+  } catch {
+    /* không có máy chủ */
+  }
+}
+
+function coverDraw(img, alpha) {
+  const ir = img.naturalWidth / img.naturalHeight;
+  const lr = LED.w / LED.h;
+  let w = LED.w;
+  let h = LED.h;
+  if (config.ledFit === 'contain' ? ir > lr : ir < lr) h = w / ir;
+  else w = h * ir;
+  ctx.globalAlpha = alpha;
+  ctx.drawImage(img, LED.x + (LED.w - w) / 2, LED.y + (LED.h - h) / 2, w, h);
+  ctx.globalAlpha = 1;
+}
+
+// trả về true nếu đang chiếu ảnh
+function drawSlides() {
+  const ready = slides.filter((s) => s.img.complete && s.img.naturalWidth > 0);
+  if (!ready.length) return false;
+  const dur = Math.max(2, Number(config.ledSlideSeconds) || 8) * 1000;
+  if (!slideSince) slideSince = now;
+  if (now - slideSince > dur) {
+    slideIdx = (slideIdx + 1) % ready.length;
+    slideSince = now;
+  }
+  const cur = ready[slideIdx % ready.length];
+  const prev = ready[(slideIdx - 1 + ready.length) % ready.length];
+  const fade = clamp((now - slideSince) / 800, 0, 1);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(LED.x, LED.y, LED.w, LED.h);
+  if (fade < 1 && prev !== cur) coverDraw(prev.img, 1);
+  // ảnh hơi phóng to dần cho sinh động
+  ctx.save();
+  const z = 1 + 0.04 * ((now - slideSince) / dur);
+  ctx.translate(LED.x + LED.w / 2, LED.y + LED.h / 2);
+  ctx.scale(z, z);
+  ctx.translate(-(LED.x + LED.w / 2), -(LED.y + LED.h / 2));
+  coverDraw(cur.img, fade);
+  ctx.restore();
+  // vạch LED mảnh để giống màn hình
+  ctx.fillStyle = 'rgba(0,0,0,0.18)';
+  for (let y = LED.y; y < LED.y + LED.h; y += 6) ctx.fillRect(LED.x, y, LED.w, 1);
+  return true;
+}
+
 function drawLED() {
   ctx.save();
   ctx.beginPath();
@@ -801,7 +865,10 @@ function drawLED() {
 
   // DJ phía sau sân khấu: ảnh riêng (djImage) hoặc DJ vẽ sẵn
   const djMode = now < dropUntil ? 'hype' : 'mix';
-  if (djImage) {
+  const slide = drawSlides();
+  if (slide) {
+    /* màn LED đang chiếu ảnh từ thư mục */
+  } else if (djImage) {
     const ih = LED.h;
     const iw = (djImage.naturalWidth / djImage.naturalHeight) * ih;
     const ix = LED.x + LED.w - Math.min(iw, 330);
@@ -827,6 +894,10 @@ function drawLED() {
   const tx = LED.x + 265;
   const d = show && dancers.get(show.id);
   if (d && (d.state === 'stage' || d.state === 'toStage')) {
+    if (slide) {
+      ctx.fillStyle = 'rgba(5,2,15,0.6)';
+      ctx.fillRect(LED.x, LED.y + 40, LED.w, 100);
+    }
     ctx.font = `900 24px ${FONT}`;
     ctx.fillStyle = '#fff';
     ctx.shadowColor = hsl(hue, 100, 60);
@@ -834,6 +905,8 @@ function drawLED() {
     ctx.fillText('🔥 ĐANG QUẨY TRÊN SÂN KHẤU 🔥', W / 2, LED.y + 70);
     ctx.font = `900 46px ${FONT}`;
     ctx.fillText(truncate(d.user.name, 16), W / 2, LED.y + 115);
+  } else if (slide && !config.ledShowText) {
+    /* để ảnh hiện rõ, không viết chữ đè */
   } else if (now < dropUntil) {
     ctx.font = `900 72px ${FONT}`;
     ctx.fillStyle = Math.floor(beat * 2) % 2 ? '#fff' : hsl(hue + 180, 100, 65);
@@ -1117,8 +1190,10 @@ function drawWorld() {
   // DJ đứng sau bàn trên bục, góc phải sân khấu
   const djX = STAGE.x + 168;
   const djY = STAGE.y - 8;
-  drawStageDJ(ctx, djX, djY, 1.4, beat, now / 1000, now < dropUntil ? 'hype' : 'mix');
-  drawBooth(ctx, djX, djY + 6, 1.4, beat, now / 1000, hue);
+  if (config.showStageDJ !== false) {
+    drawStageDJ(ctx, djX, djY, 1.4, beat, now / 1000, now < dropUntil ? 'hype' : 'mix');
+    drawBooth(ctx, djX, djY + 6, 1.4, beat, now / 1000, hue);
+  }
   if (onStage) {
     const info = drawBody(sd, STAGE.x, STAGE.y, 1.55);
     drawTag(sd, STAGE.x, info.headY, 1.3);
@@ -1540,6 +1615,8 @@ async function boot() {
     }, 3000);
   }
   setInterval(refillCrowd, 1500);
+  loadSlides();
+  setInterval(loadSlides, 30000); // thêm/bớt ảnh trong thư mục là tự cập nhật
   connectWs();
   requestAnimationFrame(frame);
 }

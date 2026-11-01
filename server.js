@@ -70,6 +70,43 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify(list));
     return;
   }
+  if (pathname === '/bar-led.json' || pathname.startsWith('/bar-led/')) {
+    // ảnh cho màn LED quán bar: thư mục trong config-bar.json "ledFolder"
+    // (đường dẫn trên máy, vd. D:\\anh-led) hoặc mặc định public/assets/anh-led
+    const cfgFolder = String(loadConfig(BAR_CONFIG_PATH).ledFolder || '').trim();
+    const dir = cfgFolder ? path.resolve(__dirname, cfgFolder) : path.join(PUBLIC_DIR, 'assets', 'anh-led');
+    const isImg = (f) => /\.(png|jpe?g|webp|gif|bmp)$/i.test(f);
+    if (pathname === '/bar-led.json') {
+      let list = [];
+      try {
+        list = fs.readdirSync(dir)
+          .filter(isImg)
+          .sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
+          .map((f) => `/bar-led/${encodeURIComponent(f)}`);
+      } catch {
+        if (cfgFolder) console.warn(`[led] Không mở được thư mục ảnh: ${dir}`);
+      }
+      res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify(list));
+      return;
+    }
+    const name = path.basename(pathname.slice('/bar-led/'.length));
+    if (!isImg(name)) {
+      res.writeHead(404).end();
+      return;
+    }
+    fs.readFile(path.join(dir, name), (err, data) => {
+      if (err) {
+        res.writeHead(404).end();
+        return;
+      }
+      const ext = path.extname(name).toLowerCase();
+      const type = { '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp', '.bmp': 'image/bmp' }[ext] || 'image/jpeg';
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' });
+      res.end(data);
+    });
+    return;
+  }
   if (pathname === '/bar-config.json') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(loadConfig(BAR_CONFIG_PATH)));
@@ -187,7 +224,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.9.3';
+const VERSION = '1.9.4';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {
