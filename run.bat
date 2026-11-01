@@ -3,7 +3,7 @@ chcp 65001 >nul
 cd /d "%~dp0"
 rem Tat ban game cu neu con chay ngam
 taskkill /F /IM node.exe >nul 2>&1
-if not exist node_modules (
+if not exist node_modules\msedge-tts (
   echo Dang cai thu vien lan dau...
   call npm install
 )
