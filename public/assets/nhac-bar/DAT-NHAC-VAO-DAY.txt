@@ -1,0 +1,7 @@
+Chép các bài hát (file .mp3 hoặc .m4a) vào thư mục này.
+Game sẽ phát lần lượt theo tên file, hết bài cuối thì quay lại bài đầu.
+Muốn chọn thứ tự thì đặt tên có số ở đầu, ví dụ:
+  01 Bai thu nhat.mp3
+  02 Bai thu hai.mp3
+Thêm/bớt bài xong thì tải lại cửa sổ game (F5).
+Nếu thư mục trống, game dùng nhạc sàn tự tạo.

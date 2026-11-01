@@ -148,7 +148,7 @@ Sàn còn có vài bóng người nhảy **không tên** cho đỡ vắng; mỗi
 - `stagePoints` (60): số điểm để lên sân khấu; `pointsPerCoin` (20); `stageGiftCoins` (10): quà từ mức này lên ngay.
 - `stageSeconds` / `stageSecondsBig`: thời gian trên sân khấu; `cameraZoom`: độ zoom camera.
 - `hypeMax`: lượng tim cần để "BÙNG NỔ"; `ambientCrowd`: số bóng người không tên.
-- `musicFile`: đặt file nhạc riêng vào `public/assets` rồi ghi `"assets/ten-file.mp3"`. Nhạc mặc định là nhạc sàn do game tự tạo (không bản quyền). Dùng nhạc có bản quyền có thể bị TikTok tắt tiếng.
+- **Nhạc riêng**: chép file `.mp3`/`.m4a` vào thư mục `public/assets/nhac-bar/`. Game phát lần lượt theo tên file (đặt `01 ...`, `02 ...` để chọn thứ tự), hết bài cuối quay lại bài đầu. Thư mục trống thì dùng nhạc sàn tự tạo (không bản quyền). Lưu ý: nhạc có bản quyền có thể bị TikTok tắt tiếng hoặc cảnh cáo LIVE.
 - `ttsVoice`: giọng MC, mặc định giọng nam `vi-VN-NamMinhNeural` (đổi `vi-VN-HoaiMyNeural` nếu muốn giọng nữ).
 - `messages`: các câu MC đọc.
 

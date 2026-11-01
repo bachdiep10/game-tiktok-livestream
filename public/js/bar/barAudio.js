@@ -177,7 +177,54 @@ function scheduler() {
   }
 }
 
-export function startMusic({ file = '', volume = 0.35, bpm = 124 } = {}) {
+// Danh sách bài hát: phát lần lượt, hết bài cuối thì quay lại bài đầu.
+// Bài nào lỗi (sai tên, hỏng file) thì bỏ qua; nếu mọi bài đều lỗi thì dùng nhạc tự tạo.
+let playlist = [];
+let trackIdx = 0;
+let trackFails = 0;
+let fileVolume = 0.7;
+function playTrack() {
+  if (!playlist.length) return;
+  const src = playlist[trackIdx % playlist.length];
+  fileEl.src = src;
+  fileEl.volume = fileVolume;
+  fileEl.play().then(() => {
+    trackFails = 0;
+  }).catch((err) => {
+    if (err && err.name === 'NotAllowedError') {
+      // trình duyệt chặn tự phát: chờ cú click đầu tiên
+      musicOn = false;
+      return;
+    }
+    nextTrack(true);
+  });
+}
+function nextTrack(failed = false) {
+  if (failed) trackFails++;
+  if (trackFails >= playlist.length) {
+    console.warn('[nhạc] Không phát được bài nào trong danh sách, dùng nhạc tự tạo.');
+    fileEl = null;
+    playlist = [];
+    startGenerated();
+    return;
+  }
+  trackIdx = (trackIdx + 1) % playlist.length;
+  playTrack();
+}
+export function currentTrack() {
+  if (!fileEl || !playlist.length) return '';
+  return decodeURIComponent(playlist[trackIdx % playlist.length].split('/').pop()).replace(/\.[a-z0-9]+$/i, '');
+}
+
+function startGenerated() {
+  musicStart = ac.currentTime + 0.1;
+  nextStep = musicStart;
+  stepIdx = 0;
+  clearInterval(timer);
+  timer = setInterval(scheduler, 25);
+}
+
+export function startMusic({ file = '', files = [], volume = 0.35, bpm = 124 } = {}) {
   if (musicOn) return;
   const a = ctx();
   if (!a) return;
@@ -192,20 +239,21 @@ export function startMusic({ file = '', volume = 0.35, bpm = 124 } = {}) {
   }
   musicBus.gain.value = volume;
   musicOn = true;
-  if (file) {
-    fileEl = new Audio(file);
-    fileEl.loop = true;
-    fileEl.volume = Math.min(1, volume * 2);
-    fileEl.play().catch(() => {
-      musicOn = false;
-    });
+  const list = [...(files || []), ...(file ? [file] : [])].filter(Boolean);
+  if (list.length) {
+    if (!fileEl) {
+      playlist = list;
+      fileVolume = Math.min(1, volume * 2);
+      fileEl = new Audio();
+      fileEl.preload = 'auto';
+      fileEl.addEventListener('ended', () => nextTrack(false));
+      fileEl.addEventListener('error', () => nextTrack(true));
+    }
     musicStart = a.currentTime;
+    playTrack();
     return;
   }
-  musicStart = a.currentTime + 0.1;
-  nextStep = musicStart;
-  stepIdx = 0;
-  timer = setInterval(scheduler, 25);
+  startGenerated();
 }
 
 export function musicPlaying() {

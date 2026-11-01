@@ -1444,9 +1444,17 @@ async function boot() {
   voice.setVoiceEnabled(config.voice !== false);
   voice.setVoiceEngine(params.get('engine') || config.voiceEngine);
   voice.setPreferredVoice(config.ttsVoice);
+  // nhạc riêng: mọi file trong public/assets/nhac-bar (theo thứ tự tên) + danh sách musicFiles
+  let musicFiles = Array.isArray(config.musicFiles) ? config.musicFiles.filter(Boolean) : [];
+  try {
+    const r = await fetch('/bar-music.json', { cache: 'no-store' });
+    if (r.ok) musicFiles = [...(await r.json()), ...musicFiles];
+  } catch {
+    /* không có máy chủ */
+  }
   const startMusic = () => {
     if (config.music !== false && config.sound !== false) {
-      sfx.startMusic({ file: config.musicFile, volume: Number(config.musicVolume) || 0.35, bpm: Number(config.bpm) || 124 });
+      sfx.startMusic({ file: config.musicFile, files: musicFiles, volume: Number(config.musicVolume) || 0.35, bpm: Number(config.bpm) || 124 });
     }
   };
   startMusic();

@@ -32,6 +32,13 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  '.mp3': 'audio/mpeg',
+  '.m4a': 'audio/mp4',
+  '.aac': 'audio/aac',
+  '.ogg': 'audio/ogg',
+  '.opus': 'audio/ogg',
+  '.wav': 'audio/wav',
+  '.webm': 'audio/webm',
 };
 
 const server = http.createServer((req, res) => {
@@ -45,6 +52,22 @@ const server = http.createServer((req, res) => {
   if (pathname === '/config.json') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(loadConfig()));
+    return;
+  }
+  if (pathname === '/bar-music.json') {
+    // danh sách bài hát trong thư mục public/assets/nhac-bar, xếp theo tên file
+    const dir = path.join(PUBLIC_DIR, 'assets', 'nhac-bar');
+    let list = [];
+    try {
+      list = fs.readdirSync(dir)
+        .filter((f) => /\.(mp3|m4a|aac|ogg|wav|webm|opus)$/i.test(f))
+        .sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
+        .map((f) => `assets/nhac-bar/${encodeURIComponent(f)}`);
+    } catch {
+      /* chưa có thư mục */
+    }
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(list));
     return;
   }
   if (pathname === '/bar-config.json') {
@@ -164,7 +187,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.9.0';
+const VERSION = '1.9.1';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {
