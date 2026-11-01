@@ -92,6 +92,7 @@ const DEFAULTS = {
 };
 let config = { ...DEFAULTS };
 let djImage = null;
+let bgImage = null; // ảnh nền riêng (config backgroundImage), thay cho cảnh vẽ bằng code
 
 const lastLine = {};
 function line(kind, vars = {}) {
@@ -1101,16 +1102,18 @@ function drawStageSpot(d) {
 
 function drawWorld() {
   const t = now / 1000;
-  ctx.drawImage(bg, 0, 0);
-  drawLED();
-  drawSpeakers(ctx, beat, hue);
-  drawDiscoBall(ctx, 95, 250, 34, t * 0.8, hue);
-  drawDiscoBall(ctx, W - 95, 250, 34, t * 0.8 + 1, hue);
+  ctx.drawImage(bgImage || bg, 0, 0, W, H);
+  if (config.showLedScreen !== false) drawLED();
+  if (config.showSpeakers !== false) drawSpeakers(ctx, beat, hue);
+  if (config.showDiscoBalls !== false) {
+    drawDiscoBall(ctx, 95, 250, 34, t * 0.8, hue);
+    drawDiscoBall(ctx, W - 95, 250, 34, t * 0.8 + 1, hue);
+  }
 
   const sd = show && dancers.get(show.id);
   const onStage = sd && sd.state === 'stage';
   if (onStage) drawStageSpot(sd);
-  drawStageTop(ctx, beat, hue, onStage);
+  if (config.showStageLights !== false) drawStageTop(ctx, beat, hue, onStage);
   // DJ đứng sau bàn trên bục, góc phải sân khấu
   const djX = STAGE.x + 168;
   const djY = STAGE.y - 8;
@@ -1122,7 +1125,7 @@ function drawWorld() {
     drawBubble(sd, STAGE.x, info.headY - 34);
   }
 
-  drawFloor(ctx, beat, hue, now < dropUntil ? 1.6 : 1, floorMode);
+  if (config.showFloorLights !== false) drawFloor(ctx, beat, hue, now < dropUntil ? 1.6 : 1, floorMode);
   drawSpotlights(ctx, t, hue);
   drawRings();
 
@@ -1482,6 +1485,20 @@ async function boot() {
     /* chạy không có server */
   }
   config.messages = { ...DEFAULTS.messages, ...(config.messages || {}) };
+  if (config.backgroundImage && params.get('bg') !== '0') {
+    await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        bgImage = img;
+        resolve();
+      };
+      img.onerror = () => {
+        console.warn('[nền] Không tải được ảnh', config.backgroundImage);
+        resolve();
+      };
+      img.src = config.backgroundImage;
+    });
+  }
   if (config.djImage) {
     const img = new Image();
     img.onload = () => {
@@ -1527,5 +1544,63 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 
-window.BarGame = { handleEvent, dancers, queue };
+// Xuất ảnh nền trống (không người, không DJ, không chữ) để tự chỉnh sửa
+function exportBackground({ guide = false } = {}) {
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const b = c.getContext('2d');
+  drawStatic(b);
+  b.fillStyle = '#070312';
+  b.fillRect(LED.x, LED.y, LED.w, LED.h);
+  b.fillStyle = 'rgba(0,0,0,0.35)';
+  for (let y = LED.y; y < LED.y + LED.h; y += 6) b.fillRect(LED.x, y, LED.w, 2);
+  drawSpeakers(b, 0.5, 280);
+  drawDiscoBall(b, 95, 250, 34, 0.4, 280);
+  drawDiscoBall(b, W - 95, 250, 34, 1.4, 280);
+  drawStageTop(b, 0.5, 280, false);
+  drawFloor(b, 0.25, 280, 1, 0);
+  if (guide) {
+    const box = (x, y, w, h, color, text) => {
+      b.save();
+      b.strokeStyle = color;
+      b.fillStyle = color.replace('1)', '0.18)');
+      b.lineWidth = 4;
+      b.setLineDash([16, 10]);
+      b.fillRect(x, y, w, h);
+      b.strokeRect(x, y, w, h);
+      b.setLineDash([]);
+      b.fillStyle = '#fff';
+      b.font = '800 30px system-ui, "Segoe UI", sans-serif';
+      b.textAlign = 'center';
+      b.textBaseline = 'middle';
+      b.shadowColor = '#000';
+      b.shadowBlur = 8;
+      String(text).split('\n').forEach((l, i, a) => b.fillText(l, x + w / 2, y + h / 2 + (i - (a.length - 1) / 2) * 38));
+      b.restore();
+    };
+    box(0, 0, W, 190, 'rgba(255,80,200,1)', 'TIÊU ĐỀ (game tự viết chữ ở đây)');
+    box(LED.x, LED.y, LED.w, LED.h, 'rgba(80,220,255,1)', 'MÀN LED: game vẽ DJ + chữ đè lên\n(tắt bằng showLedScreen: false)');
+    box(STAGE.x - STAGE.rx, STAGE.y - 60, STAGE.rx * 2, 150, 'rgba(255,220,80,1)', 'SÂN KHẤU VIP\nngười nhảy đứng giữa, DJ bên phải');
+    b.save();
+    b.strokeStyle = 'rgba(120,255,120,1)';
+    b.fillStyle = 'rgba(120,255,120,0.15)';
+    b.lineWidth = 4;
+    b.setLineDash([16, 10]);
+    b.beginPath();
+    b.moveTo(FLOOR.topL, FLOOR.top);
+    b.lineTo(FLOOR.topR, FLOOR.top);
+    b.lineTo(Math.min(W, FLOOR.botR), FLOOR.bottom);
+    b.lineTo(Math.max(0, FLOOR.botL), FLOOR.bottom);
+    b.closePath();
+    b.fill();
+    b.stroke();
+    b.restore();
+    box(W / 2 - 260, 1180, 520, 140, 'rgba(0,0,0,1)', 'SÀN NHẢY (hình thang xanh)\nngười xem rơi xuống và nhảy ở đây');
+    box(0, 1712, W, H - 1712, 'rgba(255,150,80,1)', 'BẢNG TOP QUẨY + HÀNG CHỜ\n(game che kín vùng này)');
+  }
+  return c.toDataURL('image/png');
+}
+
+window.BarGame = { handleEvent, dancers, queue, exportBackground };
 boot();
