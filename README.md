@@ -1,0 +1,86 @@
+# 🙏 Chánh điện LIVE: game tương tác TikTok LIVE
+
+Màn hình chánh điện có tượng Phật. Người xem vào phòng LIVE thì có một nhân vật mang **tên + ảnh đại diện** của họ, đi vào một chỗ trống và quỳ lễ. Bình luận, thả tim, theo dõi, tặng quà đều làm nhân vật phản ứng.
+
+Toàn bộ hình ảnh và âm thanh được vẽ/tổng hợp bằng code, không dùng ảnh hay âm thanh của kênh khác.
+
+![Chánh điện](docs/screenshot.png)
+
+## Luật tương tác
+
+| Sự kiện TikTok | Hành động trong chùa |
+|---|---|
+| Người xem vào phòng | Tạo nhân vật có tên + avatar, đi theo thảm đỏ vào chỗ trống rồi quỳ và chắp tay. Giọng đọc: "A Di Đà Phật, chào mừng …" |
+| Bình luận | Hiện bong bóng chữ trên đầu nhân vật |
+| Bình luận "Nam mô A Di Đà Phật" (có dấu hay không dấu đều được, cả "nam mo") | Nhân vật lạy 3 lạy + tiếng mõ |
+| Thả tim | Tim bay lên từ nhân vật, nhân vật vái/lạy + tiếng mõ |
+| Theo dõi (follow) | Nhân vật được vầng hào quang vàng trên đầu (giữ suốt buổi) + giọng cảm ơn |
+| Chia sẻ | Nhân vật chắp tay vái |
+| Quà 1–9 xu (Hoa hồng…) | Hoa sen nở trước bàn thờ + tiếng khánh |
+| Quà 10–99 xu | Chuông chùa đổ, ánh sáng vàng, mưa cánh hoa + giọng cảm ơn |
+| Quà 100+ xu | Đại liên hoa, tia sáng toả, bảng tên người cúng dường + chuông lớn + giọng tri ân |
+
+Người tặng quà còn được lên **bảng "Tấm lòng thành"** và có quầng sáng quanh nhân vật.
+
+Chánh điện chứa tối đa 90 người. Khi đầy, người im lặng lâu nhất sẽ nhường chỗ (người đã follow/tặng quà được ưu tiên giữ chỗ). Ai im lặng quá 20 phút sẽ tự rời đi.
+
+## Cài đặt trên Windows
+
+1. Cài **Node.js 20 trở lên** từ https://nodejs.org (chọn bản LTS).
+2. Tải mã nguồn này về (nút **Code → Download ZIP** trên GitHub) và giải nén.
+3. Bấm đúp **`run.bat`**. Lần đầu nó tự cài thư viện rồi mở trang điều khiển.
+   - Hoặc mở Terminal trong thư mục và chạy `npm install` rồi `npm start`.
+
+Hai trang quan trọng:
+
+- **Trang điều khiển + giả lập:** http://127.0.0.1:3000/control.html
+- **Màn hình game (đưa lên LIVE):** http://127.0.0.1:3000/game.html
+
+## Chạy thử không cần LIVE (Test Lab)
+
+Mở trang điều khiển, dùng các nút ở mục **2** và **3**: người vào, bình luận "Nam mô A Di Đà Phật", thả tim, theo dõi, ba mức quà, +50/+100 người, mưa quà, bão tim, tự chạy demo. Có ô nhập tên để thử với một người cụ thể.
+
+Ngoài ra mở `http://127.0.0.1:3000/game.html?demo=1` để game tự sinh sự kiện liên tục.
+
+## Đưa lên TikTok LIVE
+
+1. Bắt đầu phát LIVE (TikTok LIVE Studio trên máy tính).
+2. Trong LIVE Studio (hoặc OBS), thêm nguồn **Link / Browser source** với địa chỉ `http://127.0.0.1:3000/game.html`, kích thước **1080 × 1920**.
+3. Vào trang điều khiển, nhập **username TikTok** của bạn (ví dụ `tranvankhai99`, không cần @) rồi bấm **Kết nối**. Dòng trạng thái chuyển xanh là đã nhận được sự kiện.
+   - Có thể ghi sẵn username vào `config.json` (`"tiktokUsername"`) để tự kết nối khi chạy.
+4. Âm thanh: trong OBS bật "Control audio via OBS" cho nguồn trình duyệt để tiếng chuông, mõ, giọng đọc lên sóng.
+
+**Giọng đọc tiếng Việt** dùng giọng có sẵn của Windows. Nếu không nghe thấy, vào *Settings → Time & Language → Speech* và cài giọng **Tiếng Việt (Microsoft An)**. Tắt giọng đọc: thêm `?voice=0` vào cuối địa chỉ game, hoặc đặt `"voice": false` trong `config.json`. Tắt hết âm thanh: `?sound=0`.
+
+## Tuỳ chỉnh (`config.json`)
+
+| Khoá | Ý nghĩa |
+|---|---|
+| `tiktokUsername` | Tự kết nối kênh này khi chạy |
+| `title`, `subtitle` | Chữ trên hoành phi và dòng hướng dẫn |
+| `maxCharacters` | Số chỗ quỳ tối đa (tối đa 90 theo bố cục hiện tại) |
+| `idleMinutes` | Im lặng bao nhiêu phút thì nhân vật rời đi |
+| `bowKeywords`, `bowCount` | Từ khoá làm nhân vật lạy và số lạy |
+| `giftTiers` | Ngưỡng xu cho 3 mức hiệu ứng (`lotus`, `bell`, `grand`) |
+| `sound`, `voice`, `voiceJoin` | Bật/tắt âm thanh, giọng đọc, giọng chào người mới vào |
+
+Sửa xong chỉ cần tải lại trang game (F5), không cần khởi động lại.
+
+## Lưu ý kỹ thuật
+
+- Kết nối TikTok dùng thư viện không chính thức [`tiktok-live-connector`](https://github.com/zerodytrash/TikTok-Live-Connector). TikTok có thể đổi giao thức bất cứ lúc nào. Sự kiện "người vào phòng" đôi khi không đầy đủ, nên game cũng tạo nhân vật khi người xem bình luận, thả tim, follow hay tặng quà.
+- Quà dạng chuỗi (combo) chỉ được tính một lần khi combo kết thúc, để không bị nhân đôi.
+- Ảnh đại diện lấy trực tiếp từ TikTok. Nếu không tải được, nhân vật hiện chữ cái đầu của tên.
+
+## Cấu trúc
+
+```
+server.js            Cầu nối TikTok LIVE -> WebSocket, phục vụ trang web
+config.json          Cấu hình
+public/game.html     Màn hình game (nguồn trình duyệt cho LIVE)
+public/control.html  Bảng điều khiển + Test Lab
+public/js/scene.js   Vẽ chánh điện, tượng Phật, bàn thờ, chỗ quỳ
+public/js/game.js    Nhân vật, hiệu ứng, xử lý sự kiện, giao diện
+public/js/audio.js   Chuông, mõ, khánh (WebAudio) + giọng đọc
+public/js/fake.js    Dữ liệu giả cho Test Lab
+```

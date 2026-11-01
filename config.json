@@ -1,0 +1,19 @@
+{
+  "tiktokUsername": "",
+  "port": 3000,
+  "title": "NAM MÔ A DI ĐÀ PHẬT",
+  "subtitle": "Bình luận \"Nam mô A Di Đà Phật\" để lễ Phật",
+  "templeName": "Chánh Điện An Lạc",
+  "maxCharacters": 90,
+  "idleMinutes": 20,
+  "bowKeywords": ["nam mo a di da phat", "nam mo", "a di da phat", "adida", "nammo"],
+  "bowCount": 3,
+  "giftTiers": {
+    "lotus": 1,
+    "bell": 10,
+    "grand": 100
+  },
+  "sound": true,
+  "voice": true,
+  "voiceJoin": true
+}
