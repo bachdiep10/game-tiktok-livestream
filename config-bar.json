@@ -1,0 +1,84 @@
+{
+  "_ghi_chu": "Cấu hình game Quán bar. Sửa xong lưu lại rồi tải lại trang game (F5).",
+  "clubName": "NEON PARTY",
+  "subtitle": "Vào LIVE là được thả xuống sàn • Thả tim & tặng quà để lên sân khấu VIP",
+  "maxDancers": 70,
+  "ambientCrowd": 18,
+  "idleMinutes": 15,
+  "stagePoints": 60,
+  "pointsPerCoin": 20,
+  "stageGiftCoins": 10,
+  "stageSeconds": 6,
+  "stageSecondsBig": 10,
+  "cameraZoom": 2.2,
+  "hypeMax": 150,
+  "giftTiers": {
+    "medium": 10,
+    "big": 100
+  },
+  "sound": true,
+  "music": true,
+  "musicFile": "",
+  "musicVolume": 0.35,
+  "bpm": 124,
+  "voice": true,
+  "voiceJoin": true,
+  "voiceEngine": "auto",
+  "ttsVoice": "vi-VN-NamMinhNeural",
+  "captions": true,
+  "narration": true,
+  "narrationSeconds": 35,
+  "danceKeywords": [
+    "quẩy",
+    "quay",
+    "nhảy",
+    "nhay",
+    "dance",
+    "lên",
+    "len",
+    "🔥"
+  ],
+  "messages": {
+    "join": [
+      "Chào {name} vừa đáp xuống sàn nhảy",
+      "{name} đã vào quán, quẩy lên nào",
+      "Hoan nghênh {name}, chúc bạn một đêm thật vui",
+      "Ơ kìa, {name} rơi từ trên trời xuống rồi"
+    ],
+    "stage": [
+      "Mời {name} lên sân khấu VIP. Cả nhà cổ vũ nào",
+      "Sân khấu là của {name}. Quẩy hết mình đi",
+      "Đèn đã bật, camera đã quay. Mời {name} lên sân khấu",
+      "Cả quán nhìn về {name} nào. Nhảy đẹp quá"
+    ],
+    "follow": [
+      "Cảm ơn {name} đã theo dõi kênh. Tặng bạn vương miện",
+      "{name} vừa theo dõi kênh, đội vương miện lên nào"
+    ],
+    "share": [
+      "Cảm ơn {name} đã chia sẻ, rủ thêm bạn vào quẩy nhé",
+      "{name} đã chia sẻ phiên LIVE, quán càng đông càng vui"
+    ],
+    "gift": [
+      "Cảm ơn {name} đã tặng {gift}",
+      "Wow, {name} tặng {gift}. Cảm ơn bạn",
+      "{name} chơi lớn quá, cảm ơn {gift}"
+    ],
+    "bigGift": [
+      "Bùng nổ. {name} vừa tặng {gift}. Cả quán cảm ơn {name}",
+      "Quá đỉnh. Cảm ơn {name} đã tặng {gift}. Mời đại gia lên sân khấu"
+    ],
+    "drop": [
+      "Bùng nổ rồi. Cả sàn cùng nhảy nào",
+      "Độ quẩy đã đầy. Lên nhạc thôi"
+    ],
+    "reminder": [
+      "Thả tim liên tục để nhân vật của bạn nhảy sung và được lên sân khấu VIP",
+      "Ai muốn lên sân khấu thì thả tim thật nhiều hoặc tặng một món quà nhé",
+      "Bình luận chữ quẩy để nhân vật của bạn nhảy ngay",
+      "Theo dõi kênh để được đội vương miện trên sàn nhảy",
+      "Thả tim cho đầy thanh độ quẩy, cả sàn sẽ bùng nổ",
+      "Ai mới vào quán thì bình luận để được thả xuống sàn nhảy nhé"
+    ]
+  }
+}

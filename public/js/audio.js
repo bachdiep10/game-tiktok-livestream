@@ -122,9 +122,13 @@ export function setVoiceEnabled(on) {
 
 // Giọng mong muốn (config.ttsVoice), ví dụ vi-VN-HoaiMyNeural -> tìm "HoaiMy" trong tên giọng của trình duyệt
 let preferredVoice = 'HoaiMy';
+let onlineVoice = '';
 export function setPreferredVoice(name) {
   const m = String(name || '').match(/vi-VN-([A-Za-z]+?)(Neural)?$/);
-  if (m) preferredVoice = m[1];
+  if (m) {
+    preferredVoice = m[1];
+    onlineVoice = `vi-VN-${m[1]}Neural`;
+  }
 }
 function viVoices() {
   const voices = window.speechSynthesis?.getVoices() || [];
@@ -192,7 +196,7 @@ function speakOnline(text, done) {
   const next = () => {
     const part = list.shift();
     if (!part) return done();
-    const audio = new Audio(`/tts?text=${encodeURIComponent(part)}`);
+    const audio = new Audio(`/tts?text=${encodeURIComponent(part)}${onlineVoice ? `&voice=${onlineVoice}` : ''}`);
     audio.volume = 1;
     audio.onended = () => {
       onlineFails = 0;

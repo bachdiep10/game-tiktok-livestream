@@ -114,3 +114,42 @@ public/js/characterArt.js  Vẽ nhân vật Phật tử mặc áo tràng
 public/js/audio.js   Chuông, mõ, khánh, nhạc thiền (WebAudio) + giọng đọc
 public/js/fake.js    Dữ liệu giả cho Test Lab
 ```
+
+---
+
+# 🪩 Quán bar LIVE (game thứ hai, dùng chung máy chủ)
+
+Người xem vào LIVE sẽ được **thả từ trên trời xuống sàn nhảy** và tự nhảy theo nhạc.
+Ai **thả tim nhiều** hoặc **tặng quà** sẽ được mời **lên sân khấu VIP** phía trên, camera zoom cận cảnh điệu nhảy vài giây.
+
+| Hành động trên TikTok | Trong game |
+|---|---|
+| Vào phòng / bình luận lần đầu | Rơi từ trên trời xuống sàn, có cột sáng + tiếng "bịch" |
+| Bình luận | Bong bóng chat; có chữ "quẩy", "nhảy", "🔥" thì nhảy tưng ngay |
+| Thả tim | Nhảy sung + tim bay; mỗi tim = 1 điểm. Đủ 60 điểm → vào hàng chờ sân khấu |
+| Quà nhỏ (dưới 10 xu) | Pháo sáng + tiền vàng; mỗi xu = 20 điểm |
+| Quà từ 10 xu | Lên sân khấu ngay (được ưu tiên theo giá trị quà), pháo giấy, khói CO2 |
+| Quà từ 100 xu | Pháo hoa toàn màn hình, còi hơi, lên sân khấu trước mọi người, 10 giây |
+| Theo dõi | Đội vương miện 👑 |
+| Chia sẻ | Pháo giấy |
+| Cả phòng thả tim đầy thanh "ĐỘ QUẨY" | BÙNG NỔ: nhạc lên cao trào, laser, nháy đèn, mưa pháo giấy |
+
+Sàn còn có vài bóng người nhảy **không tên** cho đỡ vắng; mỗi người xem thật vào sẽ thay chỗ một bóng.
+
+### Chạy trên Windows
+1. Giải nén, nhấp đúp **`run-bar.bat`** (lần đầu tự cài thư viện). Trình duyệt mở trang điều khiển `bar-control.html`.
+2. Bấm các nút ở mục **Giả lập** để thử. Nút "❤️ x60" và "🎁 Quà 30 xu" sẽ đưa người lên sân khấu.
+3. Khi đang LIVE: nhập username TikTok → **Kết nối**.
+4. Nhấp đúp **`mo-cua-so-bar.bat`** để mở game trong cửa sổ Edge riêng, rồi trong TikTok LIVE Studio thêm nguồn **Chụp cửa sổ** chọn cửa sổ đó (hoặc nguồn Link/Browser: `http://127.0.0.1:3000/bar.html`, 1080×1920).
+   Tắt ô "Bật nhạc" ở khung xem trước để không bị phát tiếng hai lần.
+
+### Tuỳ chỉnh (`config-bar.json`)
+- `clubName`, `subtitle`: tên quán, dòng giới thiệu.
+- `stagePoints` (60): số điểm để lên sân khấu; `pointsPerCoin` (20); `stageGiftCoins` (10): quà từ mức này lên ngay.
+- `stageSeconds` / `stageSecondsBig`: thời gian trên sân khấu; `cameraZoom`: độ zoom camera.
+- `hypeMax`: lượng tim cần để "BÙNG NỔ"; `ambientCrowd`: số bóng người không tên.
+- `musicFile`: đặt file nhạc riêng vào `public/assets` rồi ghi `"assets/ten-file.mp3"`. Nhạc mặc định là nhạc sàn do game tự tạo (không bản quyền). Dùng nhạc có bản quyền có thể bị TikTok tắt tiếng.
+- `ttsVoice`: giọng MC, mặc định giọng nam `vi-VN-NamMinhNeural` (đổi `vi-VN-HoaiMyNeural` nếu muốn giọng nữ).
+- `messages`: các câu MC đọc.
+
+Mã nguồn game quán bar: `public/bar.html`, `public/bar-control.html`, `public/js/bar/`.
