@@ -7,6 +7,7 @@
   "templeName": "Chánh Điện An Lạc",
   "maxCharacters": 60,
   "ambientMonks": 6,
+  "ambientCrowd": 30,
   "backgroundImage": "assets/chanh-dien.jpg",
   "idleMinutes": 20,
   "bowKeywords": [
@@ -26,12 +27,17 @@
   "voice": true,
   "voiceJoin": true,
   "voiceEngine": "auto",
+  "ttsVoice": "vi-VN-HoaiMyNeural",
+  "ttsRate": "-5%",
   "captions": true,
   "music": true,
   "musicFile": "",
   "musicVolume": 0.25,
   "buddhaImage": "",
   "reminderMinutes": 3,
+  "narration": true,
+  "narrationSeconds": 30,
+  "buddhaLight": true,
   "messages": {
     "join": [
       "A Di Đà Phật, chào mừng {name} đã đến chánh điện",
@@ -61,7 +67,34 @@
     "reminder": [
       "Mời quý Phật tử bình luận Nam mô A Di Đà Phật để cùng lễ Phật",
       "Thả tim để nhân vật của bạn vái lạy, theo dõi kênh để nhận hào quang",
-      "Cầu nguyện điều gì, quý vị hãy viết vào bình luận nhé"
+      "Cầu nguyện điều gì, quý vị hãy viết vào bình luận nhé",
+      "Quý vị thả tim để vái lạy Đức Phật, mỗi lần thả tim là một lần tịnh tâm",
+      "Nếu thấy an lạc, quý vị bấm theo dõi kênh và chia sẻ phiên lễ Phật đến người thân nhé",
+      "Ai mới vào, hãy bình luận Nam mô A Di Đà Phật để vào ngồi trong chánh điện"
+    ],
+    "teaching": [
+      "Tâm an thì cảnh an. Mời quý vị hít thở thật chậm, buông xuống mọi lo toan",
+      "Một lời nói hiền, một việc làm lành hôm nay là hạt giống phước lành cho ngày mai",
+      "Giận dữ như cầm hòn than nóng, người bị bỏng trước tiên là chính mình. Mời quý vị buông xả",
+      "Hạnh phúc không ở đâu xa, hạnh phúc là được bình an ngay trong giây phút này",
+      "Biết đủ là giàu. Biết buông là nhẹ. Nguyện quý vị luôn thảnh thơi",
+      "Hiếu thảo với cha mẹ là phước lớn nhất đời người. Hôm nay quý vị đã gọi điện cho cha mẹ chưa",
+      "Gieo nhân lành, gặt quả lành. Nguyện quý vị gieo thật nhiều hạt giống yêu thương",
+      "Mỗi tiếng niệm Phật là một lần tâm được thanh tịnh. Mời quý vị cùng niệm Nam mô A Di Đà Phật",
+      "Đời người như dòng sông, có lúc êm đềm có lúc sóng gió. Giữ tâm bình thản, mọi việc rồi sẽ qua",
+      "Nguyện cầu cho quý vị và gia đình thân tâm thường an lạc, vạn sự cát tường",
+      "Tha thứ cho người khác cũng là tự giải thoát cho chính mình",
+      "Sống chậm lại một chút, thương nhau nhiều hơn một chút. A Di Đà Phật"
+    ],
+    "thanks": [
+      "Cảm ơn {name} đã ghé thăm chánh điện. Nguyện quý vị luôn bình an",
+      "A Di Đà Phật, tri ân {name} đã cùng tịnh tâm lễ Phật",
+      "Hoan hỷ có {name} đồng hành hôm nay. Chúc quý vị nhiều sức khoẻ"
+    ],
+    "chant": [
+      "Nam mô A Di Đà Phật. Nam mô A Di Đà Phật. Nam mô A Di Đà Phật",
+      "Mời quý vị cùng niệm. Nam mô Bổn Sư Thích Ca Mâu Ni Phật. Nam mô A Di Đà Phật",
+      "Nam mô Đại Từ Đại Bi Quán Thế Âm Bồ Tát. Nam mô A Di Đà Phật"
     ]
   }
 }

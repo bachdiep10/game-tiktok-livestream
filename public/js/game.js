@@ -12,6 +12,7 @@ const DEFAULTS = {
   templeName: 'Chánh Điện An Lạc',
   maxCharacters: 90,
   ambientMonks: 6,
+  ambientCrowd: 30,
   backgroundImage: '',
   idleMinutes: 20,
   bowKeywords: ['nam mo a di da phat', 'nam mo', 'a di da phat', 'adida', 'nammo'],
@@ -27,6 +28,9 @@ const DEFAULTS = {
   musicVolume: 0.25,
   buddhaImage: '',
   reminderMinutes: 3,
+  narration: true,
+  narrationSeconds: 30,
+  buddhaLight: true,
   messages: {
     join: [
       'A Di Đà Phật, chào mừng {name} đã đến chánh điện',
@@ -57,6 +61,33 @@ const DEFAULTS = {
       'Mời quý Phật tử bình luận Nam mô A Di Đà Phật để cùng lễ Phật',
       'Thả tim để nhân vật của bạn vái lạy, theo dõi kênh để nhận hào quang',
       'Cầu nguyện điều gì, quý vị hãy viết vào bình luận nhé',
+      'Quý vị thả tim để vái lạy Đức Phật, mỗi lần thả tim là một lần tịnh tâm',
+      'Nếu thấy an lạc, quý vị bấm theo dõi kênh và chia sẻ phiên lễ Phật đến người thân nhé',
+      'Ai mới vào, hãy bình luận Nam mô A Di Đà Phật để vào ngồi trong chánh điện',
+    ],
+    teaching: [
+      'Tâm an thì cảnh an. Mời quý vị hít thở thật chậm, buông xuống mọi lo toan',
+      'Một lời nói hiền, một việc làm lành hôm nay là hạt giống phước lành cho ngày mai',
+      'Giận dữ như cầm hòn than nóng, người bị bỏng trước tiên là chính mình. Mời quý vị buông xả',
+      'Hạnh phúc không ở đâu xa, hạnh phúc là được bình an ngay trong giây phút này',
+      'Biết đủ là giàu. Biết buông là nhẹ. Nguyện quý vị luôn thảnh thơi',
+      'Hiếu thảo với cha mẹ là phước lớn nhất đời người. Hôm nay quý vị đã gọi điện cho cha mẹ chưa',
+      'Gieo nhân lành, gặt quả lành. Nguyện quý vị gieo thật nhiều hạt giống yêu thương',
+      'Mỗi tiếng niệm Phật là một lần tâm được thanh tịnh. Mời quý vị cùng niệm Nam mô A Di Đà Phật',
+      'Đời người như dòng sông, có lúc êm đềm có lúc sóng gió. Giữ tâm bình thản, mọi việc rồi sẽ qua',
+      'Nguyện cầu cho quý vị và gia đình thân tâm thường an lạc, vạn sự cát tường',
+      'Tha thứ cho người khác cũng là tự giải thoát cho chính mình',
+      'Sống chậm lại một chút, thương nhau nhiều hơn một chút. A Di Đà Phật',
+    ],
+    thanks: [
+      'Cảm ơn {name} đã ghé thăm chánh điện. Nguyện quý vị luôn bình an',
+      'A Di Đà Phật, tri ân {name} đã cùng tịnh tâm lễ Phật',
+      'Hoan hỷ có {name} đồng hành hôm nay. Chúc quý vị nhiều sức khoẻ',
+    ],
+    chant: [
+      'Nam mô A Di Đà Phật. Nam mô A Di Đà Phật. Nam mô A Di Đà Phật',
+      'Mời quý vị cùng niệm. Nam mô Bổn Sư Thích Ca Mâu Ni Phật. Nam mô A Di Đà Phật',
+      'Nam mô Đại Từ Đại Bi Quán Thế Âm Bồ Tát. Nam mô A Di Đà Phật',
     ],
   },
 };
@@ -64,8 +95,10 @@ const DEFAULTS = {
 // Lời chúc: đọc thành tiếng + hiện chữ trên màn hình
 const captions = [];
 let caption = null;
+let lastAnnounce = performance.now();
 function announce(text, priority = 0) {
   if (!text) return;
+  lastAnnounce = performance.now();
   sfx.speak(text, priority);
   if (config.captions === false) return;
   if (priority === 0 && captions.length >= 2) return;
@@ -92,7 +125,7 @@ function drawCaption(now) {
   const w = Math.min(1000, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 70);
   const lh = 40;
   const h = lines.length * lh + 26;
-  const y = bgImage ? 1040 : 980;
+  const y = bgImage ? 900 : 860;
   const g = ctx.createLinearGradient(0, y, 0, y + h);
   g.addColorStop(0, 'rgba(110,20,8,0.95)');
   g.addColorStop(1, 'rgba(55,8,3,0.95)');
@@ -312,16 +345,9 @@ class Character {
     const h = hashCode(user.id);
     this.look = lookFor(h);
     this.npc = Boolean(user.npc);
-    if (this.npc) {
-      // sư thầy / chú tiểu: áo nâu hoặc vàng, đầu cạo, đã ngồi sẵn
+    if (user.monk) {
+      // sư thầy / chú tiểu: áo nâu hoặc vàng, đầu cạo
       this.look = { ...this.look, hair: 'bald', robe: h % 2 ? ['#e8a748', '#c27a1e', '#7d4a0e'] : ['#a07a55', '#76553a', '#4a3322'] };
-      this.x = slot.x;
-      this.y = slot.y;
-      this.path = [];
-      this.state = 'kneel';
-      this.kneelT = 1;
-      this.joinFlash = 0;
-      this.nextBow = performance.now() + rand(3000, 15000);
     }
     this.tagColor = TAG_COLORS[(h >> 7) % TAG_COLORS.length];
     this.x = ENTRANCE.x + rand(-40, 40);
@@ -343,6 +369,18 @@ class Character {
     this.lastActive = performance.now();
     this.hearts = [];
     this.joinFlash = 1;
+    if (this.npc) {
+      // nhân vật nền (không tên): ngồi sẵn, hoặc đi vào từ cửa nếu walkIn
+      this.joinFlash = 0;
+      this.nextBow = performance.now() + rand(3000, 15000);
+      if (!user.walkIn) {
+        this.x = slot.x;
+        this.y = slot.y;
+        this.path = [];
+        this.state = 'kneel';
+        this.kneelT = 1;
+      }
+    }
   }
 
   get scale() {
@@ -579,19 +617,18 @@ function drawHeart(x, y, size, color) {
   ctx.fill();
 }
 
+const ROW_PREF = { 4: 0, 5: 1, 3: 2, 6: 3, 2: 4, 7: 5, 1: 6, 0: 7 };
 function findFreeSlot() {
-  const free = slots.find((s) => !s.occupant);
-  if (free) return free;
+  // người thật được ngồi chỗ tốt nhất (gần tượng Phật); nếu nhân vật nền đang ngồi đó thì nhường chỗ
+  // ưu tiên các hàng giữa: nhân vật to, thẻ tên dễ đọc, không bị che
+  const order = [...slots].sort((x, y) => (ROW_PREF[x.row] ?? 9) - (ROW_PREF[y.row] ?? 9) || x.dist - y.dist);
+  const best = order.find((s) => !s.occupant) || order.find((s) => s.occupant.npc && s.occupant.state !== 'leave');
+  if (best) {
+    if (best.occupant) best.occupant.leave();
+    return best;
+  }
   // hết chỗ: mời người im lặng lâu nhất (không phải người tặng quà/theo dõi) ra về
   let victim = null;
-  // ưu tiên mời sư thầy / chú tiểu (nhân vật nền) nhường chỗ trước
-  for (const c of characters.values()) {
-    if (c.npc && c.state !== 'leave' && c.slot) {
-      const slot = c.slot;
-      c.leave();
-      return slot;
-    }
-  }
   for (const c of characters.values()) {
     if (c.state === 'leave' || !c.slot) continue;
     const vip = c.halo || c.user.coins > 0;
@@ -604,22 +641,47 @@ function findFreeSlot() {
   return slot;
 }
 
-// Nhân vật nền: vài sư thầy / chú tiểu tụng kinh sẵn trong điện cho đỡ vắng.
-// Không mang tên người xem, không tính vào số người lễ, tự nhường chỗ khi điện đông.
+// Nhân vật nền: sư thầy / chú tiểu và Phật tử không tên ngồi sẵn cho chánh điện đông vui.
+// Không mang tên, không tính vào số người lễ. Người xem thật vào sẽ được nhường chỗ đẹp,
+// rồi thỉnh thoảng có Phật tử không tên khác đi vào ngồi chỗ trống phía sau.
+let npcSeq = 0;
+function addNpc(slot, { monk = false, walkIn = false } = {}) {
+  const c = new Character({ id: `npc-${npcSeq++}`, name: '', npc: true, monk, walkIn }, slot);
+  characters.set(c.user.id, c);
+  return c;
+}
+function npcTarget() {
+  const monks = clamp(Number(config.ambientMonks ?? 6), 0, 20);
+  const crowd = clamp(Number(config.ambientCrowd ?? 30), 0, 200);
+  return Math.min(monks + crowd, Math.max(0, slots.length - 4)); // luôn chừa vài chỗ trống
+}
 function spawnAmbientMonks() {
-  const n = clamp(Number(config.ambientMonks ?? 6), 0, 20);
-  if (!n) return;
-  const picks = [...slots]
+  const monks = clamp(Number(config.ambientMonks ?? 6), 0, 20);
+  const total = npcTarget();
+  if (!total) return;
+  // sư thầy ngồi hai bên các hàng giữa
+  const monkSlots = [...slots]
     .filter((sl) => !sl.occupant && sl.row >= 1 && sl.row <= 4)
     .sort((a, b) => b.dist - a.dist || a.row - b.row)
-    .slice(0, n);
-  picks.forEach((slot, i) => {
-    const c = new Character({ id: `npc-${i}`, name: '', npc: true }, slot);
-    characters.set(c.user.id, c);
-  });
+    .slice(0, Math.min(monks, total));
+  monkSlots.forEach((slot) => addNpc(slot, { monk: true }));
+  // Phật tử không tên: rải ngẫu nhiên, chừa hàng đầu cho người xem thật
+  const rest = total - monkSlots.length;
+  const free = slots.filter((sl) => !sl.occupant).map((sl) => ({ sl, k: (ROW_PREF[sl.row] ?? 9) <= 1 ? Math.random() + 0.6 : Math.random() }));
+  free.sort((x, y) => x.k - y.k).slice(0, rest).forEach(({ sl }) => addNpc(sl));
+}
+// giữ số nhân vật nền: khi có người thật chiếm chỗ, thỉnh thoảng có người không tên đi vào chỗ trống phía sau
+function refillCrowd() {
+  const target = npcTarget();
+  const npcs = [...characters.values()].filter((c) => c.npc && c.state !== 'leave').length;
+  const free = slots.filter((sl) => !sl.occupant);
+  if (npcs >= target || free.length <= 4) return;
+  const slot = free[free.length - 1 - Math.floor(Math.random() * Math.min(6, free.length))];
+  addNpc(slot, { walkIn: true });
 }
 
 let joinCount = 0;
+const recentVisitors = []; // tên người mới vào, chưa được cảm ơn trong lời dẫn
 function ensureCharacter(user, { greet = false } = {}) {
   if (!user || !user.id) return null;
   let c = characters.get(user.id);
@@ -635,6 +697,10 @@ function ensureCharacter(user, { greet = false } = {}) {
   c.user.coins = 0;
   characters.set(user.id, c);
   joinCount++;
+  if (!user.npc && user.name) {
+    recentVisitors.push(user.name);
+    if (recentVisitors.length > 12) recentVisitors.shift();
+  }
   sfx.pop();
   addTicker(`🙏 ${truncate(user.name, 18)} đã vào chánh điện`);
   if (greet && config.voiceJoin) announce(line('join', { name: speakName(user.name) }), 0);
@@ -699,6 +765,7 @@ function effectBell() {
   haloBoost = Math.max(haloBoost, 1);
   flash = Math.max(flash, 0.35);
   spawnPetals(540, 300, 25, 450);
+  buddhaPulse(1.2);
   sfx.bell(196, 0.55, 5);
 }
 
@@ -709,6 +776,9 @@ function effectGrand(user, giftName, count) {
 function startGrand(g) {
   grand = { ...g, t: 0, dur: 7 };
   haloBoost = 2;
+  buddhaPulse(2);
+  setTimeout(() => buddhaPulse(1.5), 1200);
+  setTimeout(() => buddhaPulse(1.5), 2400);
   flash = 0.7;
   sfx.bell(130.8, 0.7, 7);
   setTimeout(() => sfx.bell(196, 0.5, 5), 900);
@@ -763,6 +833,7 @@ function handleEvent(ev) {
       if (isBowText(text)) {
         c.queueAction('bow', config.bowCount);
         sfx.woodfish();
+        buddhaPulse(0.6);
         spawnSparkles(c.x, c.y - 60 * c.scale, 6);
       }
       break;
@@ -791,6 +862,7 @@ function handleEvent(ev) {
       if (!c) break;
       c.halo = true;
       c.queueAction('bow');
+      buddhaPulse(0.8);
       spawnSparkles(c.x, c.y - 80 * c.scale, 18);
       addTicker(`✨ ${truncate(ev.user.name, 18)} đã theo dõi, nhận hào quang`);
       sfx.chime();
@@ -928,16 +1000,189 @@ function drawAltarLife(now, dt) {
     ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
     ctx.fill();
   }
-  // hào quang Phật toả sáng thêm khi có quà
-  const boost = Math.sin(now / 1400) * 0.03 + 0.05 + haloBoost * 0.25;
+  if (config.buddhaLight !== false) drawBuddhaLight(now, dt);
+}
+
+// ------------------------------------------------------------------ hào quang tượng Phật
+// Vẽ chồng lên tượng (ảnh nền hoặc tượng vẽ bằng code): tia sáng xoay chậm, vầng hào quang
+// sau đầu, ánh sáng toả quanh thân, hạt vàng bay lên và sóng ánh sáng lan ra khi có lễ/quà.
+const lightWaves = [];
+const goldMotes = [];
+let nextAutoWave = performance.now() + 6000;
+function buddhaPulse(power = 1) {
+  if (lightWaves.length > 6) lightWaves.shift();
+  lightWaves.push({ t: 0, power: clamp(power, 0.3, 2) });
+  haloBoost = Math.max(haloBoost, Math.min(2, 0.4 * power));
+}
+function buddhaGeo() {
+  return bgImage ? { x: 540, head: 372, body: 600, base: 820, r: 148 } : { x: 540, head: 345, body: 560, base: 800, r: 135 };
+}
+
+function drawBuddhaLight(now, dt) {
+  const B = buddhaGeo();
+  const boost = haloBoost; // 0..2
+  if (now > nextAutoWave) {
+    buddhaPulse(0.5);
+    nextAutoWave = now + rand(14000, 22000);
+  }
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  const hg = ctx.createRadialGradient(540, bgImage ? 380 : 400, 10, 540, 420, 300 + haloBoost * 80);
-  hg.addColorStop(0, `rgba(255,240,180,${boost})`);
-  hg.addColorStop(1, 'rgba(255,200,80,0)');
+
+  // 1. tia sáng xoay chậm toả ra từ đầu tượng
+  const rot = now / 26000;
+  const len = 560 + boost * 160;
+  const rg = ctx.createRadialGradient(B.x, B.head, B.r * 0.6, B.x, B.head, len);
+  const ra = 0.1 + Math.sin(now / 2200) * 0.025 + boost * 0.08;
+  rg.addColorStop(0, `rgba(255,236,170,${ra})`);
+  rg.addColorStop(0.45, `rgba(255,210,120,${ra * 0.45})`);
+  rg.addColorStop(1, 'rgba(255,190,90,0)');
+  ctx.fillStyle = rg;
+  ctx.beginPath();
+  const N = 18;
+  for (let i = 0; i < N; i++) {
+    const a = rot + (i / N) * Math.PI * 2;
+    const w = i % 2 ? 0.05 : 0.085;
+    ctx.moveTo(B.x + Math.cos(a) * B.r * 0.7, B.head + Math.sin(a) * B.r * 0.7);
+    ctx.lineTo(B.x + Math.cos(a - w) * len, B.head + Math.sin(a - w) * len);
+    ctx.lineTo(B.x + Math.cos(a + w) * len, B.head + Math.sin(a + w) * len);
+    ctx.closePath();
+  }
+  ctx.fill();
+  // lớp tia thứ hai xoay ngược, mờ hơn
+  ctx.globalAlpha = 0.6;
+  ctx.beginPath();
+  for (let i = 0; i < 12; i++) {
+    const a = -rot * 1.6 + (i / 12) * Math.PI * 2 + 0.13;
+    const w = 0.035;
+    ctx.moveTo(B.x, B.head);
+    ctx.lineTo(B.x + Math.cos(a - w) * len * 0.8, B.head + Math.sin(a - w) * len * 0.8);
+    ctx.lineTo(B.x + Math.cos(a + w) * len * 0.8, B.head + Math.sin(a + w) * len * 0.8);
+    ctx.closePath();
+  }
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // 2. vầng hào quang sau đầu, thở nhẹ
+  const breathe = 0.5 + Math.sin(now / 1600) * 0.5;
+  const hg = ctx.createRadialGradient(B.x, B.head, B.r * 0.2, B.x, B.head, B.r * (1.25 + boost * 0.15));
+  hg.addColorStop(0, `rgba(255,248,215,${0.16 + breathe * 0.06 + boost * 0.12})`);
+  hg.addColorStop(0.7, `rgba(255,220,140,${0.08 + boost * 0.06})`);
+  hg.addColorStop(1, 'rgba(255,200,100,0)');
   ctx.fillStyle = hg;
-  ctx.fillRect(0, 0, W, 900);
+  ctx.beginPath();
+  ctx.arc(B.x, B.head, B.r * 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = `rgba(255,236,170,${0.22 + breathe * 0.15 + boost * 0.15})`;
+  ctx.lineWidth = 3 + boost * 2;
+  ctx.beginPath();
+  ctx.arc(B.x, B.head, B.r * (1.02 + breathe * 0.02), 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = `rgba(255,250,220,${0.12 + boost * 0.1})`;
+  ctx.beginPath();
+  ctx.arc(B.x, B.head, B.r * 1.16, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // 3. ánh sáng toả quanh thân
+  ctx.save();
+  ctx.translate(B.x, B.body);
+  ctx.scale(1, 1.3);
+  const bg2 = ctx.createRadialGradient(0, 0, 40, 0, 0, 300 + boost * 60);
+  bg2.addColorStop(0, `rgba(255,225,150,${0.07 + boost * 0.07})`);
+  bg2.addColorStop(1, 'rgba(255,190,90,0)');
+  ctx.fillStyle = bg2;
+  ctx.beginPath();
+  ctx.arc(0, 0, 360 + boost * 60, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
+
+  // 4. hạt vàng bay lên quanh tượng
+  if (Math.random() < dt * (5 + boost * 20)) {
+    goldMotes.push({
+      x: B.x + rand(-260, 260), y: B.base + rand(-40, 20), vy: rand(30, 70), sway: rand(0, 6),
+      size: rand(1.5, 3.5), t: 0, life: rand(4, 7),
+    });
+    if (goldMotes.length > 120) goldMotes.shift();
+  }
+  for (const m of goldMotes) {
+    m.t += dt;
+    m.y -= m.vy * dt;
+    m.x += Math.sin(m.t * 1.2 + m.sway) * dt * 12;
+    const a = Math.sin(clamp(m.t / m.life, 0, 1) * Math.PI);
+    const tw = 0.6 + Math.sin(now / 150 + m.sway * 10) * 0.4;
+    ctx.fillStyle = `rgba(255,232,150,${a * tw * 0.9})`;
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = `rgba(255,220,120,${a * tw * 0.2})`;
+    ctx.beginPath();
+    ctx.arc(m.x, m.y, m.size * 3.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  while (goldMotes.length && goldMotes[0].t > goldMotes[0].life) goldMotes.shift();
+
+  // 5. sóng ánh sáng lan ra
+  for (const w of lightWaves) {
+    w.t += dt;
+    const k = w.t / 2.4;
+    if (k > 1) continue;
+    const r = B.r + ease(k) * (480 + w.power * 120);
+    const a = (1 - k) * 0.35 * w.power;
+    const wg = ctx.createRadialGradient(B.x, B.head, Math.max(0, r - 40), B.x, B.head, r + 10);
+    wg.addColorStop(0, 'rgba(255,230,160,0)');
+    wg.addColorStop(0.75, `rgba(255,236,180,${a})`);
+    wg.addColorStop(1, 'rgba(255,236,180,0)');
+    ctx.fillStyle = wg;
+    ctx.beginPath();
+    ctx.arc(B.x, B.head, r + 10, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  while (lightWaves.length && lightWaves[0].t > 2.4) lightWaves.shift();
+  ctx.restore();
+}
+
+// ------------------------------------------------------------------ lời dẫn tự động khi vắng
+// Khi đã lâu không có câu nào được đọc, tự đọc xen kẽ: lời nhắn tịnh tâm, cảm ơn người mới vào,
+// mời thả tim/theo dõi, và niệm Phật kèm tiếng mõ (cả chánh điện cùng lễ).
+const NARRATION_ORDER = ['teaching', 'reminder', 'thanks', 'teaching', 'chant', 'reminder', 'thanks', 'teaching'];
+let narrationStep = 0;
+function narrate() {
+  for (let tries = 0; tries < NARRATION_ORDER.length; tries++) {
+    const kind = NARRATION_ORDER[narrationStep++ % NARRATION_ORDER.length];
+    if (kind === 'thanks') {
+      if (!recentVisitors.length) continue;
+      const names = [...new Set(recentVisitors.splice(0))].slice(-4).map(speakName);
+      const joined = names.length > 1 ? `${names.slice(0, -1).join(', ')} và ${names[names.length - 1]}` : names[0];
+      announce(line('thanks', { name: joined }), 1);
+      return;
+    }
+    if (kind === 'chant') {
+      announce(line('chant'), 1);
+      chantTogether();
+      return;
+    }
+    const text = line(kind);
+    if (!text) continue;
+    if (kind === 'reminder') addTicker(`📢 ${truncate(text, 40)}`);
+    announce(text, 1);
+    if (kind === 'teaching') buddhaPulse(0.6);
+    return;
+  }
+}
+
+function chantTogether() {
+  buddhaPulse(1);
+  let i = 0;
+  const tap = () => {
+    sfx.woodfish();
+    if (i % 3 === 0) {
+      for (const c of characters.values()) if (c.state === 'kneel' && !c.action && c.actions.length < 2) c.queueAction('bow');
+      buddhaPulse(0.5);
+    }
+    if (++i < 12) setTimeout(tap, 700);
+    else sfx.chime();
+  };
+  setTimeout(tap, 400);
 }
 
 function drawBlooms(dt) {
@@ -1380,8 +1625,13 @@ async function boot() {
     sfx.unlockAudio();
     startMusic();
   }, { once: true });
-  // nhắc nhở định kỳ bằng giọng đọc + dòng chữ
-  if (Number(config.reminderMinutes) > 0) {
+  // lời dẫn tự động khi vắng (đã gồm cả lời nhắc); nếu tắt thì dùng nhắc nhở định kỳ kiểu cũ
+  if (config.narration !== false) {
+    const gap = Math.max(15, Number(config.narrationSeconds) || 30) * 1000;
+    setInterval(() => {
+      if (performance.now() - lastAnnounce > gap) narrate();
+    }, 3000);
+  } else if (Number(config.reminderMinutes) > 0) {
     setInterval(() => {
       const text = line('reminder');
       if (!text) return;
@@ -1391,9 +1641,10 @@ async function boot() {
   }
   connectWs();
   spawnAmbientMonks();
+  setInterval(refillCrowd, 9000);
   if (params.has('demo')) startDemo();
   requestAnimationFrame(frame);
 }
 
-window.TempleGame = { handleEvent };
+window.TempleGame = { handleEvent, characters };
 boot();

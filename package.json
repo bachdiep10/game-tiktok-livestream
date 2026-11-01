@@ -16,6 +16,7 @@
   },
   "homepage": "https://github.com/bachdiep10/game-tiktok-livestream#readme",
   "dependencies": {
+    "msedge-tts": "^2.1.1",
     "tiktok-live-connector": "^2.5.0",
     "ws": "^8.22.1"
   },

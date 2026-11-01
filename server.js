@@ -65,24 +65,69 @@ const server = http.createServer((req, res) => {
 });
 
 // ---------------------------------------------------------------- Giọng đọc online
-// Dùng khi máy không có giọng tiếng Việt (hoặc trong OBS). Lấy giọng đọc của Google Dịch
-// (dịch vụ không chính thức, cần Internet), có lưu tạm để câu lặp lại không phải tải lại.
+// Ưu tiên giọng AI tự nhiên của Microsoft Edge (vi-VN-HoaiMyNeural / vi-VN-NamMinhNeural),
+// nếu lỗi thì dùng giọng Google Dịch. Cần Internet. Có lưu tạm để câu lặp lại không phải tải lại.
 const ttsCache = new Map();
+let edgeLib = null;
+async function edgeTts(text, voice, rate) {
+  if (!edgeLib) edgeLib = await import('msedge-tts');
+  const { MsEdgeTTS, OUTPUT_FORMAT } = edgeLib;
+  const tts = new MsEdgeTTS();
+  await Promise.race([
+    tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3),
+    new Promise((_, reject) => setTimeout(() => reject(new Error('quá thời gian kết nối')), 8000)),
+  ]);
+  const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  const { audioStream } = tts.toStream(safe, { rate });
+  const buf = await new Promise((resolve, reject) => {
+    const parts = [];
+    const timer = setTimeout(() => reject(new Error('quá thời gian')), 12000);
+    audioStream.on('data', (d) => parts.push(d));
+    audioStream.on('close', () => {
+      clearTimeout(timer);
+      resolve(Buffer.concat(parts));
+    });
+    audioStream.on('error', (e) => {
+      clearTimeout(timer);
+      reject(e);
+    });
+  });
+  try {
+    tts.close();
+  } catch {}
+  if (!buf.length) throw new Error('không có dữ liệu');
+  return buf;
+}
+
+async function googleTts(text, lang) {
+  const target = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${encodeURIComponent(text)}`;
+  const r = await fetch(target, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: 'https://translate.google.com/' } });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return Buffer.from(await r.arrayBuffer());
+}
+
+let edgeWarned = false;
 async function handleTts(url, res) {
-  const text = String(url.searchParams.get('text') || '').slice(0, 200).trim();
+  const text = String(url.searchParams.get('text') || '').slice(0, 400).trim();
   const lang = String(url.searchParams.get('lang') || 'vi').replace(/[^a-zA-Z-]/g, '') || 'vi';
   if (!text) {
     res.writeHead(400).end();
     return;
   }
-  const key = `${lang}|${text}`;
+  const cfg = loadConfig();
+  const voice = String(cfg.ttsVoice || 'vi-VN-HoaiMyNeural');
+  const rate = String(cfg.ttsRate || '-5%');
+  const key = `${voice}|${rate}|${lang}|${text}`;
   try {
     let buf = ttsCache.get(key);
     if (!buf) {
-      const target = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=${lang}&q=${encodeURIComponent(text)}`;
-      const r = await fetch(target, { headers: { 'User-Agent': 'Mozilla/5.0', Referer: 'https://translate.google.com/' } });
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      buf = Buffer.from(await r.arrayBuffer());
+      try {
+        buf = await edgeTts(text, voice, rate);
+      } catch (err) {
+        if (!edgeWarned) console.warn('[tts] Giọng AI Edge lỗi, chuyển sang giọng Google:', err.message);
+        edgeWarned = true;
+        buf = await googleTts(text.slice(0, 200), lang);
+      }
       ttsCache.set(key, buf);
       if (ttsCache.size > 300) ttsCache.delete(ttsCache.keys().next().value);
     }
@@ -96,7 +141,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.7';
+const VERSION = '1.8';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {

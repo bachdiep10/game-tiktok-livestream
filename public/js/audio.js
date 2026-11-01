@@ -137,14 +137,17 @@ export function setOnSpeakStart(fn) {
   onSpeakStart = fn;
 }
 
+// 'auto': ưu tiên giọng AI online (tự nhiên hơn), lỗi mạng thì dùng giọng của máy.
+let onlineFails = 0;
 function useSystemVoice() {
   if (voiceEngine === 'online') return false;
   if (voiceEngine === 'system') return Boolean(window.speechSynthesis);
-  return Boolean(window.speechSynthesis && pickVoice());
+  // online lỗi liên tiếp nhiều lần -> tạm dùng giọng máy (nếu có)
+  return onlineFails >= 3 && Boolean(window.speechSynthesis && pickVoice());
 }
 
-// cắt câu dài thành các đoạn ngắn (giọng online giới hạn ~200 ký tự)
-function chunks(text, max = 180) {
+// cắt câu dài thành các đoạn vừa phải
+function chunks(text, max = 300) {
   const parts = [];
   for (const sentence of text.split(/(?<=[.!?,])\s+/)) {
     if (!parts.length || (parts[parts.length - 1] + ' ' + sentence).length > max) parts.push(sentence);
@@ -153,16 +156,46 @@ function chunks(text, max = 180) {
   return parts.map((p) => p.slice(0, max));
 }
 
+function speakSystem(text, done) {
+  if (!window.speechSynthesis) return done();
+  const u = new SpeechSynthesisUtterance(text);
+  const v = pickVoice();
+  if (v) u.voice = v;
+  u.lang = 'vi-VN';
+  u.rate = 1.0;
+  u.pitch = 1.0;
+  u.onend = done;
+  u.onerror = done;
+  window.speechSynthesis.speak(u);
+}
+
 function speakOnline(text, done) {
   const list = chunks(text);
+  let first = true;
   const next = () => {
     const part = list.shift();
     if (!part) return done();
     const audio = new Audio(`/tts?text=${encodeURIComponent(part)}`);
     audio.volume = 1;
-    audio.onended = next;
-    audio.onerror = next;
-    audio.play().catch(next);
+    audio.onended = () => {
+      onlineFails = 0;
+      first = false;
+      next();
+    };
+    let failed = false;
+    const fail = () => {
+      if (failed) return;
+      failed = true;
+      onlineFails++;
+      // câu đầu lỗi -> đọc cả câu bằng giọng máy (chế độ auto)
+      if (first && voiceEngine === 'auto' && window.speechSynthesis && pickVoice()) {
+        list.length = 0;
+        speakSystem(text, done);
+      } else next();
+      first = false;
+    };
+    audio.onerror = fail;
+    audio.play().catch(fail);
   };
   next();
 }
@@ -193,20 +226,9 @@ function pump() {
     setTimeout(pump, 150);
   };
   // phòng trường hợp trình duyệt không báo đọc xong
-  setTimeout(done, 15000);
-  if (!useSystemVoice()) {
-    speakOnline(text, done);
-    return;
-  }
-  const u = new SpeechSynthesisUtterance(text);
-  const v = pickVoice();
-  if (v) u.voice = v;
-  u.lang = 'vi-VN';
-  u.rate = 1.0;
-  u.pitch = 1.0;
-  u.onend = done;
-  u.onerror = done;
-  window.speechSynthesis.speak(u);
+  setTimeout(done, 25000);
+  if (useSystemVoice()) speakSystem(text, done);
+  else speakOnline(text, done);
 }
 
 // ------------------------------------------------------------- Nhạc nền

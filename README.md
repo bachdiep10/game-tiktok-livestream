@@ -53,7 +53,7 @@ Cách dễ nhất với TikTok LIVE Studio: chạy `run.bat`, rồi bấm đúp 
    - Có thể ghi sẵn username vào `config.json` (`"tiktokUsername"`) để tự kết nối khi chạy.
 4. Âm thanh: trong OBS bật "Control audio via OBS" cho nguồn trình duyệt để tiếng chuông, mõ, giọng đọc lên sóng.
 
-**Giọng đọc tiếng Việt**: mỗi lời chúc vừa được đọc thành tiếng vừa hiện chữ giữa màn hình. Nếu Windows có giọng tiếng Việt (*Settings → Time & Language → Speech*, cài **Tiếng Việt (Microsoft An)*) thì game dùng giọng đó. Nếu không có (hoặc chạy trong OBS) thì game tự dùng giọng đọc online của Google Dịch qua máy chủ, cần có Internet. Bấm nút **🔊 Thử giọng đọc** trên trang điều khiển để nghe thử. Đặt `"voiceEngine"` là `"system"` (chỉ giọng của máy) hoặc `"online"` (luôn dùng giọng online), mặc định `"auto"`. Tắt giọng đọc: thêm `?voice=0` vào cuối địa chỉ game, hoặc đặt `"voice": false`. Tắt chữ lời chúc: `"captions": false`. Tắt hết âm thanh: `?sound=0`.
+**Giọng đọc tiếng Việt**: mỗi lời chúc vừa được đọc thành tiếng vừa hiện chữ giữa màn hình. Từ bản 1.8 game dùng **giọng AI tự nhiên của Microsoft** (giọng nữ `vi-VN-HoaiMyNeural`, đổi sang giọng nam bằng `"ttsVoice": "vi-VN-NamMinhNeural"`; tốc độ `"ttsRate"`, ví dụ `"-10%"` chậm hơn). Cần có Internet. Nếu mạng lỗi thì tự chuyển sang giọng Google, rồi giọng có sẵn của Windows. Bấm nút **🔊 Thử giọng đọc** trên trang điều khiển để nghe thử. `"voiceEngine"`: `"auto"` (mặc định), `"online"` hoặc `"system"` (chỉ giọng của máy). Tắt giọng đọc: thêm `?voice=0` vào cuối địa chỉ game, hoặc đặt `"voice": false`. Tắt chữ lời chúc: `"captions": false`. Tắt hết âm thanh: `?sound=0`.
 
 ## Nhạc nền và lời chào
 
@@ -63,11 +63,16 @@ Cách dễ nhất với TikTok LIVE Studio: chạy `run.bat`, rồi bấm đúp 
   - `join`: khi có người mới vào
   - `follow`, `share`: khi theo dõi, chia sẻ
   - `gift`, `bigGift`: khi tặng quà thường và quà từ 100 xu
-  - `reminder`: câu nhắc nhở đọc mỗi `reminderMinutes` phút (đặt 0 để tắt)
+  - `reminder`: lời mời thả tim, theo dõi, bình luận
+  - `teaching`: lời nhắn tịnh tâm, lời chúc an lạc
+  - `thanks`: cảm ơn những người mới vào (`{name}` là danh sách tên)
+  - `chant`: câu niệm Phật, đọc kèm tiếng mõ và cả chánh điện cùng lạy
+- **Lời dẫn tự động** (`narration`, mặc định bật): khi đã `narrationSeconds` giây (mặc định 30) không có câu nào được đọc, game tự đọc xen kẽ các loại câu trên để buổi LIVE không bị trầm. Đặt `"narration": false` để tắt, khi đó dùng nhắc nhở mỗi `reminderMinutes` phút như cũ.
+- **Hào quang tượng Phật** (`buddhaLight`, mặc định bật): tia sáng xoay chậm, vầng sáng sau đầu, hạt vàng bay lên. Mỗi lần có người niệm Phật, theo dõi hay tặng quà, ánh sáng lan toả mạnh hơn.
 - **Ảnh nền chánh điện**: mặc định dùng ảnh thiết kế `public/assets/chanh-dien.jpg` (khung 1080×1920), 60 chỗ quỳ được căn khớp với các bồ đoàn trong ảnh. Muốn quay về cảnh vẽ bằng code (90 chỗ) thì đặt `"backgroundImage": ""` và `"maxCharacters": 90`, hoặc thêm `?bg=0` vào địa chỉ. Nếu thay ảnh khác có bố cục bồ đoàn khác, cần sửa `DESIGN_ROWS` trong `public/js/scene.js`. Ảnh nền đã có sẵn chữ hoành phi, nên `title`/`subtitle` chỉ dùng cho cảnh vẽ bằng code.
 - **Ảnh tượng Phật riêng** (chỉ cho cảnh vẽ bằng code): chép ảnh PNG nền trong suốt vào `public/assets/` và đặt `"buddhaImage": "assets/buddha.png"`. Để trống thì dùng tượng vẽ sẵn.
 
-- **Sư thầy / chú tiểu nền** (`ambientMonks`, mặc định 6): vài vị ngồi tụng kinh sẵn trong điện cho đỡ vắng. Không mang tên người xem, không tặng quà, không tính vào số người lễ, tự nhường chỗ khi điện đông. Đặt 0 để tắt.
+- **Nhân vật nền không tên**: `ambientMonks` (mặc định 6) sư thầy / chú tiểu và `ambientCrowd` (mặc định 30) Phật tử ngồi sẵn cho chánh điện đông vui. Không mang tên, không tính vào số người lễ. Người xem thật vào sẽ có tên và được nhường chỗ đẹp ở các hàng giữa; sau đó thỉnh thoảng có Phật tử không tên khác đi vào ngồi chỗ trống. Đặt 0 để tắt.
 - **Không bật "Tự chạy demo" khi LIVE thật**: demo tạo người xem và quà giả, dễ đánh lừa người xem và vi phạm quy định của TikTok.
 
 ## Tuỳ chỉnh (`config.json`)
