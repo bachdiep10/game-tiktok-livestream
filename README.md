@@ -2,7 +2,7 @@
 
 Màn hình chánh điện có tượng Phật. Người xem vào phòng LIVE thì có một nhân vật mang **tên + ảnh đại diện** của họ, đi vào một chỗ trống và quỳ lễ. Bình luận, thả tim, theo dõi, tặng quà đều làm nhân vật phản ứng.
 
-Toàn bộ hình ảnh và âm thanh được vẽ/tổng hợp bằng code, không dùng ảnh hay âm thanh của kênh khác.
+Nhân vật, hiệu ứng và âm thanh được vẽ/tổng hợp bằng code. Ảnh nền chánh điện là ảnh thiết kế do chủ kênh cung cấp.
 
 ![Chánh điện](docs/screenshot.png)
 
@@ -22,7 +22,7 @@ Toàn bộ hình ảnh và âm thanh được vẽ/tổng hợp bằng code, kh�
 
 Người tặng quà còn được lên **bảng "Tấm lòng thành"** và có quầng sáng quanh nhân vật.
 
-Chánh điện chứa tối đa 90 người. Khi đầy, người im lặng lâu nhất sẽ nhường chỗ (người đã follow/tặng quà được ưu tiên giữ chỗ). Ai im lặng quá 20 phút sẽ tự rời đi.
+Chánh điện chứa tối đa 60 người với ảnh nền thiết kế (90 người với cảnh vẽ bằng code). Khi đầy, người im lặng lâu nhất sẽ nhường chỗ (người đã follow/tặng quà được ưu tiên giữ chỗ). Ai im lặng quá 20 phút sẽ tự rời đi.
 
 ## Cài đặt trên Windows
 
@@ -61,7 +61,8 @@ Ngoài ra mở `http://127.0.0.1:3000/game.html?demo=1` để game tự sinh s�
   - `follow`, `share`: khi theo dõi, chia sẻ
   - `gift`, `bigGift`: khi tặng quà thường và quà từ 100 xu
   - `reminder`: câu nhắc nhở đọc mỗi `reminderMinutes` phút (đặt 0 để tắt)
-- **Ảnh tượng Phật riêng**: chép ảnh PNG nền trong suốt vào `public/assets/` và đặt `"buddhaImage": "assets/buddha.png"`. Để trống thì dùng tượng vẽ sẵn.
+- **Ảnh nền chánh điện**: mặc định dùng ảnh thiết kế `public/assets/chanh-dien.jpg` (khung 1080×1920), 60 chỗ quỳ được căn khớp với các bồ đoàn trong ảnh. Muốn quay về cảnh vẽ bằng code (90 chỗ) thì đặt `"backgroundImage": ""` và `"maxCharacters": 90`, hoặc thêm `?bg=0` vào địa chỉ. Nếu thay ảnh khác có bố cục bồ đoàn khác, cần sửa `DESIGN_ROWS` trong `public/js/scene.js`. Ảnh nền đã có sẵn chữ hoành phi, nên `title`/`subtitle` chỉ dùng cho cảnh vẽ bằng code.
+- **Ảnh tượng Phật riêng** (chỉ cho cảnh vẽ bằng code): chép ảnh PNG nền trong suốt vào `public/assets/` và đặt `"buddhaImage": "assets/buddha.png"`. Để trống thì dùng tượng vẽ sẵn.
 
 ## Tuỳ chỉnh (`config.json`)
 
@@ -77,6 +78,7 @@ Ngoài ra mở `http://127.0.0.1:3000/game.html?demo=1` để game tự sinh s�
 | `music`, `musicFile`, `musicVolume` | Nhạc nền |
 | `messages`, `reminderMinutes` | Các câu chào, cảm ơn, nhắc nhở |
 | `buddhaImage` | Ảnh tượng Phật riêng (tuỳ chọn) |
+| `backgroundImage` | Ảnh nền chánh điện (để trống = vẽ bằng code) |
 
 Sửa xong chỉ cần tải lại trang game (F5), không cần khởi động lại.
 
@@ -96,7 +98,8 @@ public/control.html  Bảng điều khiển + Test Lab
 public/js/scene.js   Vẽ chánh điện, bàn thờ, chỗ quỳ
 public/js/buddha.js  Vẽ tượng Phật A Di Đà trên đài sen
 public/assets/       Ảnh tượng / nhạc riêng (tuỳ chọn)
-public/js/game.js    Nhân vật, hiệu ứng, xử lý sự kiện, giao diện
+public/js/game.js    Hiệu ứng, xử lý sự kiện, giao diện
+public/js/characterArt.js  Vẽ nhân vật Phật tử mặc áo tràng
 public/js/audio.js   Chuông, mõ, khánh, nhạc thiền (WebAudio) + giọng đọc
 public/js/fake.js    Dữ liệu giả cho Test Lab
 ```

@@ -1,7 +1,8 @@
 import {
-  W, H, roundRect, drawLotus, drawStaticBackground, buildSlots, candlePositions, scaleAtY,
+  W, H, roundRect, drawLotus, drawStaticBackground, buildSlots, candlePositions, scaleAtY, useLayout,
 } from './scene.js';
 import * as sfx from './audio.js';
+import { drawCharacter, lookFor } from './characterArt.js';
 
 // ------------------------------------------------------------------ cấu hình
 const params = new URLSearchParams(location.search);
@@ -10,6 +11,7 @@ const DEFAULTS = {
   subtitle: 'Bình luận "Nam mô A Di Đà Phật" để lễ Phật',
   templeName: 'Chánh Điện An Lạc',
   maxCharacters: 90,
+  backgroundImage: '',
   idleMinutes: 20,
   bowKeywords: ['nam mo a di da phat', 'nam mo', 'a di da phat', 'adida', 'nammo'],
   bowCount: 3,
@@ -86,12 +88,44 @@ let slots = [];
 let bg = null;
 
 let buddhaImage = null;
+let bgImage = null; // ảnh nền thiết kế (nếu có) thay cho cảnh vẽ bằng code
+const FOOTER_Y = 1742;
 function rebuildScene() {
   if (!slots.length) slots = buildSlots(config.maxCharacters);
   bg = document.createElement('canvas');
   bg.width = W;
   bg.height = H;
-  drawStaticBackground(bg.getContext('2d'), slots, buddhaImage);
+  const b = bg.getContext('2d');
+  if (bgImage) {
+    b.drawImage(bgImage, 0, 0, W, H);
+    // dải nền dưới cùng để đặt bảng quà / bảng vàng
+    const fg = b.createLinearGradient(0, FOOTER_Y, 0, H);
+    fg.addColorStop(0, '#3a1408');
+    fg.addColorStop(1, '#1a0703');
+    b.fillStyle = fg;
+    b.fillRect(0, FOOTER_Y, W, H - FOOTER_Y);
+    const edge = b.createLinearGradient(0, FOOTER_Y - 40, 0, FOOTER_Y);
+    edge.addColorStop(0, 'rgba(26,7,3,0)');
+    edge.addColorStop(1, 'rgba(26,7,3,0.85)');
+    b.fillStyle = edge;
+    b.fillRect(0, FOOTER_Y - 40, W, 40);
+    b.fillStyle = '#d9a441';
+    b.fillRect(0, FOOTER_Y, W, 3);
+  } else {
+    drawStaticBackground(b, slots, buddhaImage);
+  }
+}
+
+function loadImage(src) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => {
+      console.warn('Không tải được ảnh:', src);
+      resolve(null);
+    };
+    img.src = src;
+  });
 }
 
 // Ảnh tượng Phật riêng (tuỳ chọn): đặt file vào public/assets và ghi tên trong config.json
@@ -214,14 +248,6 @@ function drawAvatar(x, y, r, user, color) {
 }
 
 // ------------------------------------------------------------------ nhân vật
-const ROBES = [
-  ['#97a3b1', '#6f7b8a'],
-  ['#8f9cab', '#65717f'],
-  ['#a0a8b2', '#727b86'],
-  ['#b9a27a', '#8a7350'],
-  ['#9a8f84', '#6e645a'],
-];
-const SKINS = ['#e9be96', '#dfae84', '#f0c9a4', '#d29e74'];
 const TAG_COLORS = ['#e57373', '#64b5f6', '#81c784', '#ffb74d', '#ba68c8', '#4db6ac', '#f06292'];
 
 const characters = new Map(); // userId -> Character
@@ -233,9 +259,7 @@ class Character {
     this.slot = slot;
     slot.occupant = this;
     const h = hashCode(user.id);
-    this.robe = ROBES[h % ROBES.length];
-    this.skin = SKINS[(h >> 3) % SKINS.length];
-    this.hair = (h >> 5) % 3 === 0 ? 'bald' : (h >> 5) % 3 === 1 ? 'dark' : 'bun';
+    this.look = lookFor(h);
     this.tagColor = TAG_COLORS[(h >> 7) % TAG_COLORS.length];
     this.x = ENTRANCE.x + rand(-40, 40);
     this.y = ENTRANCE.y;
@@ -352,18 +376,8 @@ class Character {
   drawBody(now) {
     const s = this.scale;
     const { x, y } = this;
-    const k = ease(this.kneelT);
-    const { bow, raise } = this.poseAmounts();
-    const breath = Math.sin(this.breath) * 1.2 * s * k;
-
     ctx.save();
     ctx.globalAlpha = this.alpha;
-
-    // bóng
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.beginPath();
-    ctx.ellipse(x, y + 4 * s, 34 * s, 10 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
 
     // hào quang của người đã tặng quà
     if (now < this.auraUntil) {
@@ -375,123 +389,7 @@ class Character {
       ctx.fillRect(x - 90 * s, y - 140 * s, 180 * s, 180 * s);
     }
 
-    // kích thước dáng: đứng -> quỳ -> cúi
-    const standH = 98 * s;
-    const kneelH = 56 * s;
-    let bodyH = standH + (kneelH - standH) * k;
-    bodyH *= 1 - 0.5 * bow;
-    bodyH += breath;
-    const hemW = (22 + 12 * k) * s;
-    const shoulderW = (21 - 3 * bow) * s;
-    const sway = this.state === 'walk' ? Math.sin(this.walkPhase) * 4 * s : 0;
-    const bob = this.state === 'walk' ? Math.abs(Math.sin(this.walkPhase)) * 3 * s : 0;
-    const topY = y - bodyH - bob;
-    const [light, dark] = this.robe;
-
-    // tay áo khi cúi lạy (vươn ra phía trước = phía trên màn hình)
-    if (bow > 0.05) {
-      ctx.strokeStyle = dark;
-      ctx.lineWidth = 9 * s;
-      ctx.lineCap = 'round';
-      const reach = topY - 22 * s * bow;
-      for (const side of [-1, 1]) {
-        ctx.beginPath();
-        ctx.moveTo(x + side * shoulderW * 0.8, topY + 6 * s);
-        ctx.lineTo(x + side * 9 * s, reach);
-        ctx.stroke();
-      }
-    }
-
-    // thân áo
-    const g = ctx.createLinearGradient(x - hemW, 0, x + hemW, 0);
-    g.addColorStop(0, dark);
-    g.addColorStop(0.45, light);
-    g.addColorStop(1, dark);
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.moveTo(x - hemW + sway, y);
-    ctx.quadraticCurveTo(x - hemW * 1.05, y - bodyH * 0.55, x - shoulderW, topY + 8 * s);
-    ctx.quadraticCurveTo(x, topY - 4 * s, x + shoulderW, topY + 8 * s);
-    ctx.quadraticCurveTo(x + hemW * 1.05, y - bodyH * 0.55, x + hemW + sway, y);
-    ctx.quadraticCurveTo(x, y + 6 * s, x - hemW + sway, y);
-    ctx.closePath();
-    ctx.fill();
-    // nếp áo
-    ctx.strokeStyle = 'rgba(40,50,60,0.35)';
-    ctx.lineWidth = 1.5 * s;
-    ctx.beginPath();
-    ctx.moveTo(x, topY + 6 * s);
-    ctx.lineTo(x + sway * 0.5, y - 2 * s);
-    ctx.stroke();
-    if (this.state === 'walk') {
-      // bàn chân
-      ctx.fillStyle = '#3a2a20';
-      const step = Math.sin(this.walkPhase) * 6 * s;
-      ctx.fillRect(x - 10 * s + step, y - 2 * s, 8 * s, 5 * s);
-      ctx.fillRect(x + 2 * s - step, y - 2 * s, 8 * s, 5 * s);
-    } else if (k > 0.5) {
-      // lòng bàn chân lộ ra khi quỳ (nhìn từ phía sau)
-      ctx.fillStyle = this.skin;
-      ctx.beginPath();
-      ctx.ellipse(x - 9 * s, y + 1 * s, 5 * s, 3 * s, 0, 0, Math.PI * 2);
-      ctx.ellipse(x + 9 * s, y + 1 * s, 5 * s, 3 * s, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // tay chắp giơ lên đầu
-    if (raise > 0.05) {
-      ctx.strokeStyle = dark;
-      ctx.lineWidth = 8 * s;
-      ctx.lineCap = 'round';
-      const handY = topY - (6 + 34 * raise) * s;
-      for (const side of [-1, 1]) {
-        ctx.beginPath();
-        ctx.moveTo(x + side * shoulderW * 0.85, topY + 8 * s);
-        ctx.quadraticCurveTo(x + side * (shoulderW + 6 * s), topY - 8 * s * raise, x + side * 3 * s, handY);
-        ctx.stroke();
-      }
-      ctx.fillStyle = this.skin;
-      ctx.beginPath();
-      ctx.ellipse(x, handY - 5 * s, 4 * s, 8 * s, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // đầu (nhìn từ phía sau)
-    const headR = 14 * s * (1 - 0.15 * bow);
-    const headY = topY - headR * 0.75 + bow * 10 * s;
-    if (bow < 0.85) {
-      ctx.fillStyle = this.skin;
-      ctx.beginPath();
-      ctx.arc(x + sway * 0.3, headY, headR, 0, Math.PI * 2);
-      ctx.fill();
-      if (this.hair === 'dark') {
-        ctx.fillStyle = '#2a211c';
-        ctx.beginPath();
-        ctx.arc(x + sway * 0.3, headY - 1 * s, headR * 1.02, Math.PI * 0.95, Math.PI * 2.05);
-        ctx.lineTo(x + sway * 0.3 + headR, headY + headR * 0.5);
-        ctx.lineTo(x + sway * 0.3 - headR, headY + headR * 0.5);
-        ctx.fill();
-      } else if (this.hair === 'bun') {
-        ctx.fillStyle = '#231a15';
-        ctx.beginPath();
-        ctx.arc(x + sway * 0.3, headY - 1 * s, headR * 1.02, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(x + sway * 0.3, headY - headR * 0.9, headR * 0.45, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.fillStyle = 'rgba(80,60,50,0.18)';
-        ctx.beginPath();
-        ctx.arc(x + sway * 0.3, headY - 2 * s, headR * 0.92, Math.PI, Math.PI * 2);
-        ctx.fill();
-      }
-      // tai
-      ctx.fillStyle = this.skin;
-      ctx.beginPath();
-      ctx.ellipse(x - headR + 1 * s, headY + 2 * s, 3 * s, 4.5 * s, 0, 0, Math.PI * 2);
-      ctx.ellipse(x + headR - 1 * s, headY + 2 * s, 3 * s, 4.5 * s, 0, 0, Math.PI * 2);
-      ctx.fill();
-    }
+    const top = drawCharacter(ctx, this, s, this.poseAmounts(), now);
 
     // vầng hào quang người theo dõi
     if (this.halo) {
@@ -501,7 +399,7 @@ class Character {
       ctx.shadowBlur = 14 * s;
       ctx.lineWidth = 3.5 * s;
       ctx.beginPath();
-      ctx.ellipse(x, headY - headR - 6 * s, 15 * s, 4.5 * s, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, top - 5 * s, 15 * s, 4.5 * s, 0, 0, Math.PI * 2);
       ctx.stroke();
       ctx.shadowBlur = 0;
     }
@@ -516,7 +414,7 @@ class Character {
       ctx.fillRect(x - 70 * s, y - 110 * s, 140 * s, 140 * s);
     }
 
-    this.headTop = headY - headR;
+    this.headTop = top;
     ctx.restore();
   }
 
@@ -696,7 +594,7 @@ function spawnSparkles(x, y, n, spread = 40) {
 
 function effectLotus(user) {
   const x = rand(260, 820);
-  lotusBlooms.push({ x, y: rand(1015, 1065), t: 0, life: 7, size: rand(34, 46), name: user?.name });
+  lotusBlooms.push({ x, y: bgImage ? rand(1112, 1150) : rand(1015, 1065), t: 0, life: 7, size: rand(34, 46), name: user?.name });
   if (lotusBlooms.length > 14) lotusBlooms.shift();
   spawnPetals(x, 960, 6, 60);
   sfx.chime();
@@ -895,8 +793,8 @@ function drawLightRays(now) {
 }
 
 function drawAltarLife(now, dt) {
-  // ngọn nến
-  for (const c of candlePositions()) {
+  // ngọn nến (chỉ với cảnh vẽ bằng code; ảnh nền đã có nến)
+  for (const c of bgImage ? [] : candlePositions()) {
     const f = 1 + Math.sin(now / 90 + c.x) * 0.12 + Math.sin(now / 37 + c.x) * 0.06;
     const glow = ctx.createRadialGradient(c.x, c.y - 10, 2, c.x, c.y - 10, 60);
     glow.addColorStop(0, 'rgba(255,200,90,0.55)');
@@ -916,7 +814,7 @@ function drawAltarLife(now, dt) {
   }
   // khói hương
   if (Math.random() < dt * 14) {
-    smoke.push({ x: 540 + rand(-18, 18), y: 818, r: rand(6, 10), t: 0, life: rand(4, 6), seed: rand(0, 6) });
+    smoke.push({ x: 540 + rand(-18, 18), y: bgImage ? 915 : 818, r: rand(6, 10), t: 0, life: rand(4, 6), seed: rand(0, 6) });
   }
   for (const p of smoke) {
     p.t += dt;
@@ -936,7 +834,7 @@ function drawAltarLife(now, dt) {
   const boost = Math.sin(now / 1400) * 0.03 + 0.05 + haloBoost * 0.25;
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  const hg = ctx.createRadialGradient(540, 400, 10, 540, 420, 300 + haloBoost * 80);
+  const hg = ctx.createRadialGradient(540, bgImage ? 380 : 400, 10, 540, 420, 300 + haloBoost * 80);
   hg.addColorStop(0, `rgba(255,240,180,${boost})`);
   hg.addColorStop(1, 'rgba(255,200,80,0)');
   ctx.fillStyle = hg;
@@ -1113,6 +1011,8 @@ function drawGrand(dt) {
 }
 
 function drawUI(now) {
+  // ảnh nền thiết kế đã có sẵn hoành phi và dòng hướng dẫn
+  if (!bgImage) {
   // bảng hiệu (hoành phi)
   const pw = 640;
   const ph = 92;
@@ -1147,16 +1047,20 @@ function drawUI(now) {
   ctx.fillStyle = '#ffe9b0';
   ctx.font = '600 25px system-ui, "Segoe UI", sans-serif';
   ctx.fillText(truncate(config.subtitle, 46), 540, 1035);
+  }
 
   // số người đang lễ
   const present = [...characters.values()].filter((c) => c.state !== 'leave').length;
-  ctx.fillStyle = 'rgba(25,8,3,0.6)';
-  roundRect(ctx, 24, 236, 300, 50, 25);
+  const cy = bgImage ? 262 : 236;
+  ctx.fillStyle = bgImage ? 'rgba(25,8,3,0.92)' : 'rgba(25,8,3,0.6)';
+  roundRect(ctx, 24, cy, 300, 50, 25);
   ctx.fill();
   ctx.fillStyle = '#fff';
   ctx.font = '600 25px system-ui, "Segoe UI", sans-serif';
   ctx.textAlign = 'left';
-  ctx.fillText(`🙏 ${present} Phật tử đang lễ`, 44, 262);
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`🙏 ${present} Phật tử đang lễ`, 44, cy + 26);
+  const ty0 = cy + 64;
 
   // dòng thông báo người mới vào
   ticker.forEach((tk) => (tk.t += 1 / 60));
@@ -1167,10 +1071,10 @@ function drawUI(now) {
     ctx.font = '600 24px system-ui, "Segoe UI", sans-serif';
     const tw = ctx.measureText(tk.text).width;
     ctx.fillStyle = 'rgba(25,8,3,0.6)';
-    roundRect(ctx, 24, 300 + i * 50, tw + 32, 42, 21);
+    roundRect(ctx, 24, ty0 + i * 50, tw + 32, 42, 21);
     ctx.fill();
     ctx.fillStyle = '#ffe9b0';
-    ctx.fillText(tk.text, 40, 322 + i * 50);
+    ctx.fillText(tk.text, 40, ty0 + 22 + i * 50);
   });
   ctx.globalAlpha = 1;
 
@@ -1206,7 +1110,7 @@ function drawUI(now) {
   boxes.forEach((b, i) => {
     const x = 20 + i * 228;
     const y = 1760;
-    ctx.fillStyle = 'rgba(40,10,5,0.72)';
+    ctx.fillStyle = bgImage ? 'rgba(48,14,6,0.97)' : 'rgba(40,10,5,0.72)';
     roundRect(ctx, x, y, 214, 120, 18);
     ctx.fill();
     ctx.strokeStyle = 'rgba(233,184,79,0.7)';
@@ -1236,7 +1140,7 @@ function drawUI(now) {
   const top = [...board.values()].sort((a, b) => b.coins - a.coins).slice(0, 3);
   const lx = 712;
   const ly = 1700;
-  ctx.fillStyle = 'rgba(40,10,5,0.75)';
+  ctx.fillStyle = bgImage ? 'rgba(48,14,6,0.97)' : 'rgba(40,10,5,0.75)';
   roundRect(ctx, lx, ly, 350, 180, 18);
   ctx.fill();
   ctx.strokeStyle = 'rgba(233,184,79,0.8)';
@@ -1358,6 +1262,10 @@ async function boot() {
   if (params.get('sound') === '0') config.sound = false;
   if (params.get('voice') === '0') config.voice = false;
   if (params.get('music') === '0') config.music = false;
+  if (config.backgroundImage && params.get('bg') !== '0') {
+    bgImage = await loadImage(config.backgroundImage);
+    if (bgImage) useLayout('design');
+  }
   sfx.setSoundEnabled(config.sound !== false);
   sfx.setVoiceEnabled(config.voice !== false);
   rebuildScene();

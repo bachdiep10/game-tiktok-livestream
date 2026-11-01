@@ -463,12 +463,58 @@ function drawDiamond(ctx, x, y, w, h) {
 // Tạo các vị trí quỳ theo hàng, gần bàn thờ được ưu tiên trước
 export const ROW_TOP = 1150;
 export const ROW_BOTTOM = 1690;
+
+// Bố cục khớp với ảnh nền thiết kế (public/assets/chanh-dien.png, khung 1080x1920):
+// mỗi hàng: y, độ rộng bồ đoàn, các toạ độ x bên trái lối đi (bên phải đối xứng qua x = 540.5)
+const DESIGN_ROWS = [
+  [1190, 51, [411, 348, 287, 224]],
+  [1222, 57, [398, 329, 260, 191]],
+  [1264, 63, [383, 307, 231, 154]],
+  [1314, 71, [367, 281, 195, 119]],
+  [1376, 80, [349, 254, 158, 65]],
+  [1457, 91, [331, 224, 117, 28]],
+  [1559, 101, [309, 189, 69]],
+  [1674, 106, [277, 160, 44]],
+];
+let layout = 'classic';
+export function useLayout(name) {
+  layout = name;
+}
+export function hasDesignLayout() {
+  return layout === 'design';
+}
+
 export function scaleAtY(y) {
+  if (layout === 'design') {
+    const pts = DESIGN_ROWS.map(([ry, w]) => [ry, w / 72]);
+    if (y <= pts[0][0]) return Math.max(0.5, pts[0][1] - (pts[0][0] - y) * 0.003);
+    for (let i = 1; i < pts.length; i++) {
+      if (y <= pts[i][0]) {
+        const t = (y - pts[i - 1][0]) / (pts[i][0] - pts[i - 1][0]);
+        return pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t;
+      }
+    }
+    return pts[pts.length - 1][1];
+  }
   const t = Math.max(-0.4, Math.min(1.6, (y - ROW_TOP) / (ROW_BOTTOM - ROW_TOP)));
   return 0.6 + 0.45 * t;
 }
 
+function buildDesignSlots(maxSlots) {
+  const slots = [];
+  DESIGN_ROWS.forEach(([y, w, xs], row) => {
+    xs.forEach((x, dist) => {
+      const scale = w / 72;
+      slots.push({ x, y, scale, row, dist });
+      slots.push({ x: 1081 - x, y, scale, row, dist });
+    });
+  });
+  slots.sort((a, b) => a.row - b.row || a.dist - b.dist);
+  return slots.slice(0, maxSlots).map((sl, i) => ({ ...sl, id: i, occupant: null }));
+}
+
 export function buildSlots(maxSlots = 120) {
+  if (layout === 'design') return buildDesignSlots(maxSlots);
   const rows = [];
   const yTop = ROW_TOP;
   const yBot = ROW_BOTTOM;

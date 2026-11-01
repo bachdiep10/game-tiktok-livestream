@@ -4,7 +4,8 @@
   "title": "NAM MÔ A DI ĐÀ PHẬT",
   "subtitle": "Bình luận \"Nam mô A Di Đà Phật\" để lễ Phật",
   "templeName": "Chánh Điện An Lạc",
-  "maxCharacters": 90,
+  "maxCharacters": 60,
+  "backgroundImage": "assets/chanh-dien.jpg",
   "idleMinutes": 20,
   "bowKeywords": [
     "nam mo a di da phat",
