@@ -44,7 +44,7 @@ Ngoài ra mở `http://127.0.0.1:3000/game.html?demo=1` để game tự sinh s�
 
 ## Đưa lên TikTok LIVE
 
-Cách dễ nhất với TikTok LIVE Studio: chạy `run.bat`, rồi bấm đúp `mo-cua-so-game.bat` để mở game trong một cửa sổ Chrome riêng (khung dọc, không có thanh địa chỉ). Trong LIVE Studio thêm nguồn **Window capture** chọn cửa sổ đó.
+Cách dễ nhất với TikTok LIVE Studio: chạy `run.bat`, rồi bấm đúp `mo-cua-so-game.bat` để mở game trong một cửa sổ Microsoft Edge riêng (khung dọc, không có thanh địa chỉ; Edge có sẵn giọng đọc AI tiếng Việt HoaiMy/NamMinh nên giọng hay nhất). Trong LIVE Studio thêm nguồn **Window capture** chọn cửa sổ đó.
 
 
 1. Bắt đầu phát LIVE (TikTok LIVE Studio trên máy tính).

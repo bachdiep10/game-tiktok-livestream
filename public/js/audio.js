@@ -120,9 +120,24 @@ export function setVoiceEnabled(on) {
   }
 }
 
-function pickVoice() {
+// Giọng mong muốn (config.ttsVoice), ví dụ vi-VN-HoaiMyNeural -> tìm "HoaiMy" trong tên giọng của trình duyệt
+let preferredVoice = 'HoaiMy';
+export function setPreferredVoice(name) {
+  const m = String(name || '').match(/vi-VN-([A-Za-z]+?)(Neural)?$/);
+  if (m) preferredVoice = m[1];
+}
+function viVoices() {
   const voices = window.speechSynthesis?.getVoices() || [];
-  return voices.find((v) => /vi[-_]VN/i.test(v.lang)) || voices.find((v) => /^vi/i.test(v.lang)) || null;
+  return voices.filter((v) => /^vi([-_]|$)/i.test(v.lang));
+}
+// giọng AI tự nhiên có sẵn trong trình duyệt Microsoft Edge ("Microsoft HoaiMy Online (Natural)")
+function naturalVoice() {
+  const list = viVoices().filter((v) => /natural|online/i.test(v.name));
+  return list.find((v) => v.name.includes(preferredVoice)) || list[0] || null;
+}
+function pickVoice() {
+  const list = viVoices();
+  return naturalVoice() || list.find((v) => v.name.includes(preferredVoice)) || list[0] || null;
 }
 
 // priority: 2 = quà lớn (luôn đọc), 1 = follow/quà, 0 = chào hỏi (bỏ nếu hàng đợi dài)
@@ -142,6 +157,8 @@ let onlineFails = 0;
 function useSystemVoice() {
   if (voiceEngine === 'online') return false;
   if (voiceEngine === 'system') return Boolean(window.speechSynthesis);
+  // trình duyệt Edge có sẵn giọng AI tự nhiên -> dùng luôn, không cần máy chủ
+  if (naturalVoice()) return true;
   // online lỗi liên tiếp nhiều lần -> tạm dùng giọng máy (nếu có)
   return onlineFails >= 3 && Boolean(window.speechSynthesis && pickVoice());
 }

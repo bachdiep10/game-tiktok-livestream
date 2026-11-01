@@ -78,7 +78,7 @@ async function edgeTts(text, voice, rate) {
     new Promise((_, reject) => setTimeout(() => reject(new Error('quá thời gian kết nối')), 8000)),
   ]);
   const safe = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
-  const { audioStream } = tts.toStream(safe, { rate });
+  const { audioStream } = tts.toStream(safe, { rate, pitch: '+0Hz', volume: '+0%' });
   const buf = await new Promise((resolve, reject) => {
     const parts = [];
     const timer = setTimeout(() => reject(new Error('quá thời gian')), 12000);
@@ -116,13 +116,19 @@ async function handleTts(url, res) {
   }
   const cfg = loadConfig();
   const voice = String(cfg.ttsVoice || 'vi-VN-HoaiMyNeural');
-  const rate = String(cfg.ttsRate || '-5%');
+  const rate = /^[+-]?\d{1,3}%$/.test(String(cfg.ttsRate)) ? String(cfg.ttsRate).replace(/^(\d)/, '+$1') : '-5%';
   const key = `${voice}|${rate}|${lang}|${text}`;
   try {
     let buf = ttsCache.get(key);
     if (!buf) {
       try {
-        buf = await edgeTts(text, voice, rate);
+        try {
+          buf = await edgeTts(text, voice, rate);
+        } catch {
+          buf = await edgeTts(text, voice, rate); // thử lại một lần
+        }
+        if (edgeWarned) console.log('[tts] Giọng AI đã hoạt động.');
+        edgeWarned = false;
       } catch (err) {
         if (!edgeWarned) {
           if (/Cannot find (package|module)/.test(err.message)) {
@@ -145,7 +151,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.8';
+const VERSION = '1.8.1';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {

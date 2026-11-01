@@ -22,6 +22,7 @@ const DEFAULTS = {
   voice: true,
   voiceJoin: true,
   voiceEngine: 'auto',
+  ttsVoice: 'vi-VN-HoaiMyNeural',
   captions: true,
   music: true,
   musicFile: '',
@@ -1613,6 +1614,7 @@ async function boot() {
   sfx.setSoundEnabled(config.sound !== false);
   sfx.setVoiceEnabled(config.voice !== false);
   sfx.setVoiceEngine(params.get('engine') || config.voiceEngine);
+  sfx.setPreferredVoice(config.ttsVoice);
   rebuildScene();
   loadBuddhaImage();
   const startMusic = () => {
