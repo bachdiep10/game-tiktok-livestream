@@ -200,7 +200,10 @@ async function connectTikTok(username) {
     return;
   }
   const { TikTokLiveConnection, WebcastEvent, ControlEvent } = lib;
-  const conn = new TikTokLiveConnection(username, { enableExtendedGiftInfo: true });
+  const conn = new TikTokLiveConnection(username, {
+    // Không bật enableExtendedGiftInfo: tuỳ chọn đó gọi dịch vụ ký trả phí (Euler Business)
+    enableExtendedGiftInfo: false,
+  });
   connection = conn;
   setStatus({ connected: false, username, message: `Đang kết nối @${username}...` });
 
