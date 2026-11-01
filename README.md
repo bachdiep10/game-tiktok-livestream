@@ -44,6 +44,9 @@ Ngoài ra mở `http://127.0.0.1:3000/game.html?demo=1` để game tự sinh s�
 
 ## Đưa lên TikTok LIVE
 
+Cách dễ nhất với TikTok LIVE Studio: chạy `run.bat`, rồi bấm đúp `mo-cua-so-game.bat` để mở game trong một cửa sổ Chrome riêng (khung dọc, không có thanh địa chỉ). Trong LIVE Studio thêm nguồn **Window capture** chọn cửa sổ đó.
+
+
 1. Bắt đầu phát LIVE (TikTok LIVE Studio trên máy tính).
 2. Trong LIVE Studio (hoặc OBS), thêm nguồn **Link / Browser source** với địa chỉ `http://127.0.0.1:3000/game.html`, kích thước **1080 × 1920**.
 3. Vào trang điều khiển, nhập **username TikTok** của bạn (ví dụ `tranvankhai99`, không cần @) rồi bấm **Kết nối**. Dòng trạng thái chuyển xanh là đã nhận được sự kiện.
