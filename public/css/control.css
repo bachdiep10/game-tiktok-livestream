@@ -20,3 +20,6 @@ code { display: block; padding: 10px; background: #120805; border-radius: 8px; c
 .preview iframe { width: 405px; height: 720px; border: 2px solid #5a3220; border-radius: 16px; background: #000; }
 .toggle { display: flex; gap: 8px; align-items: center; margin: 10px 0 4px; font-size: 15px; cursor: pointer; }
 .toggle input { width: 18px; height: 18px; flex: none; }
+.log { list-style: none; margin: 6px 0; padding: 8px 10px; background: #120805; border-radius: 8px; max-height: 180px; overflow-y: auto; font-size: 13px; }
+.log li { padding: 2px 0; border-bottom: 1px solid #2a1510; }
+.log time { color: #c9b39a; margin-right: 6px; }

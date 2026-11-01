@@ -27,6 +27,16 @@ function connect() {
   };
   ws.onmessage = (e) => {
     const msg = JSON.parse(e.data);
+    if (msg.type === 'log') {
+      const ul = $('#eventLog');
+      if (ul.querySelector('.hint')) ul.innerHTML = '';
+      const li = document.createElement('li');
+      const t = new Date(msg.time).toLocaleTimeString('vi-VN');
+      li.innerHTML = `<time>${t}</time>`;
+      li.append(document.createTextNode(msg.text));
+      ul.prepend(li);
+      while (ul.children.length > 50) ul.lastChild.remove();
+    }
     if (msg.type === 'status') {
       const s = msg.status;
       statusEl.textContent = `${s.message}${s.viewers ? ` · ${s.viewers} người xem` : ''}${s.version ? ` (bản ${s.version})` : ' (bản cũ)'}`;

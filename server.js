@@ -96,7 +96,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.4';
+const VERSION = '1.5';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {
@@ -112,8 +112,16 @@ function setStatus(patch) {
   console.log('[status]', status.message);
 }
 
+const LOG_LABEL = { join: 'vào phòng', chat: 'bình luận', like: 'thả tim', follow: 'theo dõi', share: 'chia sẻ', gift: 'tặng quà' };
 function emit(event) {
   broadcast(event);
+  if (!event.simulated && LOG_LABEL[event.type]) {
+    const who = event.user?.uniqueId || event.user?.name || '?';
+    const extra = event.type === 'chat' ? `: ${event.text}` : event.type === 'gift' ? `: ${event.giftName} x${event.repeatCount} (${event.coins} xu)` : event.type === 'like' ? ` x${event.count}` : '';
+    const line = `${who} ${LOG_LABEL[event.type]}${extra}`;
+    console.log(`[tiktok] ${line}`);
+    broadcast({ type: 'log', text: line, time: Date.now() });
+  }
 }
 
 wss.on('connection', (ws) => {
@@ -156,10 +164,12 @@ function pickAvatar(user) {
   return candidates.find((u) => typeof u === 'string' && u.startsWith('http')) || '';
 }
 
-function normUser(user) {
+function normUser(user, fallbackId = '') {
   if (!user) return null;
-  const uniqueId = user.uniqueId || user.displayId || '';
-  const id = String(user.userId || user.id || uniqueId || '');
+  const real = (v) => (v && String(v) !== '0' ? String(v) : '');
+  const uniqueId = user.uniqueId || user.displayId || user.specialId || '';
+  // Một số sự kiện (nhất là "người vào") thiếu userId -> dùng các trường khác thay thế
+  const id = real(user.userId) || real(user.id) || real(fallbackId) || real(user.secUid) || uniqueId || real(user.nickname);
   if (!id) return null;
   return {
     id,
@@ -211,8 +221,9 @@ async function connectTikTok(username) {
   setStatus({ connected: false, username, message: `Đang kết nối @${username}...` });
 
   const userEvent = (type, extra = {}) => (data) => {
-    const user = normUser(data.user);
+    const user = normUser(data.user, data.userId);
     if (user) emit({ type, user, ...extra(data) });
+    else console.log(`[tiktok] Bỏ qua sự kiện ${type}: không có thông tin người dùng`);
   };
   const none = () => ({});
 
