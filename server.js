@@ -96,7 +96,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.6';
+const VERSION = '1.7';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {
@@ -117,7 +117,7 @@ function emit(event) {
   broadcast(event);
   if (!event.simulated && LOG_LABEL[event.type]) {
     const who = event.user?.uniqueId || event.user?.name || '?';
-    const extra = event.type === 'chat' ? `: ${event.text}` : event.type === 'gift' ? `: ${event.giftName} x${event.repeatCount} (${event.coins} xu)` : event.type === 'like' ? ` x${event.count}` : '';
+    const extra = event.type === 'chat' ? (event.text ? `: ${event.text}` : ' (sticker)') : event.type === 'gift' ? `: ${event.giftName} x${event.repeatCount} (${event.coins} xu)` : event.type === 'like' ? ` x${event.count}` : '';
     const line = `${who} ${LOG_LABEL[event.type]}${extra}`;
     console.log(`[tiktok] ${line}`);
     broadcast({ type: 'log', text: line, time: Date.now() });
@@ -228,10 +228,13 @@ async function connectTikTok(username) {
   const none = () => ({});
 
   conn.on(WebcastEvent.MEMBER, userEvent('join', none));
-  conn.on(WebcastEvent.CHAT, userEvent('chat', (d) => ({ text: String(d.comment || '') })));
+  // bản mới của thư viện dùng trường "content", bản cũ dùng "comment"
+  conn.on(WebcastEvent.CHAT, userEvent('chat', (d) => ({ text: String(d.content ?? d.comment ?? '') })));
+  // sticker / biểu tượng cảm xúc: vẫn tạo nhân vật, không hiện chữ
+  if (WebcastEvent.EMOTE) conn.on(WebcastEvent.EMOTE, userEvent('chat', () => ({ text: '' })));
   conn.on(WebcastEvent.FOLLOW, userEvent('follow', none));
   conn.on(WebcastEvent.SHARE, userEvent('share', none));
-  conn.on(WebcastEvent.LIKE, userEvent('like', (d) => ({ count: Number(d.likeCount || 1) })));
+  conn.on(WebcastEvent.LIKE, userEvent('like', (d) => ({ count: Number(d.count ?? d.likeCount ?? 1) || 1 })));
   // Quà dạng chuỗi (combo, giftType 1): TikTok gửi nhiều sự kiện với repeatCount tăng dần
   // rồi một sự kiện kết thúc. Chỉ tính một lần khi combo kết thúc; nếu sự kiện kết thúc
   // bị mất thì tự chốt sau 4 giây không có cập nhật.
@@ -266,7 +269,7 @@ async function connectTikTok(username) {
     emit({ type: 'gift', user, ...info, coins: info.diamonds * info.repeatCount });
   });
   conn.on(WebcastEvent.ROOM_USER, (data) => {
-    const viewers = Number(data.viewerCount || 0);
+    const viewers = Number(data.viewerCount || data.totalUser || data.total || 0);
     if (viewers) setStatus({ viewers, message: status.message });
   });
   conn.on(WebcastEvent.STREAM_END, () => {

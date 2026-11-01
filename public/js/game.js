@@ -759,7 +759,7 @@ function handleEvent(ev) {
       const c = ensureCharacter(ev.user);
       if (!c) break;
       const text = String(ev.text || '').slice(0, 80);
-      c.say(text);
+      if (text.trim()) c.say(text);
       if (isBowText(text)) {
         c.queueAction('bow', config.bowCount);
         sfx.woodfish();
