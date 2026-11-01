@@ -96,7 +96,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.5';
+const VERSION = '1.6';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {
@@ -232,13 +232,35 @@ async function connectTikTok(username) {
   conn.on(WebcastEvent.FOLLOW, userEvent('follow', none));
   conn.on(WebcastEvent.SHARE, userEvent('share', none));
   conn.on(WebcastEvent.LIKE, userEvent('like', (d) => ({ count: Number(d.likeCount || 1) })));
+  // Quà dạng chuỗi (combo, giftType 1): TikTok gửi nhiều sự kiện với repeatCount tăng dần
+  // rồi một sự kiện kết thúc. Chỉ tính một lần khi combo kết thúc; nếu sự kiện kết thúc
+  // bị mất thì tự chốt sau 4 giây không có cập nhật.
+  const streaks = new Map(); // key -> { timer, last }
+  const finished = new Map(); // key -> thời điểm đã chốt (chống tính trùng)
+  const finalizeGift = (key, user, info) => {
+    const st = streaks.get(key);
+    if (st) clearTimeout(st.timer);
+    streaks.delete(key);
+    if (finished.has(key)) return;
+    finished.set(key, Date.now());
+    for (const [k, t] of finished) if (Date.now() - t > 120000) finished.delete(k);
+    emit({ type: 'gift', user, ...info, coins: info.diamonds * info.repeatCount });
+  };
   conn.on(WebcastEvent.GIFT, (data) => {
-    const user = normUser(data.user);
+    const user = normUser(data.user, data.userId);
     if (!user) return;
     const info = giftInfo(data);
-    // Quà dạng chuỗi (giftType 1): chỉ tính khi chuỗi kết thúc để không nhân đôi.
+    const key = `${user.id}|${info.giftId}|${data.groupId || data.logId || ''}`;
     if (info.giftType === 1 && !info.repeatEnd) {
       emit({ type: 'giftStreak', user, ...info });
+      const st = streaks.get(key) || {};
+      clearTimeout(st.timer);
+      st.timer = setTimeout(() => finalizeGift(key, user, info), 4000);
+      streaks.set(key, st);
+      return;
+    }
+    if (info.giftType === 1) {
+      finalizeGift(key, user, info);
       return;
     }
     emit({ type: 'gift', user, ...info, coins: info.diamonds * info.repeatCount });
