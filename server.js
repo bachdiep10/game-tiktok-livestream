@@ -124,7 +124,11 @@ async function handleTts(url, res) {
       try {
         buf = await edgeTts(text, voice, rate);
       } catch (err) {
-        if (!edgeWarned) console.warn('[tts] Giọng AI Edge lỗi, chuyển sang giọng Google:', err.message);
+        if (!edgeWarned) {
+          if (/Cannot find (package|module)/.test(err.message)) {
+            console.warn('[tts] Chưa cài giọng AI. Hãy tắt cửa sổ này, xoá thư mục node_modules rồi chạy lại run.bat. Tạm dùng giọng Google.');
+          } else console.warn('[tts] Giọng AI Edge lỗi, chuyển sang giọng Google:', err.message);
+        }
         edgeWarned = true;
         buf = await googleTts(text.slice(0, 200), lang);
       }
