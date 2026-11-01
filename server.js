@@ -203,6 +203,8 @@ async function connectTikTok(username) {
   const conn = new TikTokLiveConnection(username, {
     // Không bật enableExtendedGiftInfo: tuỳ chọn đó gọi dịch vụ ký trả phí (Euler Business)
     enableExtendedGiftInfo: false,
+    // Khoá API Euler Stream (miễn phí tại eulerstream.com) giúp nới giới hạn kết nối
+    ...(loadConfig().eulerApiKey ? { signApiKey: loadConfig().eulerApiKey } : {}),
   });
   connection = conn;
   setStatus({ connected: false, username, message: `Đang kết nối @${username}...` });
