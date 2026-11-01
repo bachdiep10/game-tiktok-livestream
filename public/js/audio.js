@@ -159,3 +159,120 @@ function pump() {
   // phòng trường hợp trình duyệt không gọi onend
   setTimeout(() => speaking && done(), 12000);
 }
+
+// ------------------------------------------------------------- Nhạc nền
+// Nhạc thiền tự tạo: tiếng nền trầm + giai điệu ngũ cung chậm + khánh nhẹ.
+// Hoặc phát file nhạc riêng (config.musicFile) nếu có.
+let music = null;
+
+export function startMusic({ file = '', volume = 0.25 } = {}) {
+  if (music) return;
+  if (file) {
+    const el = new Audio(file);
+    el.loop = true;
+    el.volume = Math.max(0, Math.min(1, volume));
+    music = { el };
+    const tryPlay = () => el.play().catch(() => {});
+    tryPlay();
+    window.addEventListener('pointerdown', tryPlay, { once: true });
+    return;
+  }
+  const a = ctx();
+  if (!a) return;
+  const out = a.createGain();
+  out.gain.value = volume;
+  // tiếng vang đơn giản bằng delay có phản hồi
+  const delay = a.createDelay(2);
+  delay.delayTime.value = 0.55;
+  const fb = a.createGain();
+  fb.gain.value = 0.45;
+  const wet = a.createGain();
+  wet.gain.value = 0.5;
+  const lp = a.createBiquadFilter();
+  lp.type = 'lowpass';
+  lp.frequency.value = 2400;
+  delay.connect(fb).connect(lp).connect(delay);
+  lp.connect(wet).connect(out);
+  out.connect(master);
+
+  // nền trầm (Rê + La), thở chậm
+  const drones = [];
+  for (const [f, g] of [[73.42, 0.22], [110, 0.14], [146.83, 0.07]]) {
+    for (const det of [-4, 4]) {
+      const o = a.createOscillator();
+      o.type = 'triangle';
+      o.frequency.value = f;
+      o.detune.value = det;
+      const gg = a.createGain();
+      gg.gain.value = g * 0.5;
+      const f2 = a.createBiquadFilter();
+      f2.type = 'lowpass';
+      f2.frequency.value = 500;
+      o.connect(f2).connect(gg).connect(out);
+      o.start();
+      drones.push(o);
+    }
+  }
+  const lfo = a.createOscillator();
+  lfo.frequency.value = 0.07;
+  const lfoGain = a.createGain();
+  lfoGain.gain.value = volume * 0.25;
+  lfo.connect(lfoGain).connect(out.gain);
+  lfo.start();
+
+  // giai điệu ngũ cung (Rê - Mi - Fa# - La - Si)
+  const scale = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25];
+  let idx = 3;
+  let beat = 0;
+  const flute = (freq, dur) => {
+    const now = a.currentTime;
+    const o = a.createOscillator();
+    o.type = 'sine';
+    o.frequency.value = freq;
+    const vib = a.createOscillator();
+    vib.frequency.value = 5;
+    const vg = a.createGain();
+    vg.gain.value = freq * 0.006;
+    vib.connect(vg).connect(o.frequency);
+    const o2 = a.createOscillator();
+    o2.type = 'sine';
+    o2.frequency.value = freq * 2;
+    const g2 = a.createGain();
+    g2.gain.value = 0.15;
+    const g = a.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.16, now + 0.35);
+    g.gain.setValueAtTime(0.16, now + dur * 0.6);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o2.connect(g2).connect(g);
+    o.connect(g);
+    g.connect(out);
+    g.connect(delay);
+    for (const x of [o, o2, vib]) {
+      x.start(now);
+      x.stop(now + dur + 0.1);
+    }
+  };
+  const step = () => {
+    if (!music) return;
+    beat++;
+    const r = Math.random();
+    if (r < 0.75) {
+      idx = Math.max(0, Math.min(scale.length - 1, idx + [-2, -1, -1, 1, 1, 2][Math.floor(Math.random() * 6)]));
+      flute(scale[idx], 1.6 + Math.random() * 1.6);
+    }
+    if (beat % 8 === 0) bell(587.33, 0.12, 4);
+    music.timer = setTimeout(step, 1400 + Math.random() * 1400);
+  };
+  music = { out, drones, lfo, timer: setTimeout(step, 1500) };
+}
+
+export function stopMusic() {
+  if (!music) return;
+  if (music.el) music.el.pause();
+  clearTimeout(music.timer);
+  music.drones?.forEach((o) => o.stop());
+  music.lfo?.stop();
+  music.out?.disconnect();
+  music = null;
+}

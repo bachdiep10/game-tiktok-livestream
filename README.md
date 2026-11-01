@@ -52,6 +52,17 @@ Ngoài ra mở `http://127.0.0.1:3000/game.html?demo=1` để game tự sinh s�
 
 **Giọng đọc tiếng Việt** dùng giọng có sẵn của Windows. Nếu không nghe thấy, vào *Settings → Time & Language → Speech* và cài giọng **Tiếng Việt (Microsoft An)**. Tắt giọng đọc: thêm `?voice=0` vào cuối địa chỉ game, hoặc đặt `"voice": false` trong `config.json`. Tắt hết âm thanh: `?sound=0`.
 
+## Nhạc nền và lời chào
+
+- **Nhạc thiền** phát liên tục: tiếng nền trầm, sáo ngũ cung chậm và tiếng khánh, tất cả tự tạo bằng code nên không lo bản quyền. Chỉnh âm lượng bằng `musicVolume` (0 đến 1), tắt bằng `"music": false` hoặc `?music=0`.
+- Muốn dùng **bài nhạc Phật riêng**: chép file (ví dụ `nhac.mp3`) vào `public/assets/` rồi đặt `"musicFile": "assets/nhac.mp3"`. Chỉ dùng nhạc bạn có quyền phát trên LIVE, TikTok có thể tắt tiếng hoặc cảnh báo nếu nhạc vi phạm bản quyền.
+- **Lời chào, cảm ơn** nằm trong mục `messages` của `config.json`, mỗi loại có nhiều câu và game chọn ngẫu nhiên, không lặp câu vừa đọc. `{name}` là tên người xem, `{gift}` là tên quà:
+  - `join`: khi có người mới vào
+  - `follow`, `share`: khi theo dõi, chia sẻ
+  - `gift`, `bigGift`: khi tặng quà thường và quà từ 100 xu
+  - `reminder`: câu nhắc nhở đọc mỗi `reminderMinutes` phút (đặt 0 để tắt)
+- **Ảnh tượng Phật riêng**: chép ảnh PNG nền trong suốt vào `public/assets/` và đặt `"buddhaImage": "assets/buddha.png"`. Để trống thì dùng tượng vẽ sẵn.
+
 ## Tuỳ chỉnh (`config.json`)
 
 | Khoá | Ý nghĩa |
@@ -63,6 +74,9 @@ Ngoài ra mở `http://127.0.0.1:3000/game.html?demo=1` để game tự sinh s�
 | `bowKeywords`, `bowCount` | Từ khoá làm nhân vật lạy và số lạy |
 | `giftTiers` | Ngưỡng xu cho 3 mức hiệu ứng (`lotus`, `bell`, `grand`) |
 | `sound`, `voice`, `voiceJoin` | Bật/tắt âm thanh, giọng đọc, giọng chào người mới vào |
+| `music`, `musicFile`, `musicVolume` | Nhạc nền |
+| `messages`, `reminderMinutes` | Các câu chào, cảm ơn, nhắc nhở |
+| `buddhaImage` | Ảnh tượng Phật riêng (tuỳ chọn) |
 
 Sửa xong chỉ cần tải lại trang game (F5), không cần khởi động lại.
 
@@ -79,8 +93,10 @@ server.js            Cầu nối TikTok LIVE -> WebSocket, phục vụ trang web
 config.json          Cấu hình
 public/game.html     Màn hình game (nguồn trình duyệt cho LIVE)
 public/control.html  Bảng điều khiển + Test Lab
-public/js/scene.js   Vẽ chánh điện, tượng Phật, bàn thờ, chỗ quỳ
+public/js/scene.js   Vẽ chánh điện, bàn thờ, chỗ quỳ
+public/js/buddha.js  Vẽ tượng Phật A Di Đà trên đài sen
+public/assets/       Ảnh tượng / nhạc riêng (tuỳ chọn)
 public/js/game.js    Nhân vật, hiệu ứng, xử lý sự kiện, giao diện
-public/js/audio.js   Chuông, mõ, khánh (WebAudio) + giọng đọc
+public/js/audio.js   Chuông, mõ, khánh, nhạc thiền (WebAudio) + giọng đọc
 public/js/fake.js    Dữ liệu giả cho Test Lab
 ```

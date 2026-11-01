@@ -1,3 +1,5 @@
+import { drawBuddha } from './buddha.js';
+
 // Vẽ bối cảnh chánh điện hoàn toàn bằng code (không dùng ảnh bên ngoài).
 // Kích thước logic: 1080 x 1920 (dọc, đúng khung TikTok LIVE).
 
@@ -252,190 +254,6 @@ function drawFruitPlate(ctx, x, y, s) {
   }
 }
 
-// Tượng Phật ngồi thiền (vẽ cách điệu)
-function drawBuddha(ctx) {
-  const cx = 540;
-  // Hào quang lớn
-  const halo = ctx.createRadialGradient(cx, 430, 20, cx, 470, 380);
-  halo.addColorStop(0, 'rgba(255,250,220,1)');
-  halo.addColorStop(0.25, 'rgba(255,214,120,0.95)');
-  halo.addColorStop(0.55, 'rgba(214,140,40,0.55)');
-  halo.addColorStop(1, 'rgba(120,50,10,0)');
-  ctx.fillStyle = halo;
-  ctx.beginPath();
-  ctx.arc(cx, 470, 380, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.save();
-  ctx.translate(cx, 430);
-  for (let i = 0; i < 64; i++) {
-    ctx.rotate((Math.PI * 2) / 64);
-    ctx.fillStyle = i % 2 ? 'rgba(255,230,150,0.18)' : 'rgba(255,200,90,0.1)';
-    ctx.beginPath();
-    ctx.moveTo(-6, 120);
-    ctx.lineTo(6, 120);
-    ctx.lineTo(16, 330);
-    ctx.lineTo(-16, 330);
-    ctx.closePath();
-    ctx.fill();
-  }
-  ctx.restore();
-  ctx.strokeStyle = 'rgba(255,225,140,0.6)';
-  ctx.lineWidth = 3;
-  for (const r of [130, 150, 250]) {
-    ctx.beginPath();
-    ctx.arc(cx, 420, r, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  // Đài sen
-  const petalRow = (y, n, w, h, color) => {
-    for (let i = 0; i < n; i++) {
-      const px = cx - w / 2 + (i + 0.5) * (w / n);
-      const g = ctx.createLinearGradient(px, y - h, px, y + 10);
-      g.addColorStop(0, '#fff0f5');
-      g.addColorStop(0.5, color);
-      g.addColorStop(1, shade(color, -60));
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.moveTo(px - (w / n) * 0.62, y);
-      ctx.quadraticCurveTo(px - (w / n) * 0.55, y - h * 0.8, px, y - h);
-      ctx.quadraticCurveTo(px + (w / n) * 0.55, y - h * 0.8, px + (w / n) * 0.62, y);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255,215,120,0.8)';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-    }
-  };
-  ctx.fillStyle = goldGradient(ctx, cx - 230, cx + 230);
-  ctx.beginPath();
-  ctx.ellipse(cx, 880, 230, 30, 0, 0, Math.PI * 2);
-  ctx.fill();
-  petalRow(890, 11, 500, 90, '#e8557f');
-  petalRow(850, 9, 440, 80, '#f06d94');
-
-  // Thân
-  const body = goldGradient(ctx, cx - 230, cx + 230);
-  ctx.fillStyle = body;
-  // chân xếp bằng
-  ctx.beginPath();
-  ctx.ellipse(cx, 770, 225, 70, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // thân trên
-  ctx.beginPath();
-  ctx.moveTo(cx - 70, 505);
-  ctx.quadraticCurveTo(cx - 140, 510, cx - 150, 560);
-  ctx.quadraticCurveTo(cx - 175, 650, cx - 190, 730);
-  ctx.quadraticCurveTo(cx - 120, 770, cx, 760);
-  ctx.quadraticCurveTo(cx + 120, 770, cx + 190, 730);
-  ctx.quadraticCurveTo(cx + 175, 650, cx + 150, 560);
-  ctx.quadraticCurveTo(cx + 140, 510, cx + 70, 505);
-  ctx.closePath();
-  ctx.fill();
-  // nếp áo cà sa
-  ctx.strokeStyle = 'rgba(120,70,10,0.55)';
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(cx - 120, 530);
-  ctx.quadraticCurveTo(cx - 10, 620, cx + 110, 740);
-  ctx.stroke();
-  for (let i = 0; i < 4; i++) {
-    ctx.beginPath();
-    ctx.moveTo(cx - 200 + i * 12, 760 + i * 6);
-    ctx.quadraticCurveTo(cx, 800 + i * 10, cx + 200 - i * 12, 760 + i * 6);
-    ctx.stroke();
-  }
-  ctx.beginPath();
-  ctx.moveTo(cx - 150, 570);
-  ctx.quadraticCurveTo(cx - 165, 650, cx - 120, 720);
-  ctx.moveTo(cx + 150, 570);
-  ctx.quadraticCurveTo(cx + 165, 650, cx + 120, 720);
-  ctx.stroke();
-  // tay ấn thiền
-  ctx.fillStyle = goldGradient(ctx, cx - 80, cx + 80, 740);
-  ctx.beginPath();
-  ctx.ellipse(cx, 735, 78, 26, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(120,70,10,0.6)';
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.ellipse(cx, 732, 50, 12, 0, Math.PI, Math.PI * 2);
-  ctx.stroke();
-  // cổ
-  ctx.fillStyle = goldGradient(ctx, cx - 36, cx + 36);
-  ctx.fillRect(cx - 34, 470, 68, 45);
-  ctx.strokeStyle = 'rgba(120,70,10,0.5)';
-  ctx.beginPath();
-  ctx.moveTo(cx - 28, 492);
-  ctx.quadraticCurveTo(cx, 500, cx + 28, 492);
-  ctx.stroke();
-  // tai
-  ctx.fillStyle = goldGradient(ctx, cx - 95, cx + 95);
-  for (const side of [-1, 1]) {
-    ctx.beginPath();
-    ctx.ellipse(cx + side * 72, 445, 16, 52, side * 0.08, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  // đầu
-  ctx.fillStyle = goldGradient(ctx, cx - 75, cx + 75);
-  ctx.beginPath();
-  ctx.ellipse(cx, 410, 70, 84, 0, 0, Math.PI * 2);
-  ctx.fill();
-  // nhục kế + tóc xoắn ốc
-  ctx.fillStyle = '#9c6417';
-  ctx.beginPath();
-  ctx.ellipse(cx, 380, 72, 60, 0, Math.PI, Math.PI * 2);
-  ctx.fill();
-  ctx.beginPath();
-  ctx.ellipse(cx, 320, 38, 30, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = '#d9a440';
-  for (let yy = 300; yy < 380; yy += 11) {
-    for (let xx = -70; xx <= 70; xx += 11) {
-      const inHead = (xx * xx) / (70 * 70) + ((yy - 380) * (yy - 380)) / (60 * 60) < 1 && yy < 378;
-      const inTop = (xx * xx) / (36 * 36) + ((yy - 320) * (yy - 320)) / (28 * 28) < 1;
-      if (inHead || inTop) {
-        ctx.beginPath();
-        ctx.arc(cx + xx + ((yy / 11) % 2) * 5, yy, 3.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-  // khuôn mặt
-  ctx.strokeStyle = '#7a4a0c';
-  ctx.lineWidth = 3;
-  ctx.lineCap = 'round';
-  for (const side of [-1, 1]) {
-    ctx.beginPath(); // lông mày
-    ctx.moveTo(cx + side * 10, 398);
-    ctx.quadraticCurveTo(cx + side * 30, 386, cx + side * 52, 398);
-    ctx.stroke();
-    ctx.beginPath(); // mắt khép hờ
-    ctx.moveTo(cx + side * 16, 418);
-    ctx.quadraticCurveTo(cx + side * 32, 426, cx + side * 46, 418);
-    ctx.stroke();
-  }
-  ctx.beginPath(); // mũi
-  ctx.moveTo(cx, 405);
-  ctx.lineTo(cx - 3, 445);
-  ctx.quadraticCurveTo(cx, 452, cx + 8, 446);
-  ctx.stroke();
-  ctx.beginPath(); // miệng
-  ctx.moveTo(cx - 16, 466);
-  ctx.quadraticCurveTo(cx, 474, cx + 16, 466);
-  ctx.stroke();
-  ctx.fillStyle = '#ffe9a8';
-  ctx.beginPath(); // bạch hào
-  ctx.arc(cx, 395, 4, 0, Math.PI * 2);
-  ctx.fill();
-  // ánh sáng phản chiếu
-  const shine = ctx.createRadialGradient(cx - 30, 420, 5, cx - 30, 420, 200);
-  shine.addColorStop(0, 'rgba(255,255,230,0.35)');
-  shine.addColorStop(1, 'rgba(255,255,230,0)');
-  ctx.fillStyle = shine;
-  ctx.fillRect(cx - 240, 300, 480, 500);
-}
-
 function drawAltar(ctx) {
   // bàn thờ sơn son thếp vàng
   const top = 900;
@@ -458,7 +276,7 @@ function drawAltar(ctx) {
   }
 }
 
-export function drawStaticBackground(ctx, slots) {
+export function drawStaticBackground(ctx, slots, buddhaImage = null) {
   // tường
   const wall = ctx.createLinearGradient(0, 0, 0, FLOOR_TOP);
   wall.addColorStop(0, '#1c0603');
@@ -496,7 +314,7 @@ export function drawStaticBackground(ctx, slots) {
     drawDharmaWheel(ctx, x + 25, 55, 10, 'rgba(240,180,70,0.5)');
   }
 
-  drawBuddha(ctx);
+  drawBuddha(ctx, buddhaImage);
   drawPillar(ctx, 20, 95);
   drawPillar(ctx, W - 115, 95);
   drawBanner(ctx, 140, 125, 70, 560);

@@ -17,7 +17,55 @@ const DEFAULTS = {
   sound: true,
   voice: true,
   voiceJoin: true,
+  music: true,
+  musicFile: '',
+  musicVolume: 0.25,
+  buddhaImage: '',
+  reminderMinutes: 3,
+  messages: {
+    join: [
+      'A Di Đà Phật, chào mừng {name} đã đến chánh điện',
+      'Nam mô A Di Đà Phật, {name} vừa vào lễ Phật',
+      'Hoan hỷ đón {name}, chúc bạn một ngày an lạc',
+      'Chào {name}, mời bạn tịnh tâm cùng mọi người',
+      'A Di Đà Phật, {name} đã đến, nguyện bình an',
+    ],
+    follow: [
+      'Cảm ơn {name} đã theo dõi kênh. Nguyện an lạc',
+      'A Di Đà Phật, tri ân {name} đã theo dõi, chúc bạn nhiều phước lành',
+      'Cảm ơn {name} đã đồng hành cùng chánh điện',
+    ],
+    share: [
+      'Cảm ơn {name} đã chia sẻ, công đức vô lượng',
+      'A Di Đà Phật, {name} đã lan toả phiên lễ Phật',
+    ],
+    gift: [
+      'Cảm ơn {name} đã cúng dường {gift}',
+      'A Di Đà Phật, tri ân {name} đã dâng {gift}',
+      'Hoan hỷ tâm thành của {name}, nguyện bạn bình an',
+    ],
+    bigGift: [
+      'Nam mô A Di Đà Phật. Xin tri ân {name} đã cúng dường {gift}. Nguyện cầu gia đạo bình an, vạn sự cát tường',
+      'Nam mô A Di Đà Phật. Tâm thành của {name} thật đáng quý. Nguyện bạn và gia đình luôn an lạc',
+    ],
+    reminder: [
+      'Mời quý Phật tử bình luận Nam mô A Di Đà Phật để cùng lễ Phật',
+      'Thả tim để nhân vật của bạn vái lạy, theo dõi kênh để nhận hào quang',
+      'Cầu nguyện điều gì, quý vị hãy viết vào bình luận nhé',
+    ],
+  },
 };
+
+// chọn ngẫu nhiên một câu, tránh lặp lại câu vừa dùng
+const lastLine = {};
+function line(kind, vars = {}) {
+  const list = (config.messages && config.messages[kind]) || DEFAULTS.messages[kind] || [];
+  if (!list.length) return '';
+  let i = Math.floor(Math.random() * list.length);
+  if (list.length > 1 && i === lastLine[kind]) i = (i + 1) % list.length;
+  lastLine[kind] = i;
+  return list[i].replace(/\{name\}/g, vars.name || '').replace(/\{gift\}/g, vars.gift || 'quà');
+}
 let config = { ...DEFAULTS };
 
 // ------------------------------------------------------------------ canvas
@@ -37,12 +85,25 @@ fit();
 let slots = [];
 let bg = null;
 
+let buddhaImage = null;
 function rebuildScene() {
-  slots = buildSlots(config.maxCharacters);
+  if (!slots.length) slots = buildSlots(config.maxCharacters);
   bg = document.createElement('canvas');
   bg.width = W;
   bg.height = H;
-  drawStaticBackground(bg.getContext('2d'), slots);
+  drawStaticBackground(bg.getContext('2d'), slots, buddhaImage);
+}
+
+// Ảnh tượng Phật riêng (tuỳ chọn): đặt file vào public/assets và ghi tên trong config.json
+function loadBuddhaImage() {
+  if (!config.buddhaImage) return;
+  const img = new Image();
+  img.onload = () => {
+    buddhaImage = img;
+    rebuildScene();
+  };
+  img.onerror = () => console.warn('Không tải được ảnh tượng Phật:', config.buddhaImage);
+  img.src = config.buddhaImage;
 }
 
 // ------------------------------------------------------------------ tiện ích
@@ -584,7 +645,7 @@ function ensureCharacter(user, { greet = false } = {}) {
   joinCount++;
   sfx.pop();
   addTicker(`🙏 ${truncate(user.name, 18)} đã vào chánh điện`);
-  if (greet && config.voiceJoin) sfx.speak(`A Di Đà Phật, chào mừng ${speakName(user.name)}`, 0);
+  if (greet && config.voiceJoin) sfx.speak(line('join', { name: speakName(user.name) }), 0);
   c.queueAction('raise');
   return c;
 }
@@ -659,7 +720,7 @@ function startGrand(g) {
   flash = 0.7;
   sfx.bell(130.8, 0.7, 7);
   setTimeout(() => sfx.bell(196, 0.5, 5), 900);
-  sfx.speak(`Nam mô A Di Đà Phật. Xin tri ân ${speakName(g.user.name)} đã cúng dường ${g.giftName}. Nguyện cầu bình an.`, 2);
+  sfx.speak(line('bigGift', { name: speakName(g.user.name), gift: g.giftName }), 2);
 }
 
 // ------------------------------------------------------------------ UI
@@ -741,13 +802,14 @@ function handleEvent(ev) {
       spawnSparkles(c.x, c.y - 80 * c.scale, 18);
       addTicker(`✨ ${truncate(ev.user.name, 18)} đã theo dõi, nhận hào quang`);
       sfx.chime();
-      sfx.speak(`Cảm ơn ${speakName(ev.user.name)} đã theo dõi. Nguyện an lạc.`, 1);
+      sfx.speak(line('follow', { name: speakName(ev.user.name) }), 1);
       break;
     }
     case 'share': {
       const c = ensureCharacter(ev.user);
       if (c) c.queueAction('raise');
       addTicker(`📿 ${truncate(ev.user.name, 18)} đã chia sẻ phiên LIVE`);
+      sfx.speak(line('share', { name: speakName(ev.user.name) }), 1);
       break;
     }
     case 'giftStreak': {
@@ -771,11 +833,11 @@ function handleEvent(ev) {
         effectGrand(ev.user, ev.giftName, count);
       } else if (coins >= tiers.bell) {
         effectBell();
-        sfx.speak(`Cảm ơn ${speakName(ev.user.name)} đã cúng dường ${ev.giftName}`, 1);
+        sfx.speak(line('gift', { name: speakName(ev.user.name), gift: ev.giftName }), 1);
       } else {
         const n = Math.min(count, 5);
         for (let i = 0; i < n; i++) setTimeout(() => effectLotus(ev.user), i * 250);
-        if (count >= 1 && Math.random() < 0.5) sfx.speak(`Cảm ơn ${speakName(ev.user.name)}`, 0);
+        sfx.speak(line('gift', { name: speakName(ev.user.name), gift: ev.giftName }), 0);
       }
       break;
     }
@@ -871,10 +933,10 @@ function drawAltarLife(now, dt) {
     ctx.fill();
   }
   // hào quang Phật toả sáng thêm khi có quà
-  const boost = Math.sin(now / 1400) * 0.06 + 0.12 + haloBoost * 0.25;
+  const boost = Math.sin(now / 1400) * 0.03 + 0.05 + haloBoost * 0.25;
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  const hg = ctx.createRadialGradient(540, 430, 10, 540, 430, 360 + haloBoost * 60);
+  const hg = ctx.createRadialGradient(540, 400, 10, 540, 420, 300 + haloBoost * 80);
   hg.addColorStop(0, `rgba(255,240,180,${boost})`);
   hg.addColorStop(1, 'rgba(255,200,80,0)');
   ctx.fillStyle = hg;
@@ -1292,12 +1354,33 @@ async function boot() {
     /* chạy không có server */
   }
   config.giftTiers = { ...DEFAULTS.giftTiers, ...(config.giftTiers || {}) };
+  config.messages = { ...DEFAULTS.messages, ...(config.messages || {}) };
   if (params.get('sound') === '0') config.sound = false;
   if (params.get('voice') === '0') config.voice = false;
+  if (params.get('music') === '0') config.music = false;
   sfx.setSoundEnabled(config.sound !== false);
   sfx.setVoiceEnabled(config.voice !== false);
   rebuildScene();
-  window.addEventListener('pointerdown', sfx.unlockAudio, { once: true });
+  loadBuddhaImage();
+  const startMusic = () => {
+    if (config.music !== false && config.sound !== false) {
+      sfx.startMusic({ file: config.musicFile, volume: Number(config.musicVolume) || 0.25 });
+    }
+  };
+  startMusic();
+  window.addEventListener('pointerdown', () => {
+    sfx.unlockAudio();
+    startMusic();
+  }, { once: true });
+  // nhắc nhở định kỳ bằng giọng đọc + dòng chữ
+  if (Number(config.reminderMinutes) > 0) {
+    setInterval(() => {
+      const text = line('reminder');
+      if (!text) return;
+      addTicker(`📢 ${truncate(text, 40)}`);
+      sfx.speak(text, 1);
+    }, Number(config.reminderMinutes) * 60 * 1000);
+  }
   connectWs();
   if (params.has('demo')) startDemo();
   requestAnimationFrame(frame);

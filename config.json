@@ -6,7 +6,13 @@
   "templeName": "Chánh Điện An Lạc",
   "maxCharacters": 90,
   "idleMinutes": 20,
-  "bowKeywords": ["nam mo a di da phat", "nam mo", "a di da phat", "adida", "nammo"],
+  "bowKeywords": [
+    "nam mo a di da phat",
+    "nam mo",
+    "a di da phat",
+    "adida",
+    "nammo"
+  ],
   "bowCount": 3,
   "giftTiers": {
     "lotus": 1,
@@ -15,5 +21,42 @@
   },
   "sound": true,
   "voice": true,
-  "voiceJoin": true
+  "voiceJoin": true,
+  "music": true,
+  "musicFile": "",
+  "musicVolume": 0.25,
+  "buddhaImage": "",
+  "reminderMinutes": 3,
+  "messages": {
+    "join": [
+      "A Di Đà Phật, chào mừng {name} đã đến chánh điện",
+      "Nam mô A Di Đà Phật, {name} vừa vào lễ Phật",
+      "Hoan hỷ đón {name}, chúc bạn một ngày an lạc",
+      "Chào {name}, mời bạn tịnh tâm cùng mọi người",
+      "A Di Đà Phật, {name} đã đến, nguyện bình an"
+    ],
+    "follow": [
+      "Cảm ơn {name} đã theo dõi kênh. Nguyện an lạc",
+      "A Di Đà Phật, tri ân {name} đã theo dõi, chúc bạn nhiều phước lành",
+      "Cảm ơn {name} đã đồng hành cùng chánh điện"
+    ],
+    "share": [
+      "Cảm ơn {name} đã chia sẻ, công đức vô lượng",
+      "A Di Đà Phật, {name} đã lan toả phiên lễ Phật"
+    ],
+    "gift": [
+      "Cảm ơn {name} đã cúng dường {gift}",
+      "A Di Đà Phật, tri ân {name} đã dâng {gift}",
+      "Hoan hỷ tâm thành của {name}, nguyện bạn bình an"
+    ],
+    "bigGift": [
+      "Nam mô A Di Đà Phật. Xin tri ân {name} đã cúng dường {gift}. Nguyện cầu gia đạo bình an, vạn sự cát tường",
+      "Nam mô A Di Đà Phật. Tâm thành của {name} thật đáng quý. Nguyện bạn và gia đình luôn an lạc"
+    ],
+    "reminder": [
+      "Mời quý Phật tử bình luận Nam mô A Di Đà Phật để cùng lễ Phật",
+      "Thả tim để nhân vật của bạn vái lạy, theo dõi kênh để nhận hào quang",
+      "Cầu nguyện điều gì, quý vị hãy viết vào bình luận nhé"
+    ]
+  }
 }
