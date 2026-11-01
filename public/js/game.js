@@ -11,6 +11,7 @@ const DEFAULTS = {
   subtitle: 'Bình luận "Nam mô A Di Đà Phật" để lễ Phật',
   templeName: 'Chánh Điện An Lạc',
   maxCharacters: 90,
+  ambientMonks: 6,
   backgroundImage: '',
   idleMinutes: 20,
   bowKeywords: ['nam mo a di da phat', 'nam mo', 'a di da phat', 'adida', 'nammo'],
@@ -310,6 +311,18 @@ class Character {
     slot.occupant = this;
     const h = hashCode(user.id);
     this.look = lookFor(h);
+    this.npc = Boolean(user.npc);
+    if (this.npc) {
+      // sư thầy / chú tiểu: áo nâu hoặc vàng, đầu cạo, đã ngồi sẵn
+      this.look = { ...this.look, hair: 'bald', robe: h % 2 ? ['#e8a748', '#c27a1e', '#7d4a0e'] : ['#a07a55', '#76553a', '#4a3322'] };
+      this.x = slot.x;
+      this.y = slot.y;
+      this.path = [];
+      this.state = 'kneel';
+      this.kneelT = 1;
+      this.joinFlash = 0;
+      this.nextBow = performance.now() + rand(3000, 15000);
+    }
     this.tagColor = TAG_COLORS[(h >> 7) % TAG_COLORS.length];
     this.x = ENTRANCE.x + rand(-40, 40);
     this.y = ENTRANCE.y;
@@ -359,6 +372,13 @@ class Character {
 
   update(dt, now) {
     this.breath += dt * 1.6;
+    if (this.npc && this.state !== 'leave') {
+      this.lastActive = now;
+      if (now > this.nextBow && !this.action) {
+        this.queueAction(Math.random() < 0.6 ? 'bow' : 'raise');
+        this.nextBow = now + rand(9000, 22000);
+      }
+    }
     if (this.state === 'leave') {
       this.alpha -= dt * 1.5;
       return this.alpha > 0;
@@ -469,6 +489,7 @@ class Character {
   }
 
   drawLabels(now) {
+    if (this.npc) return;
     const s = this.scale;
     const ts = clamp(s * 1.05, 0.66, 1.1);
     const x = this.x;
@@ -563,6 +584,14 @@ function findFreeSlot() {
   if (free) return free;
   // hết chỗ: mời người im lặng lâu nhất (không phải người tặng quà/theo dõi) ra về
   let victim = null;
+  // ưu tiên mời sư thầy / chú tiểu (nhân vật nền) nhường chỗ trước
+  for (const c of characters.values()) {
+    if (c.npc && c.state !== 'leave' && c.slot) {
+      const slot = c.slot;
+      c.leave();
+      return slot;
+    }
+  }
   for (const c of characters.values()) {
     if (c.state === 'leave' || !c.slot) continue;
     const vip = c.halo || c.user.coins > 0;
@@ -573,6 +602,21 @@ function findFreeSlot() {
   const slot = victim.c.slot;
   victim.c.leave();
   return slot;
+}
+
+// Nhân vật nền: vài sư thầy / chú tiểu tụng kinh sẵn trong điện cho đỡ vắng.
+// Không mang tên người xem, không tính vào số người lễ, tự nhường chỗ khi điện đông.
+function spawnAmbientMonks() {
+  const n = clamp(Number(config.ambientMonks ?? 6), 0, 20);
+  if (!n) return;
+  const picks = [...slots]
+    .filter((sl) => !sl.occupant && sl.row >= 1 && sl.row <= 4)
+    .sort((a, b) => b.dist - a.dist || a.row - b.row)
+    .slice(0, n);
+  picks.forEach((slot, i) => {
+    const c = new Character({ id: `npc-${i}`, name: '', npc: true }, slot);
+    characters.set(c.user.id, c);
+  });
 }
 
 let joinCount = 0;
@@ -794,7 +838,7 @@ function handleEvent(ev) {
       break;
     }
     case 'reset': {
-      for (const c of characters.values()) c.leave();
+      for (const c of characters.values()) if (!c.npc) c.leave();
       board.clear();
       giftToasts.length = 0;
       break;
@@ -1104,7 +1148,7 @@ function drawUI(now) {
   }
 
   // số người đang lễ
-  const present = [...characters.values()].filter((c) => c.state !== 'leave').length;
+  const present = [...characters.values()].filter((c) => c.state !== 'leave' && !c.npc).length;
   const cy = bgImage ? 262 : 236;
   ctx.fillStyle = bgImage ? 'rgba(25,8,3,0.92)' : 'rgba(25,8,3,0.6)';
   roundRect(ctx, 24, cy, 300, 50, 25);
@@ -1346,6 +1390,7 @@ async function boot() {
     }, Number(config.reminderMinutes) * 60 * 1000);
   }
   connectWs();
+  spawnAmbientMonks();
   if (params.has('demo')) startDemo();
   requestAnimationFrame(frame);
 }

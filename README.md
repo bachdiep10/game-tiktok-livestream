@@ -67,6 +67,9 @@ Cách dễ nhất với TikTok LIVE Studio: chạy `run.bat`, rồi bấm đúp 
 - **Ảnh nền chánh điện**: mặc định dùng ảnh thiết kế `public/assets/chanh-dien.jpg` (khung 1080×1920), 60 chỗ quỳ được căn khớp với các bồ đoàn trong ảnh. Muốn quay về cảnh vẽ bằng code (90 chỗ) thì đặt `"backgroundImage": ""` và `"maxCharacters": 90`, hoặc thêm `?bg=0` vào địa chỉ. Nếu thay ảnh khác có bố cục bồ đoàn khác, cần sửa `DESIGN_ROWS` trong `public/js/scene.js`. Ảnh nền đã có sẵn chữ hoành phi, nên `title`/`subtitle` chỉ dùng cho cảnh vẽ bằng code.
 - **Ảnh tượng Phật riêng** (chỉ cho cảnh vẽ bằng code): chép ảnh PNG nền trong suốt vào `public/assets/` và đặt `"buddhaImage": "assets/buddha.png"`. Để trống thì dùng tượng vẽ sẵn.
 
+- **Sư thầy / chú tiểu nền** (`ambientMonks`, mặc định 6): vài vị ngồi tụng kinh sẵn trong điện cho đỡ vắng. Không mang tên người xem, không tặng quà, không tính vào số người lễ, tự nhường chỗ khi điện đông. Đặt 0 để tắt.
+- **Không bật "Tự chạy demo" khi LIVE thật**: demo tạo người xem và quà giả, dễ đánh lừa người xem và vi phạm quy định của TikTok.
+
 ## Tuỳ chỉnh (`config.json`)
 
 | Khoá | Ý nghĩa |

@@ -96,7 +96,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.3';
+const VERSION = '1.4';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {
