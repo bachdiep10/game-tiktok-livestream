@@ -122,10 +122,15 @@ async function handleTts(url, res) {
     let buf = ttsCache.get(key);
     if (!buf) {
       try {
-        try {
-          buf = await edgeTts(text, voice, rate);
-        } catch {
-          buf = await edgeTts(text, voice, rate); // thử lại một lần
+        // máy chủ Microsoft thỉnh thoảng ngắt giữa chừng -> thử lại tối đa 3 lần
+        for (let attempt = 1; ; attempt++) {
+          try {
+            buf = await edgeTts(text, voice, rate);
+            break;
+          } catch (e) {
+            if (attempt >= 3) throw e;
+            await new Promise((r) => setTimeout(r, 300 * attempt));
+          }
         }
         if (edgeWarned) console.log('[tts] Giọng AI đã hoạt động.');
         edgeWarned = false;
@@ -151,7 +156,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.8.1';
+const VERSION = '1.8.2';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {
