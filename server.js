@@ -96,7 +96,8 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const status = { connected: false, username: '', viewers: 0, message: 'Chưa kết nối TikTok' };
+const VERSION = '1.3';
+const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {
   const data = JSON.stringify(msg);
@@ -284,9 +285,21 @@ async function disconnectTikTok(silent = false) {
   if (!silent) setStatus({ connected: false, message: 'Đã ngắt kết nối TikTok' });
 }
 
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error('');
+    console.error(`  ❌ Cổng ${PORT} đang bị một chương trình khác dùng (thường là bản game cũ vẫn đang chạy ngầm).`);
+    console.error('  Mở Task Manager, tắt hết "Node.js JavaScript Runtime", hoặc chạy lệnh: taskkill /F /IM node.exe');
+    console.error('');
+  } else {
+    console.error(err);
+  }
+  process.exitCode = 1;
+});
+
 server.listen(PORT, '0.0.0.0', () => {
   console.log('');
-  console.log('  🙏 Chánh điện LIVE đã chạy');
+  console.log(`  🙏 Chánh điện LIVE đã chạy (phiên bản ${VERSION})`);
   console.log(`  - Màn hình game (thêm vào OBS / LIVE Studio): http://127.0.0.1:${PORT}/game.html`);
   console.log(`  - Bảng điều khiển + giả lập:                   http://127.0.0.1:${PORT}/control.html`);
   console.log('');

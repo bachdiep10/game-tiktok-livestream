@@ -29,7 +29,7 @@ function connect() {
     const msg = JSON.parse(e.data);
     if (msg.type === 'status') {
       const s = msg.status;
-      statusEl.textContent = `${s.message}${s.viewers ? ` · ${s.viewers} người xem` : ''}`;
+      statusEl.textContent = `${s.message}${s.viewers ? ` · ${s.viewers} người xem` : ''}${s.version ? ` (bản ${s.version})` : ' (bản cũ)'}`;
       statusEl.classList.toggle('ok', Boolean(s.connected));
     }
   };
