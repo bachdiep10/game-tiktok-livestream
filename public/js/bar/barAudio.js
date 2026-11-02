@@ -183,21 +183,36 @@ let playlist = [];
 let trackIdx = 0;
 let trackFails = 0;
 let fileVolume = 0.7;
+let attempt = 0;
 function playTrack() {
-  if (!playlist.length) return;
+  if (!playlist.length || !fileEl) return;
+  const my = ++attempt; // mỗi lần thử chỉ được tính lỗi một lần
   const src = playlist[trackIdx % playlist.length];
+  fileEl.dataset.attempt = String(my);
   fileEl.src = src;
   fileEl.volume = fileVolume;
   fileEl.play().then(() => {
     trackFails = 0;
+    blocked = false;
   }).catch((err) => {
+    if (my !== attempt) return;
     if (err && err.name === 'NotAllowedError') {
-      // trình duyệt chặn tự phát: chờ cú click đầu tiên
+      // trình duyệt chặn tự phát: chờ cú click / thử lại sau
+      blocked = true;
       musicOn = false;
       return;
     }
+    if (err && err.name === 'AbortError') return;
+    console.warn('[nhạc] Không phát được', decodeURIComponent(src), err?.message || err);
+    attempt++;
     nextTrack(true);
   });
+}
+let blocked = false;
+// nhạc có đang thực sự phát ra không (để báo lên màn hình khi bị chặn)
+export function musicAudible() {
+  if (fileEl) return !fileEl.paused;
+  return Boolean(musicOn && ac && ac.state === 'running');
 }
 function nextTrack(failed = false) {
   if (failed) trackFails++;
@@ -247,7 +262,12 @@ export function startMusic({ file = '', files = [], volume = 0.35, bpm = 124 } =
       fileEl = new Audio();
       fileEl.preload = 'auto';
       fileEl.addEventListener('ended', () => nextTrack(false));
-      fileEl.addEventListener('error', () => nextTrack(true));
+      fileEl.addEventListener('error', () => {
+        if (fileEl && fileEl.dataset.attempt !== String(attempt)) return;
+        console.warn('[nhạc] File lỗi, bỏ qua:', decodeURIComponent(fileEl?.src || ''));
+        attempt++;
+        nextTrack(true);
+      });
     }
     musicStart = a.currentTime;
     playTrack();

@@ -159,3 +159,15 @@ $('#btnConnect').addEventListener('click', () => {
   send({ cmd: 'connect', username });
 });
 $('#btnDisconnect').addEventListener('click', () => send({ cmd: 'disconnect' }));
+
+// cho biết game tìm thấy bao nhiêu bài trong thư mục nhạc
+fetch('/bar-music.json', { cache: 'no-store' })
+  .then((r) => r.json())
+  .then((list) => {
+    $('#musicInfo').textContent = list.length
+      ? `🎵 Nhạc: ${list.length} bài trong thư mục public/assets/nhac-bar: ${list.map((f) => decodeURIComponent(f.split('/').pop())).join(', ')}`
+      : '🎵 Thư mục public/assets/nhac-bar đang trống, game dùng nhạc sàn tự tạo.';
+  })
+  .catch(() => {
+    $('#musicInfo').textContent = '🎵 Không đọc được danh sách nhạc (máy chủ bản cũ?)';
+  });

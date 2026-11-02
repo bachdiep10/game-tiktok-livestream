@@ -933,11 +933,12 @@ function drawLED() {
   ctx.shadowBlur = 0;
   ctx.font = `700 20px ${FONT}`;
   ctx.fillStyle = 'rgba(0,0,0,0.55)';
-  const label = `🎵 ${truncate(song || config.musicLabel || 'DJ đang chơi nhạc', 30)}`;
+  const muted = config.music !== false && config.sound !== false && !sfx.musicAudible();
+  const label = muted ? '🔇 Bấm vào game để bật nhạc' : `🎵 ${truncate(song || config.musicLabel || 'DJ đang chơi nhạc', 30)}`;
   const lw = ctx.measureText(label).width + 24;
   roundRectPath(ctx, tx - lw / 2, LED.y + LED.h - 46, lw, 32, 16);
   ctx.fill();
-  ctx.fillStyle = '#9dfcff';
+  ctx.fillStyle = muted ? '#ff8a8a' : '#9dfcff';
   ctx.fillText(label, tx, LED.y + LED.h - 29);
   ctx.restore();
 }
@@ -1603,11 +1604,18 @@ async function boot() {
     }
   };
   startMusic();
+  // bấm vào màn hình game bất kỳ lúc nào cũng bật lại nhạc nếu bị trình duyệt chặn
   window.addEventListener('pointerdown', () => {
     sfx.unlockAudio();
     voice.unlockAudio();
     startMusic();
-  }, { once: true });
+  });
+  setInterval(() => {
+    if (!sfx.musicAudible()) {
+      sfx.unlockAudio();
+      startMusic();
+    }
+  }, 3000);
   if (config.narration !== false) {
     const gap = Math.max(15, Number(config.narrationSeconds) || 35) * 1000;
     setInterval(() => {
