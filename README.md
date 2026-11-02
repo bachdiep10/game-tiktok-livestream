@@ -126,7 +126,7 @@ Ai **thả tim nhiều** hoặc **tặng quà** sẽ được mời **lên sân 
 |---|---|
 | Vào phòng / bình luận lần đầu | Rơi từ trên trời xuống sàn, có cột sáng + tiếng "bịch" |
 | Bình luận | Bong bóng chat; có chữ "quẩy", "nhảy", "🔥" thì nhảy tưng ngay |
-| Thả tim | Nhảy sung + tim bay; mỗi tim = 1 điểm. Đủ 60 điểm → vào hàng chờ sân khấu |
+| Thả tim | Nhảy sung + tim bay; mỗi tim = 1 điểm. Đủ 30 điểm → vào hàng chờ sân khấu |
 | Quà nhỏ (dưới 10 xu) | Pháo sáng + tiền vàng; mỗi xu = 20 điểm |
 | Quà từ 10 xu | Lên sân khấu ngay (được ưu tiên theo giá trị quà), pháo giấy, khói CO2 |
 | Quà từ 100 xu | Pháo hoa toàn màn hình, còi hơi, lên sân khấu trước mọi người, 10 giây |
@@ -138,14 +138,14 @@ Sàn còn có vài bóng người nhảy **không tên** cho đỡ vắng; mỗi
 
 ### Chạy trên Windows
 1. Giải nén, nhấp đúp **`run-bar.bat`** (lần đầu tự cài thư viện). Trình duyệt mở trang điều khiển `bar-control.html`.
-2. Bấm các nút ở mục **Giả lập** để thử. Nút "❤️ x60" và "🎁 Quà 30 xu" sẽ đưa người lên sân khấu.
+2. Bấm các nút ở mục **Giả lập** để thử. Nút "❤️ x30" và "🎁 Quà 30 xu" sẽ đưa người lên sân khấu.
 3. Khi đang LIVE: nhập username TikTok → **Kết nối**.
 4. Nhấp đúp **`mo-cua-so-bar.bat`** để mở game trong cửa sổ Edge riêng, rồi trong TikTok LIVE Studio thêm nguồn **Chụp cửa sổ** chọn cửa sổ đó (hoặc nguồn Link/Browser: `http://127.0.0.1:3000/bar.html`, 1080×1920).
    Tắt ô "Bật nhạc" ở khung xem trước để không bị phát tiếng hai lần.
 
 ### Tuỳ chỉnh (`config-bar.json`)
 - `clubName`, `subtitle`: tên quán, dòng giới thiệu.
-- `stagePoints` (60): số điểm để lên sân khấu; `pointsPerCoin` (20); `stageGiftCoins` (10): quà từ mức này lên ngay.
+- `stagePoints` (30): số điểm để lên sân khấu; `pointsPerCoin` (20); `stageGiftCoins` (10): quà từ mức này lên ngay.
 - `stageSeconds` / `stageSecondsBig`: thời gian trên sân khấu; `cameraZoom`: độ zoom camera.
 - `hypeMax`: lượng tim cần để "BÙNG NỔ"; `ambientCrowd`: số bóng người không tên.
 - **Nhạc riêng**: chép file `.mp3`/`.m4a` vào thư mục `public/assets/nhac-bar/`. Game phát lần lượt theo tên file (đặt `01 ...`, `02 ...` để chọn thứ tự), hết bài cuối quay lại bài đầu. Bài nào lỗi sẽ được bỏ qua. Trang điều khiển ghi rõ đã tìm thấy bao nhiêu bài. Nếu dưới màn LED hiện "🔇 Bấm vào game để bật nhạc" là trình duyệt đang chặn tự phát nhạc: bấm chuột một lần vào màn hình game. Thư mục trống thì dùng nhạc sàn tự tạo (không bản quyền). Lưu ý: nhạc có bản quyền có thể bị TikTok tắt tiếng hoặc cảnh cáo LIVE.

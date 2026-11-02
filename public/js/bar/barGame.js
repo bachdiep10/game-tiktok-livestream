@@ -25,7 +25,7 @@ const DEFAULTS = {
   maxDancers: 70,
   ambientCrowd: 18,
   idleMinutes: 15,
-  stagePoints: 60,
+  stagePoints: 30,
   pointsPerCoin: 20,
   stageGiftCoins: 10,
   stageSeconds: 6,
@@ -354,7 +354,7 @@ function enqueueStage(d, priority, seconds) {
 function addPoints(d, pts) {
   d.points += pts;
   d.pending += pts;
-  const need = Math.max(5, Number(config.stagePoints) || 60);
+  const need = Math.max(5, Number(config.stagePoints) || 30);
   if (d.pending >= need) {
     d.pending = 0;
     enqueueStage(d, 0, Number(config.stageSeconds) || 6);
@@ -1536,7 +1536,7 @@ function drawFooter() {
   });
   if (!waiting.length) {
     ctx.fillStyle = '#b9a8e0';
-    const need = Number(config.stagePoints) || 60;
+    const need = Number(config.stagePoints) || 30;
     ctx.fillText(`Chưa có ai • ${need} tim hoặc`, 558, y0 + 64);
     ctx.fillText(`quà ${Number(config.stageGiftCoins) || 10} xu là được lên!`, 558, y0 + 98);
   }

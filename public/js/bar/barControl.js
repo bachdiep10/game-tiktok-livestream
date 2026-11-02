@@ -86,9 +86,9 @@ const actions = {
   chatDance: () => sim({ type: 'chat', user: namedUser(), text: 'quẩy lên nào 🔥' }),
   chat: () => sim({ type: 'chat', user: namedUser(), text: pick(CHATS) }),
   like: () => sim({ type: 'like', user: namedUser(), count: 1 + Math.floor(Math.random() * 5) }),
-  like60: () => {
+  like30: () => {
     const u = namedUser();
-    for (let i = 0; i < 6; i++) setTimeout(() => sim({ type: 'like', user: u, count: 10 }), i * 200);
+    for (let i = 0; i < 3; i++) setTimeout(() => sim({ type: "like", user: u, count: 10 }), i * 200);
   },
   follow: () => sim({ type: 'follow', user: namedUser() }),
   share: () => sim({ type: 'share', user: namedUser() }),

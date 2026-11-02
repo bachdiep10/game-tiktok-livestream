@@ -15,7 +15,7 @@
   "maxDancers": 70,
   "ambientCrowd": 18,
   "idleMinutes": 15,
-  "stagePoints": 60,
+  "stagePoints": 30,
   "pointsPerCoin": 20,
   "stageGiftCoins": 10,
   "stageSeconds": 6,
