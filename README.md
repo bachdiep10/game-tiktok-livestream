@@ -125,13 +125,13 @@ Ai **thả tim nhiều** hoặc **tặng quà** sẽ được mời **lên sân 
 | Hành động trên TikTok | Trong game |
 |---|---|
 | Vào phòng / bình luận lần đầu | Rơi từ trên trời xuống sàn, có cột sáng + tiếng "bịch" |
-| Bình luận | Bong bóng chat; có chữ "quẩy", "nhảy", "🔥" thì nhảy tưng ngay |
-| Thả tim | Nhảy sung + tim bay; mỗi tim = 1 điểm. Đủ 30 điểm → vào hàng chờ sân khấu |
+| Bình luận | Bong bóng chat, +5 điểm (mỗi người tối đa 1 lần / 5 giây); có chữ "quẩy", "nhảy", "🔥" thì nhảy tưng ngay |
+| Thả tim | Nhảy sung + tim bay; mỗi tim = 1 điểm. Đủ 30 điểm (tim + bình luận + chia sẻ) → vào hàng chờ sân khấu |
 | Quà nhỏ (dưới 10 xu) | Pháo sáng + tiền vàng; mỗi xu = 20 điểm |
 | Quà từ 10 xu | Lên sân khấu ngay (được ưu tiên theo giá trị quà), pháo giấy, khói CO2 |
 | Quà từ 100 xu | Pháo hoa toàn màn hình, còi hơi, lên sân khấu trước mọi người, 10 giây |
-| Theo dõi | Đội vương miện 👑 |
-| Chia sẻ | Pháo giấy |
+| Theo dõi | Đội vương miện 👑, +15 điểm |
+| Chia sẻ | Pháo giấy, +15 điểm |
 | Cả phòng thả tim đầy thanh "ĐỘ QUẨY" | BÙNG NỔ: nhạc lên cao trào, laser, nháy đèn, mưa pháo giấy |
 
 Sàn còn có vài bóng người nhảy **không tên** cho đỡ vắng; mỗi người xem thật vào sẽ thay chỗ một bóng.
@@ -145,7 +145,7 @@ Sàn còn có vài bóng người nhảy **không tên** cho đỡ vắng; mỗi
 
 ### Tuỳ chỉnh (`config-bar.json`)
 - `clubName`, `subtitle`: tên quán, dòng giới thiệu.
-- `stagePoints` (30): số điểm để lên sân khấu; `pointsPerCoin` (20); `stageGiftCoins` (10): quà từ mức này lên ngay.
+- `stagePoints` (30): số điểm để lên sân khấu; `pointsPerComment` (5), `pointsPerShare` (15), `pointsPerFollow` (15), `commentCooldownSeconds` (5); `pointsPerCoin` (20); `stageGiftCoins` (10): quà từ mức này lên ngay.
 - `stageSeconds` / `stageSecondsBig`: thời gian trên sân khấu; `cameraZoom`: độ zoom camera.
 - `hypeMax`: lượng tim cần để "BÙNG NỔ"; `ambientCrowd`: số bóng người không tên.
 - **Nhạc riêng**: chép file `.mp3`/`.m4a` vào thư mục `public/assets/nhac-bar/`. Game phát lần lượt theo tên file (đặt `01 ...`, `02 ...` để chọn thứ tự), hết bài cuối quay lại bài đầu. Bài nào lỗi sẽ được bỏ qua. Trang điều khiển ghi rõ đã tìm thấy bao nhiêu bài. Nếu dưới màn LED hiện "🔇 Bấm vào game để bật nhạc" là trình duyệt đang chặn tự phát nhạc: bấm chuột một lần vào màn hình game. Thư mục trống thì dùng nhạc sàn tự tạo (không bản quyền). Lưu ý: nhạc có bản quyền có thể bị TikTok tắt tiếng hoặc cảnh cáo LIVE.

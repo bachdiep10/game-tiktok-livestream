@@ -27,6 +27,10 @@ const DEFAULTS = {
   idleMinutes: 15,
   stagePoints: 30,
   pointsPerCoin: 20,
+  pointsPerComment: 5,
+  pointsPerShare: 15,
+  pointsPerFollow: 15,
+  commentCooldownSeconds: 5,
   stageGiftCoins: 10,
   stageSeconds: 6,
   stageSecondsBig: 10,
@@ -564,6 +568,13 @@ function handleEvent(ev) {
         sparks(d.x, d.y - 60, 12, () => d.look.glow, 160);
       }
       addHype(1);
+      // bình luận cũng được cộng điểm lên sân khấu (chống spam: mỗi người tối đa 1 lần / vài giây)
+      const cd = Math.max(0, Number(config.commentCooldownSeconds ?? 5)) * 1000;
+      if (!d.lastCommentPts || now - d.lastCommentPts >= cd) {
+        d.lastCommentPts = now;
+        d.comments = (d.comments || 0) + 1;
+        addPoints(d, Number(config.pointsPerComment ?? 5));
+      }
       break;
     }
     case 'like': {
@@ -581,6 +592,7 @@ function handleEvent(ev) {
     case 'follow': {
       if (!user) break;
       const d = ensureDancer(user);
+      if (!d.crown) addPoints(d, Number(config.pointsPerFollow ?? 15));
       d.crown = true;
       hypeUp(d, 2500);
       sparks(d.x, d.y - 110, 30, () => pick(['#ffd54a', '#fff3b0', '#ffb300']), 220);
@@ -596,6 +608,8 @@ function handleEvent(ev) {
       confettiBurst(d.x, d.y - 60, 30);
       sfx.sparkle();
       addToast(`📣 ${truncate(d.user.name, 18)} đã chia sẻ`, '#7cf7ff');
+      d.shares = (d.shares || 0) + 1;
+      addPoints(d, Number(config.pointsPerShare ?? 15));
       announce(line('share', { name: d.user.name }), 0);
       addHype(10);
       break;
@@ -1444,7 +1458,7 @@ function drawCamOverlay() {
     ctx.fillText(truncate(d.user.name, 16), 190, y + 44);
     ctx.font = `600 24px ${FONT}`;
     ctx.fillStyle = '#ffd1f4';
-    ctx.fillText(`❤️ ${d.likes}   🎁 ${d.coins} xu   ⭐ ${d.points} điểm`, 190, y + 88);
+    ctx.fillText(`❤️ ${d.likes}   💬 ${d.comments || 0}   📣 ${d.shares || 0}   🎁 ${d.coins} xu`, 190, y + 88);
     ctx.fillStyle = hsl(hue + 60, 100, 60);
     ctx.fillRect(80, y + 112, (W - 160) * clamp(left / total, 0, 1), 5);
   }
@@ -1517,7 +1531,7 @@ function drawFooter() {
   });
   if (!top.length) {
     ctx.fillStyle = '#b9a8e0';
-    ctx.fillText('Thả tim để vào bảng!', 26, y0 + 64);
+    ctx.fillText('Tương tác để vào bảng!', 26, y0 + 64);
   }
 
   // hàng chờ sân khấu
@@ -1537,8 +1551,9 @@ function drawFooter() {
   if (!waiting.length) {
     ctx.fillStyle = '#b9a8e0';
     const need = Number(config.stagePoints) || 30;
-    ctx.fillText(`Chưa có ai • ${need} tim hoặc`, 558, y0 + 64);
-    ctx.fillText(`quà ${Number(config.stageGiftCoins) || 10} xu là được lên!`, 558, y0 + 98);
+    ctx.fillText(`Đủ ${need} điểm là được lên:`, 558, y0 + 64);
+    ctx.fillText(`❤️ tim +1 • 💬 bình luận +${Number(config.pointsPerComment ?? 5)}`, 558, y0 + 98);
+    ctx.fillText(`📣 chia sẻ +${Number(config.pointsPerShare ?? 15)} • 🎁 quà ${Number(config.stageGiftCoins) || 10} xu`, 558, y0 + 132);
   }
   ctx.restore();
 }
