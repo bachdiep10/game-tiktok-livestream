@@ -797,15 +797,45 @@ async function loadSlides() {
   }
 }
 
-function coverDraw(img, alpha) {
+// Dựng sẵn khung ảnh cho màn LED (1 lần mỗi ảnh, độ phân giải gấp đôi để khi camera zoom vẫn nét).
+// 'contain' (mặc định): hiện trọn ảnh, phần thừa lấp bằng chính ảnh đó làm mờ; 'cover': lấp đầy, cắt bớt.
+function slideCanvas(s) {
+  if (s.canvas && s.fit === config.ledFit) return s.canvas;
+  const k = 2;
+  const c = document.createElement('canvas');
+  c.width = LED.w * k;
+  c.height = LED.h * k;
+  const b = c.getContext('2d');
+  const img = s.img;
   const ir = img.naturalWidth / img.naturalHeight;
   const lr = LED.w / LED.h;
-  let w = LED.w;
-  let h = LED.h;
-  if (config.ledFit === 'contain' ? ir > lr : ir < lr) h = w / ir;
-  else w = h * ir;
+  const fit = (cover) => {
+    let w = c.width;
+    let h = c.height;
+    if (cover ? ir < lr : ir > lr) h = w / ir;
+    else w = h * ir;
+    return [(c.width - w) / 2, (c.height - h) / 2, w, h];
+  };
+  b.fillStyle = '#000';
+  b.fillRect(0, 0, c.width, c.height);
+  if (config.ledFit === 'cover') {
+    b.drawImage(img, ...fit(true));
+  } else {
+    b.save();
+    b.filter = 'blur(24px) brightness(0.45) saturate(1.3)';
+    const [x, y, w, h] = fit(true);
+    b.drawImage(img, x - 40, y - 40, w + 80, h + 80);
+    b.restore();
+    b.drawImage(img, ...fit(false));
+  }
+  s.canvas = c;
+  s.fit = config.ledFit;
+  return c;
+}
+
+function coverDraw(s, alpha) {
   ctx.globalAlpha = alpha;
-  ctx.drawImage(img, LED.x + (LED.w - w) / 2, LED.y + (LED.h - h) / 2, w, h);
+  ctx.drawImage(slideCanvas(s), LED.x, LED.y, LED.w, LED.h);
   ctx.globalAlpha = 1;
 }
 
@@ -824,14 +854,14 @@ function drawSlides() {
   const fade = clamp((now - slideSince) / 800, 0, 1);
   ctx.fillStyle = '#000';
   ctx.fillRect(LED.x, LED.y, LED.w, LED.h);
-  if (fade < 1 && prev !== cur) coverDraw(prev.img, 1);
+  if (fade < 1 && prev !== cur) coverDraw(prev, 1);
   // ảnh hơi phóng to dần cho sinh động
   ctx.save();
-  const z = 1 + 0.04 * ((now - slideSince) / dur);
+  const z = 1 + 0.02 * ((now - slideSince) / dur);
   ctx.translate(LED.x + LED.w / 2, LED.y + LED.h / 2);
   ctx.scale(z, z);
   ctx.translate(-(LED.x + LED.w / 2), -(LED.y + LED.h / 2));
-  coverDraw(cur.img, fade);
+  coverDraw(cur, fade);
   ctx.restore();
   // vạch LED mảnh để giống màn hình
   ctx.fillStyle = 'rgba(0,0,0,0.18)';
@@ -1430,7 +1460,7 @@ function drawCaption() {
   const lh = 40;
   const h = lines.length * lh + 26;
   const zoomed = cam.z > 1.1;
-  const y = zoomed ? 1580 : 430;
+  const y = zoomed || slides.length ? 1580 : 430;
   const g = ctx.createLinearGradient(0, y, 0, y + h);
   g.addColorStop(0, 'rgba(90,10,120,0.95)');
   g.addColorStop(1, 'rgba(40,5,70,0.95)');

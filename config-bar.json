@@ -6,7 +6,7 @@
   "showLedScreen": true,
   "ledFolder": "",
   "ledSlideSeconds": 8,
-  "ledFit": "cover",
+  "ledFit": "contain",
   "ledShowText": false,
   "showSpeakers": true,
   "showDiscoBalls": true,
