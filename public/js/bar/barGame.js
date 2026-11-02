@@ -44,7 +44,9 @@ const DEFAULTS = {
   ttsVoice: 'vi-VN-NamMinhNeural',
   captions: true,
   narration: true,
-  narrationSeconds: 35,
+  narrationSeconds: 60,
+  voiceLevel: 'it',
+  voiceGapSeconds: 20,
   danceKeywords: ['quẩy', 'quay', 'nhảy', 'nhay', 'dance', 'lên', 'len', '🔥'],
   messages: {
     join: [
@@ -377,7 +379,7 @@ function updateShow() {
       d.t0 = now;
       sfx.whoosh();
       sfx.laser();
-      announce(line('stage', { name: d.user.name }), 1);
+      announce(line('stage', { name: d.user.name }), 2);
       addToast(`🎤 ${truncate(d.user.name, 18)} lên sân khấu VIP!`, '#7cf7ff');
       return;
     }
@@ -523,10 +525,18 @@ function addToast(text, color = '#fff') {
 const captions = [];
 let caption = null;
 let lastAnnounce = performance.now();
-function announce(text, priority = 0) {
+// Giọng MC đọc ít thôi để không lấn nhạc: các câu khác chỉ hiện chữ.
+// voiceLevel: "it" (mặc định: chỉ mời lên sân khấu + quà lớn), "vua" (thêm quà, theo dõi), "nhieu" (đọc tất cả)
+let lastSpoken = -1e9;
+function announce(text, priority = 0, force = false) {
   if (!text) return;
   lastAnnounce = performance.now();
-  voice.speak(text, priority);
+  const level = { it: 2, vua: 1, nhieu: 0 }[config.voiceLevel] ?? 2;
+  const gap = Math.max(0, Number(config.voiceGapSeconds ?? 20)) * 1000;
+  if (force || (priority >= level && performance.now() - lastSpoken >= gap)) {
+    lastSpoken = performance.now();
+    voice.speak(text, priority);
+  }
   if (config.captions === false) return;
   if (priority === 0 && captions.length >= 2) return;
   captions.push({ text, priority });
@@ -619,7 +629,7 @@ function handleEvent(ev) {
         confettiRain(120);
         coins(x, y, 30);
         addToast(`💎 ${truncate(d.user.name, 16)} tặng ${truncate(giftLabel, 18)}`, '#ffd54a');
-        announce(line('bigGift', { name: d.user.name, gift: giftLabel }), 2);
+        announce(line('bigGift', { name: d.user.name, gift: giftLabel }), 2, true);
       } else if (coinsN >= (Number(config.stageGiftCoins) || tiers.medium)) {
         enqueueStage(d, coinsN, Number(config.stageSeconds) || 6);
         sfx.sparkle();
@@ -642,7 +652,7 @@ function handleEvent(ev) {
       break;
     }
     case 'voiceTest': {
-      announce('Xin chào cả nhà. Chào mừng đến với quán bar. Thả tim để lên sân khấu nào', 2);
+      announce('Xin chào cả nhà. Chào mừng đến với quán bar. Thả tim để lên sân khấu nào', 2, true);
       break;
     }
     case 'reset': {
@@ -1620,6 +1630,8 @@ async function boot() {
   voice.setVoiceEnabled(config.voice !== false);
   voice.setVoiceEngine(params.get('engine') || config.voiceEngine);
   voice.setPreferredVoice(config.ttsVoice);
+  // nhạc nhỏ lại trong lúc MC nói
+  voice.setOnSpeakStart((text) => sfx.duck(Math.min(9000, 1500 + String(text).length * 75)));
   // nhạc riêng: mọi file trong public/assets/nhac-bar (theo thứ tự tên) + danh sách musicFiles
   let musicFiles = Array.isArray(config.musicFiles) ? config.musicFiles.filter(Boolean) : [];
   try {

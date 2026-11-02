@@ -276,6 +276,23 @@ export function startMusic({ file = '', files = [], volume = 0.35, bpm = 124 } =
   startGenerated();
 }
 
+// hạ nhỏ nhạc trong ms mili giây (khi MC nói) rồi trả lại như cũ
+let duckTimer = null;
+let baseBusGain = null;
+export function duck(ms = 4000, level = 0.35) {
+  if (!ac || !musicBus) return;
+  if (baseBusGain == null) baseBusGain = musicBus.gain.value;
+  const t = ac.currentTime;
+  musicBus.gain.cancelScheduledValues(t);
+  musicBus.gain.setTargetAtTime(baseBusGain * level, t, 0.08);
+  if (fileEl) fileEl.volume = fileVolume * level;
+  clearTimeout(duckTimer);
+  duckTimer = setTimeout(() => {
+    if (ac) musicBus.gain.setTargetAtTime(baseBusGain, ac.currentTime, 0.4);
+    if (fileEl) fileEl.volume = fileVolume;
+  }, ms);
+}
+
 export function musicPlaying() {
   return musicOn && ac && ac.state === 'running';
 }
