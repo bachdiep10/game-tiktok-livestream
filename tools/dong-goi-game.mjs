@@ -57,7 +57,8 @@ function copy(src, dst) {
 function zip(dir, out) {
   fs.rmSync(out, { force: true });
   if (process.platform === 'win32') {
-    execFileSync('powershell', ['-NoProfile', '-Command', `Compress-Archive -Path '${dir}' -DestinationPath '${out}' -Force`], { stdio: 'inherit' });
+    // tar có sẵn trên Windows 10/11, tạo ZIP chuẩn (đường dẫn dùng "/"), khác Compress-Archive của PowerShell 5
+    execFileSync('tar', ['-a', '-c', '-f', out, '-C', path.dirname(dir), path.basename(dir)], { stdio: 'inherit' });
   } else {
     execFileSync('zip', ['-qr', out, path.basename(dir)], { cwd: path.dirname(dir), stdio: 'inherit' });
   }
