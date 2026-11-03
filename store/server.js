@@ -37,6 +37,15 @@ const app = express();
 app.set('trust proxy', true);
 app.disable('x-powered-by');
 app.use(express.json({ limit: '200kb' }));
+// Nhiều tiến trình cùng chạy: mỗi yêu cầu API/tải game giữ khoá dữ liệu tới khi trả lời xong
+app.use(async (req, res, next) => {
+  if (!req.path.startsWith('/api/') && !req.path.startsWith('/tai-ve/')) return next();
+  const release = await db.acquire();
+  res.locals.release = release;
+  res.on('finish', release);
+  res.on('close', release);
+  next();
+});
 
 // ---------- tiện ích ----------
 const hmac = (data) => crypto.createHmac('sha256', D.secret).update(String(data)).digest('hex');
@@ -583,10 +592,13 @@ let bankBusy = false;
 async function checkBankEmails() {
   if (bankBusy || !imapReady()) return { skipped: true };
   bankBusy = true;
+  let release = null;
+  db.refresh();
   const s = D.settings;
   let added = 0, matched = 0;
   try {
     const r = await fetchNewMails({ host: s.imapHost, port: s.imapPort, user: s.imapUser, pass: s.imapPass, folder: s.imapFolder, from: s.imapFrom }, D.bank.state);
+    release = await db.acquire(); // khoá dữ liệu trong lúc ghi giao dịch (đã nạp lại bản mới nhất)
     for (const m of r.mails) {
       const p = parseBankEmail(m.text);
       if (!p || !p.credit) continue;
@@ -599,8 +611,10 @@ async function checkBankEmails() {
     D.bank.lastError = String(e.responseText || e.message || e).slice(0, 300);
     console.error('[ngân hàng] lỗi đọc email:', D.bank.lastError);
   } finally {
+    if (!release) { release = await db.acquire(); }
     D.bank.lastRun = now();
     db.save();
+    release();
     bankBusy = false;
   }
   return { added, matched, error: D.bank.lastError };
@@ -615,6 +629,7 @@ app.get('/api/admin/bank', (req, res) => {
 
 app.post('/api/admin/bank/check', async (req, res) => {
   if (!imapReady()) return fail(res, 400, 'Chưa bật hoặc chưa nhập đủ Gmail và mật khẩu ứng dụng trong Cài đặt.');
+  res.locals.release(); // nhả khoá: việc đọc email tự khoá khi ghi
   while (bankBusy) await new Promise(r => setTimeout(r, 300));
   res.json({ ok: true, ...(await checkBankEmails()) });
 });

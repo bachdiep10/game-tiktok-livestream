@@ -216,55 +216,124 @@ function loadJsonSafe(file) {
   }
 }
 
+function normalize(data) {
+  const d = {
+    settings: { ...DEFAULT_SETTINGS, ...(data.settings || {}) },
+    plans: data.plans || structuredClone(DEFAULT_PLANS),
+    games: data.games || structuredClone(DEFAULT_GAMES).map(g => ({ ...g, createdAt: Date.now() })),
+    faq: data.faq || structuredClone(DEFAULT_FAQ),
+    orders: data.orders || [],
+    licenses: data.licenses || [],
+    users: data.users || [],
+    bankTxns: data.bankTxns || [],
+    bank: data.bank || { state: {}, lastRun: 0, lastError: '' },
+    admin: data.admin || { passwordHash: '', salt: '' },
+    secret: data.secret || '',
+    seq: data.seq || 0,
+    seededGames: data.seededGames || (data.games ? data.games.map(g => g.id) : DEFAULT_GAMES.map(g => g.id)),
+  };
+  // Game mặc định mới ra (vd. Trà Đá Vỉa Hè) được thêm sẵn ở trạng thái ẩn vào dữ liệu cũ.
+  // Quản trị tải file game lên rồi bật "Hiện" là key combo còn suất tự nhận game.
+  // Game đã từng thêm rồi bị xoá thì không thêm lại.
+  for (const def of DEFAULT_GAMES) {
+    if (d.seededGames.includes(def.id)) continue;
+    d.seededGames.push(def.id);
+    if (d.games.some(g => g.id === def.id)) continue;
+    d.games.push({ ...structuredClone(def), visible: false, createdAt: Date.now() });
+  }
+  // Bổ sung hướng dẫn mặc định cho game có sẵn (dữ liệu tạo từ bản cũ)
+  for (const g of d.games) {
+    const def = DEFAULT_GAMES.find(x => x.id === g.id);
+    if (def && g.guide === undefined) { g.guide = def.guide; g.version = g.version || def.version; g.guideVideo = g.guideVideo || ''; }
+  }
+  return d;
+}
+
+const sleepSync = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+
+// Dữ liệu dùng chung giữa nhiều tiến trình Node (Hostinger có thể chạy vài tiến trình cùng lúc hoặc chồng nhau khi
+// triển khai lại). Mỗi yêu cầu giữ khoá (giữa các tiến trình) trong lúc xử lý: nạp lại file nếu tiến trình khác vừa ghi,
+// sửa dữ liệu, ghi ngay, rồi nhả khoá. Nhờ vậy hai tiến trình không ghi đè mất dữ liệu của nhau.
 export class DB {
   constructor(dir) {
     this.dir = dir;
     this.file = path.join(dir, 'db.json');
+    this.lockDir = this.file + '.lock';
     fs.mkdirSync(dir, { recursive: true });
-    let data = {};
-    if (fs.existsSync(this.file)) data = loadJsonSafe(this.file);
-    this.data = {
-      settings: { ...DEFAULT_SETTINGS, ...(data.settings || {}) },
-      plans: data.plans || structuredClone(DEFAULT_PLANS),
-      games: data.games || structuredClone(DEFAULT_GAMES).map(g => ({ ...g, createdAt: Date.now() })),
-      faq: data.faq || structuredClone(DEFAULT_FAQ),
-      orders: data.orders || [],
-      licenses: data.licenses || [],
-      users: data.users || [],
-      bankTxns: data.bankTxns || [],
-      bank: data.bank || { state: {}, lastRun: 0, lastError: '' },
-      admin: data.admin || { passwordHash: '', salt: '' },
-      secret: data.secret || '',
-      seq: data.seq || 0,
-      seededGames: data.seededGames || (data.games ? data.games.map(g => g.id) : DEFAULT_GAMES.map(g => g.id)),
-    };
-    // Game mặc định mới ra (vd. Trà Đá Vỉa Hè) được thêm sẵn ở trạng thái ẩn vào dữ liệu cũ.
-    // Quản trị tải file game lên rồi bật "Hiện" là key combo còn suất tự nhận game.
-    // Game đã từng thêm rồi bị xoá thì không thêm lại.
-    for (const def of DEFAULT_GAMES) {
-      if (this.data.seededGames.includes(def.id)) continue;
-      this.data.seededGames.push(def.id);
-      if (this.data.games.some(g => g.id === def.id)) continue;
-      this.data.games.push({ ...structuredClone(def), visible: false, createdAt: Date.now() });
-    }
-    // Bổ sung hướng dẫn mặc định cho game có sẵn (dữ liệu tạo từ bản cũ)
-    for (const g of this.data.games) {
-      const def = DEFAULT_GAMES.find(d => d.id === g.id);
-      if (def && g.guide === undefined) { g.guide = def.guide; g.version = g.version || def.version; g.guideVideo = g.guideVideo || ''; }
-    }
-    this._timer = null;
-    this.saveNow();
+    this.mtime = '';
+    this.held = false;
+    this._queue = Promise.resolve();
+    this.withLockSync(() => {
+      const data = fs.existsSync(this.file) ? loadJsonSafe(this.file) : {};
+      this.data = normalize(data);
+      this.write();
+    });
   }
-  save() {
-    clearTimeout(this._timer);
-    this._timer = setTimeout(() => this.saveNow(), 200);
+  _tryLock() {
+    try { fs.mkdirSync(this.lockDir); return true; } catch (e) {
+      if (e.code !== 'EEXIST') throw e;
+      // khoá bỏ quên (tiến trình chết giữa chừng) quá 15 giây thì gỡ
+      try { if (Date.now() - fs.statSync(this.lockDir).mtimeMs > 15000) fs.rmdirSync(this.lockDir); } catch { /* bỏ qua */ }
+      return false;
+    }
   }
+  _unlock() {
+    clearInterval(this._beat);
+    this.held = false;
+    try { fs.rmdirSync(this.lockDir); } catch { /* đã bị gỡ */ }
+  }
+  _hold() {
+    this.held = true;
+    // giữ khoá lâu (vd. tải file game lên) thì làm mới thời gian để tiến trình khác không coi là bỏ quên
+    this._beat = setInterval(() => { const t = new Date(); try { fs.utimesSync(this.lockDir, t, t); } catch { /* bỏ qua */ } }, 3000);
+    this._beat.unref?.();
+    this.refresh();
+  }
+  // Khoá bất đồng bộ: trong 1 tiến trình xếp hàng lần lượt, giữa các tiến trình dùng thư mục khoá. Trả về hàm nhả khoá.
+  acquire() {
+    let release;
+    const mine = new Promise(r => { release = r; });
+    const prev = this._queue;
+    this._queue = prev.then(() => mine);
+    return prev.then(async () => {
+      for (let i = 0; !this._tryLock(); i++) {
+        if (i > 500) break; // chờ tối đa ~10 giây rồi vẫn làm, tránh treo web
+        await new Promise(r => setTimeout(r, 20));
+      }
+      this._hold();
+      let done = false;
+      return () => { if (done) return; done = true; this._unlock(); release(); };
+    });
+  }
+  withLockSync(fn) {
+    const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+    for (let i = 0; !this._tryLock() && i < 500; i++) sleep(20);
+    try { return fn(); } finally { clearInterval(this._beat); try { fs.rmdirSync(this.lockDir); } catch { /* bỏ qua */ } }
+  }
+  fileMtime() { try { const st = fs.statSync(this.file); return `${st.mtimeMs}:${st.size}:${st.ino}`; } catch { return ''; } }
+  // Tiến trình khác đã ghi thì nạp lại (giữ nguyên đối tượng this.data)
+  refresh() {
+    const m = this.fileMtime();
+    if (!m || m === this.mtime) return false;
+    try {
+      const fresh = normalize(JSON.parse(fs.readFileSync(this.file, 'utf8')));
+      for (const k of Object.keys(this.data)) if (!(k in fresh)) delete this.data[k];
+      Object.assign(this.data, fresh);
+      this.mtime = m;
+      return true;
+    } catch { return false; }
+  }
+  save() { this.saveNow(); }
   saveNow() {
-    clearTimeout(this._timer);
-    // Tên file tạm riêng cho từng tiến trình: khi Hostinger khởi động lại, bản cũ và bản mới không ghi chồng lên nhau
+    if (this.held) return this.write();
+    this.withLockSync(() => this.write());
+  }
+  write() {
+    // Tên file tạm riêng cho từng tiến trình, giữ db.json.bak trước mỗi lần ghi
     const tmp = `${this.file}.${process.pid}.tmp`;
     fs.writeFileSync(tmp, JSON.stringify(this.data, null, 1));
     try { if (fs.existsSync(this.file)) fs.copyFileSync(this.file, this.file + '.bak'); } catch { /* bỏ qua */ }
     fs.renameSync(tmp, this.file);
+    this.mtime = this.fileMtime();
   }
 }
