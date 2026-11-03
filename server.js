@@ -9,12 +9,13 @@ import { WebSocketServer } from 'ws';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const CONFIG_PATH = path.join(__dirname, 'config.json');
+const BAR_CONFIG_PATH = path.join(__dirname, 'config-bar.json');
 
-function loadConfig() {
+function loadConfig(file = CONFIG_PATH) {
   try {
-    return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
+    return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch (err) {
-    console.warn('[config] Không đọc được config.json, dùng mặc định:', err.message);
+    console.warn(`[config] Không đọc được ${path.basename(file)}, dùng mặc định:`, err.message);
     return {};
   }
 }
@@ -31,6 +32,13 @@ const MIME = {
   '.jpg': 'image/jpeg',
   '.svg': 'image/svg+xml',
   '.ico': 'image/x-icon',
+  '.mp3': 'audio/mpeg',
+  '.m4a': 'audio/mp4',
+  '.aac': 'audio/aac',
+  '.ogg': 'audio/ogg',
+  '.opus': 'audio/ogg',
+  '.wav': 'audio/wav',
+  '.webm': 'audio/webm',
 };
 
 const server = http.createServer((req, res) => {
@@ -44,6 +52,64 @@ const server = http.createServer((req, res) => {
   if (pathname === '/config.json') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(loadConfig()));
+    return;
+  }
+  if (pathname === '/bar-music.json') {
+    // danh sách bài hát trong thư mục public/assets/nhac-bar, xếp theo tên file
+    const dir = path.join(PUBLIC_DIR, 'assets', 'nhac-bar');
+    let list = [];
+    try {
+      list = fs.readdirSync(dir)
+        .filter((f) => /\.(mp3|m4a|aac|ogg|wav|webm|opus)$/i.test(f))
+        .sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
+        .map((f) => `assets/nhac-bar/${encodeURIComponent(f)}`);
+    } catch {
+      /* chưa có thư mục */
+    }
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(list));
+    return;
+  }
+  if (pathname === '/bar-led.json' || pathname.startsWith('/bar-led/')) {
+    // ảnh cho màn LED quán bar: thư mục trong config-bar.json "ledFolder"
+    // (đường dẫn trên máy, vd. D:\\anh-led) hoặc mặc định public/assets/anh-led
+    const cfgFolder = String(loadConfig(BAR_CONFIG_PATH).ledFolder || '').trim();
+    const dir = cfgFolder ? path.resolve(__dirname, cfgFolder) : path.join(PUBLIC_DIR, 'assets', 'anh-led');
+    const isImg = (f) => /\.(png|jpe?g|webp|gif|bmp)$/i.test(f);
+    if (pathname === '/bar-led.json') {
+      let list = [];
+      try {
+        list = fs.readdirSync(dir)
+          .filter(isImg)
+          .sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
+          .map((f) => `/bar-led/${encodeURIComponent(f)}`);
+      } catch {
+        if (cfgFolder) console.warn(`[led] Không mở được thư mục ảnh: ${dir}`);
+      }
+      res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+      res.end(JSON.stringify(list));
+      return;
+    }
+    const name = path.basename(pathname.slice('/bar-led/'.length));
+    if (!isImg(name)) {
+      res.writeHead(404).end();
+      return;
+    }
+    fs.readFile(path.join(dir, name), (err, data) => {
+      if (err) {
+        res.writeHead(404).end();
+        return;
+      }
+      const ext = path.extname(name).toLowerCase();
+      const type = { '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp', '.bmp': 'image/bmp' }[ext] || 'image/jpeg';
+      res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' });
+      res.end(data);
+    });
+    return;
+  }
+  if (pathname === '/bar-config.json') {
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(loadConfig(BAR_CONFIG_PATH)));
     return;
   }
   const filePath = path.normalize(path.join(PUBLIC_DIR, pathname));
@@ -115,7 +181,9 @@ async function handleTts(url, res) {
     return;
   }
   const cfg = loadConfig();
-  const voice = String(cfg.ttsVoice || 'vi-VN-HoaiMyNeural');
+  // trang game có thể chọn giọng riêng (vd. quán bar dùng giọng nam NamMinh)
+  const askVoice = String(url.searchParams.get('voice') || '');
+  const voice = /^[a-z]{2}-[A-Z]{2}-[A-Za-z]+Neural$/.test(askVoice) ? askVoice : String(cfg.ttsVoice || 'vi-VN-HoaiMyNeural');
   const rate = /^[+-]?\d{1,3}%$/.test(String(cfg.ttsRate)) ? String(cfg.ttsRate).replace(/^(\d)/, '+$1') : '-5%';
   const key = `${voice}|${rate}|${lang}|${text}`;
   try {
@@ -156,7 +224,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.8.2';
+const VERSION = '1.9.9';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 
 function broadcast(msg) {
@@ -398,6 +466,7 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(`  🙏 Chánh điện LIVE đã chạy (phiên bản ${VERSION})`);
   console.log(`  - Màn hình game (thêm vào OBS / LIVE Studio): http://127.0.0.1:${PORT}/game.html`);
   console.log(`  - Bảng điều khiển + giả lập:                   http://127.0.0.1:${PORT}/control.html`);
+  console.log(`  🪩 Quán bar: game  http://127.0.0.1:${PORT}/bar.html   ·  điều khiển  http://127.0.0.1:${PORT}/bar-control.html`);
   console.log('');
   const startUser = process.env.TIKTOK_USERNAME || config.tiktokUsername;
   if (startUser) connectTikTok(startUser);

@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Quán bar LIVE</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #0b0418; color: #efe6ff; }
+    .panel { background: #170a2e; border-color: #3d2370; }
+    h1 { color: #ff7ae0; }
+    h2 { color: #7cf7ff; }
+    .status { background: #241243; }
+    input, code, .log { background: #0b0418; border-color: #3d2370; }
+    button { background: #2c1656; border-color: #5b34a8; }
+    button:hover { background: #3c1f72; }
+    button.primary { background: #c026d3; border-color: #e879f9; }
+    .hint, .log time { color: #b9a8e0; }
+    .log li { border-color: #170a2e; }
+    .preview iframe { border-color: #3d2370; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>🪩 Quán bar LIVE <a href="control.html" style="font-size:15px;color:#9fe3ff;margin-left:10px">→ chuyển sang Chánh điện 🙏</a></h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập sự kiện (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button data-sim="join">🪂 Người vào (rơi xuống)</button>
+        <button data-sim="chatDance">🔥 Bình luận "quẩy"</button>
+        <button data-sim="chat">💬 Bình luận ngẫu nhiên</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="like30">❤️ x30 (lên sân khấu)</button>
+        <button data-sim="follow">👑 Theo dõi</button>
+        <button data-sim="share">📣 Chia sẻ</button>
+        <button data-sim="gift1">🌹 Hoa hồng (1 xu)</button>
+        <button data-sim="gift10">🎁 Quà 30 xu</button>
+        <button data-sim="gift100">💎 Quà 299 xu</button>
+        <button data-sim="voiceTest">🔊 Thử giọng MC</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử...">
+        <button id="btnChat">Gửi</button>
+      </div>
+
+      <h2>3. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="20">+20 người vào</button>
+        <button data-bulk="60">+60 người vào</button>
+        <button id="btnGiftStorm">Mưa quà (15 quà)</button>
+        <button id="btnLikeStorm">Bão tim (150 tim)</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hết nhân vật</button>
+      </div>
+
+      <h2>4. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-bar.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật nhạc + giọng MC ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/bar/barControl.js"></script>
+</body>
+</html>

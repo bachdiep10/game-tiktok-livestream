@@ -115,6 +115,49 @@ public/js/audio.js   Chuông, mõ, khánh, nhạc thiền (WebAudio) + giọng �
 public/js/fake.js    Dữ liệu giả cho Test Lab
 ```
 
+---
+
+# 🪩 Quán bar LIVE (game thứ hai, dùng chung máy chủ)
+
+Người xem vào LIVE sẽ được **thả từ trên trời xuống sàn nhảy** và tự nhảy theo nhạc.
+Ai **thả tim nhiều** hoặc **tặng quà** sẽ được mời **lên sân khấu VIP** phía trên, camera zoom cận cảnh điệu nhảy vài giây.
+
+| Hành động trên TikTok | Trong game |
+|---|---|
+| Vào phòng / bình luận lần đầu | Rơi từ trên trời xuống sàn, có cột sáng + tiếng "bịch" |
+| Bình luận | Bong bóng chat, +5 điểm (mỗi người tối đa 1 lần / 5 giây); có chữ "quẩy", "nhảy", "🔥" thì nhảy tưng ngay |
+| Thả tim | Nhảy sung + tim bay; mỗi tim = 1 điểm. Đủ 30 điểm (tim + bình luận + chia sẻ) → vào hàng chờ sân khấu |
+| Quà nhỏ (dưới 10 xu) | Pháo sáng + tiền vàng; mỗi xu = 20 điểm |
+| Quà từ 10 xu | Lên sân khấu ngay (được ưu tiên theo giá trị quà), pháo giấy, khói CO2 |
+| Quà từ 100 xu | Pháo hoa toàn màn hình, còi hơi, lên sân khấu trước mọi người, 10 giây |
+| Theo dõi | Đội vương miện 👑, +15 điểm |
+| Chia sẻ | Pháo giấy, +15 điểm |
+| Cả phòng thả tim đầy thanh "ĐỘ QUẨY" | BÙNG NỔ: nhạc lên cao trào, laser, nháy đèn, mưa pháo giấy |
+
+Sàn còn có vài bóng người nhảy **không tên** cho đỡ vắng; mỗi người xem thật vào sẽ thay chỗ một bóng.
+
+### Chạy trên Windows
+1. Giải nén, nhấp đúp **`run-bar.bat`** (lần đầu tự cài thư viện). Trình duyệt mở trang điều khiển `bar-control.html`.
+2. Bấm các nút ở mục **Giả lập** để thử. Nút "❤️ x30" và "🎁 Quà 30 xu" sẽ đưa người lên sân khấu.
+3. Khi đang LIVE: nhập username TikTok → **Kết nối**.
+4. Nhấp đúp **`mo-cua-so-bar.bat`** để mở game trong cửa sổ Edge riêng, rồi trong TikTok LIVE Studio thêm nguồn **Chụp cửa sổ** chọn cửa sổ đó (hoặc nguồn Link/Browser: `http://127.0.0.1:3000/bar.html`, 1080×1920).
+   Tắt ô "Bật nhạc" ở khung xem trước để không bị phát tiếng hai lần.
+
+### Tuỳ chỉnh (`config-bar.json`)
+- `clubName`, `subtitle`: tên quán, dòng giới thiệu.
+- `stagePoints` (30): số điểm để lên sân khấu; `pointsPerComment` (5), `pointsPerShare` (15), `pointsPerFollow` (15), `commentCooldownSeconds` (5); `pointsPerCoin` (20); `stageGiftCoins` (10): quà từ mức này lên ngay.
+- `stageSeconds` / `stageSecondsBig`: thời gian trên sân khấu; `cameraZoom`: độ zoom camera.
+- `hypeMax`: lượng tim cần để "BÙNG NỔ"; `ambientCrowd`: số bóng người không tên.
+- **Nhạc riêng**: chép file `.mp3`/`.m4a` vào thư mục `public/assets/nhac-bar/`. Game phát lần lượt theo tên file (đặt `01 ...`, `02 ...` để chọn thứ tự), hết bài cuối quay lại bài đầu. Bài nào lỗi sẽ được bỏ qua. Trang điều khiển ghi rõ đã tìm thấy bao nhiêu bài. Nếu dưới màn LED hiện "🔇 Bấm vào game để bật nhạc" là trình duyệt đang chặn tự phát nhạc: bấm chuột một lần vào màn hình game. Thư mục trống thì dùng nhạc sàn tự tạo (không bản quyền). Lưu ý: nhạc có bản quyền có thể bị TikTok tắt tiếng hoặc cảnh cáo LIVE.
+- **Màn LED chiếu ảnh**: chép ảnh (.jpg/.png/.webp) vào `public/assets/anh-led/` (hoặc ghi thư mục bất kỳ trên máy vào `ledFolder`, ví dụ `"D:\\anh-led"`). Màn LED chiếu lần lượt theo tên file, mỗi ảnh `ledSlideSeconds` giây (mặc định 8), chuyển mờ dần; thêm/bớt ảnh tự cập nhật sau ~30 giây. `ledFit`: `contain` (mặc định, hiện trọn ảnh, phần thừa lấp bằng ảnh làm mờ) hoặc `cover` (lấp đầy, cắt bớt mép). `ledShowText: true` để vẫn hiện chữ kêu gọi trên ảnh. `showStageDJ: false` để ẩn nhân vật DJ trên bục.
+- **Ảnh nền riêng**: vẽ lại trên file `nen-quan-bar.png` (1080×1920, giữ đúng vị trí màn LED, sân khấu, sàn nhảy theo `nen-quan-bar-vung-bo-tri.png`), chép vào `public/assets` rồi ghi `"backgroundImage": "assets/ten-anh.png"`. Muốn game không vẽ đè lên phần nào của ảnh thì đặt `false` cho `showLedScreen`, `showSpeakers`, `showDiscoBalls`, `showStageLights`, `showFloorLights`.
+- **DJ**: có sẵn nhân vật DJ vẽ bằng code (tóc vàng, yếm ánh kim) ở màn LED sau sân khấu và đứng sau bàn DJ trên bục. Muốn dùng ảnh DJ riêng trên màn LED: chép ảnh vào `public/assets` rồi ghi `"djImage": "assets/ten-anh.jpg"` (chỉ dùng ảnh bạn có quyền sử dụng). `musicLabel`: chữ hiện dưới màn LED khi không có tên bài.
+- **Giọng MC đọc ít**: `voiceLevel` = `"it"` (mặc định: chỉ đọc khi mời lên sân khấu và khi có quà lớn), `"vua"` (thêm quà nhỏ, theo dõi), `"nhieu"` (đọc tất cả). Hai câu đọc cách nhau ít nhất `voiceGapSeconds` giây (mặc định 20). Các câu không đọc vẫn hiện chữ. Nhạc tự nhỏ lại khi MC nói.
+- `ttsVoice`: giọng MC, mặc định giọng nam `vi-VN-NamMinhNeural` (đổi `vi-VN-HoaiMyNeural` nếu muốn giọng nữ).
+- `messages`: các câu MC đọc.
+
+Mã nguồn game quán bar: `public/bar.html`, `public/bar-control.html`, `public/js/bar/`.
+
 ## Website bán game + quản lý key
 
 Thư mục [`store/`](store/README.md) là website bán các game này kèm license key (1 key = 1 máy), trang quản trị và API kiểm tra key cho game.

@@ -1,0 +1,3 @@
+Chep anh (.jpg, .png, .webp) vao thu muc nay, man LED se chieu lan luot theo ten file.
+Muon dung thu muc khac tren may: sua "ledFolder" trong config-bar.json, vi du "D:\\anh-led".
+Them/bot anh thi game tu cap nhat sau khoang 30 giay.
