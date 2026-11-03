@@ -1,0 +1,67 @@
+{
+  "_ghi_chu": "Cấu hình game Rồng rắn lên mây. Sửa xong lưu lại rồi tải lại trang game (F5).",
+  "title": "RỒNG RẮN LÊN MÂY",
+  "subtitle": "Vào LIVE là nối đuôi rồng • Thả tim để rồng chạy • Tặng quà để bay lên mây",
+  "backgroundImage": "",
+  "_ghi_chu_van_choi": "maxDragon: rồng dài tối đa bao nhiêu khúc. roundSeconds: thời gian dạo sân trước khi hỏi thầy thuốc. chaseSeconds: thời gian thầy thuốc đuổi. caughtSeconds: bị bắt ngồi phạt bao lâu. releaseLikes: thả bao nhiêu tim thì được thả về.",
+  "maxDragon": 30,
+  "ambientCrowd": 5,
+  "idleMinutes": 10,
+  "roundSeconds": 40,
+  "chaseSeconds": 20,
+  "caughtSeconds": 40,
+  "releaseLikes": 20,
+  "_ghi_chu_toc_do": "dragonSpeed: tốc độ rồng chạy, doctorSpeed: tốc độ thầy thuốc. Thầy thuốc nhanh hơn rồng một chút, thả tim thì rồng nhanh thêm tối đa likeBoost (1.2 = thêm 120%).",
+  "dragonSpeed": 190,
+  "doctorSpeed": 215,
+  "likeBoost": 1.2,
+  "hypeMax": 1500,
+  "flySeconds": 11,
+  "giftTiers": {
+    "medium": 10,
+    "big": 100
+  },
+  "sound": true,
+  "music": true,
+  "musicFiles": [],
+  "musicVolume": 0.3,
+  "ambienceVolume": 0.08,
+  "voice": true,
+  "voiceLevel": "vua",
+  "voiceGapSeconds": 10,
+  "voiceJoin": true,
+  "voiceEngine": "auto",
+  "ttsVoice": "vi-VN-HoaiMyNeural",
+  "captions": true,
+  "narration": true,
+  "narrationSeconds": 45,
+  "commands": {
+    "sing": ["rồng rắn", "lên mây", "rong ran len may"],
+    "wiggle": ["lúc lắc", "lắc lư", "lắc đi"],
+    "run": ["chạy mau", "chạy đi", "chạy nhanh", "chạy thôi"],
+    "protect": ["bảo vệ", "che chở", "che đuôi"],
+    "fire": ["xin lửa", "xin ít lửa"],
+    "askHead": ["khúc đầu", "xin khúc đầu"],
+    "askMid": ["khúc giữa", "xin khúc giữa"],
+    "askTail": ["khúc đuôi", "xin khúc đuôi", "tha hồ mà đuổi"],
+    "ransom": ["chuộc", "về đội", "cứu tôi", "cứu em"]
+  },
+  "messages": {
+    "join": [
+      "Mời {name} nối vào đuôi rồng",
+      "{name} nắm vai bạn phía trước nào",
+      "Rồng dài thêm một khúc, chào {name}",
+      "Chào {name}, vào chơi rồng rắn lên mây"
+    ],
+    "reminder": [
+      "Thả tim để rồng chạy nhanh, không bị thầy thuốc bắt",
+      "Bình luận rồng rắn để cả đàn cùng hát",
+      "Bình luận lúc lắc để rồng uốn éo",
+      "Bình luận khúc đuôi để thầy thuốc bắt đầu đuổi",
+      "Ai bị bắt thì bình luận chuộc để về đội",
+      "Tặng quà để có bùa hộ mệnh, không sợ bị bắt",
+      "Chia sẻ để được đứng gần đầu rồng",
+      "Thả tim thật nhiều cho rồng bay lên mây"
+    ]
+  }
+}

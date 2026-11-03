@@ -71,6 +71,16 @@ export const GUIDE_TRA_DA = `1. Cài Node.js bản LTS tại nodejs.org (chỉ l
 8. Bấm đúp mo-cua-so-tra-da.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_RONG_RAN = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\RongRan. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-rong-ran.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập ("rồng rắn", "khúc đuôi", "Đuổi bắt ngay"...) để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Người xem vào LIVE là nắm vai nhau nối thành đuôi rồng. Mỗi ván rồng dạo sân, hỏi thầy thuốc, rồi thầy thuốc đuổi bắt khúc đuôi: thả tim càng nhiều rồng chạy càng nhanh. Bình luận: rồng rắn, lúc lắc, chạy mau, bảo vệ, xin lửa, khúc đầu, khúc giữa, khúc đuôi, chuộc. Quà nhỏ có bùa hộ mệnh, quà từ 10 xu làm thầy thuốc trượt ngã, quà từ 100 xu làm đầu rồng và cả rồng bay lên mây.
+7. Nhạc riêng (nếu muốn): chép MP3 vào public\\assets\\nhac-rong-ran. Đổi thời gian ván, tốc độ, câu thoại: sửa config-rong-ran.json.
+8. Bấm đúp mo-cua-so-rong-ran.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 const DEFAULT_GAMES = [
   {
     id: 'chanh-dien', name: 'Chánh Điện Lễ Phật',
@@ -99,6 +109,16 @@ const DEFAULT_GAMES = [
     guide: GUIDE_TRA_DA, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 3, isNew: true,
+  },
+  {
+    id: 'rong-ran', name: 'Rồng Rắn Lên Mây',
+    tagline: 'Người xem nối đuôi thành rồng, chạy trốn ông thầy thuốc',
+    description: 'Trò chơi dân gian ở sân đình: người xem vào LIVE là nắm vai nhau nối thành đuôi rồng. Mỗi ván rồng hát "Rồng rắn lên mây", hỏi thầy thuốc xin khúc đầu, khúc giữa, khúc đuôi, rồi thầy thuốc đuổi bắt khúc đuôi. Thả tim để rồng chạy nhanh, tặng quà để có bùa hộ mệnh, làm đầu rồng và bay lên mây.',
+    features: ['Ván chơi tự chạy, có đuổi bắt hồi hộp', 'Thả tim = rồng chạy nhanh', 'Quà = bùa hộ mệnh, đầu rồng, rồng vàng bay lên mây', 'Giọng đọc AI tiếng Việt', 'Nhạc sáo trúc + trống hội tự tạo'],
+    image: '/media/rong-ran.jpg', video: '/media/rong-ran.mp4', download: '', version: '2.1.0',
+    guide: GUIDE_RONG_RAN, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 4, isNew: true,
   },
 ];
 
