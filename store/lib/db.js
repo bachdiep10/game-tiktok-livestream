@@ -173,13 +173,56 @@ const DEFAULT_SETTINGS = {
   guideUrl: '',
 };
 
+// Lấy khối JSON hoàn chỉnh đầu tiên trong chuỗi (bỏ phần rác dính phía sau)
+function firstJsonObject(text) {
+  const start = text.indexOf('{');
+  if (start < 0) return null;
+  let depth = 0, inStr = false, esc = false;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inStr) {
+      if (esc) esc = false;
+      else if (c === '\\') esc = true;
+      else if (c === '"') inStr = false;
+    } else if (c === '"') inStr = true;
+    else if (c === '{') depth++;
+    else if (c === '}' && --depth === 0) return text.slice(start, i + 1);
+  }
+  return null;
+}
+
+// Đọc db.json; nếu file hỏng (vd. 2 tiến trình cùng ghi khi khởi động lại) thì giữ bản hỏng làm bản sao
+// rồi cứu phần JSON hoàn chỉnh, hoặc dùng bản dự phòng db.json.bak. Không bao giờ ghi đè dữ liệu mà không giữ bản sao.
+function loadJsonSafe(file) {
+  const text = fs.readFileSync(file, 'utf8');
+  try { return JSON.parse(text); } catch (e) {
+    const copy = `${file}.hong-${Date.now()}`;
+    fs.copyFileSync(file, copy);
+    console.error(`[dữ liệu] db.json bị hỏng (${e.message}). Đã giữ bản sao: ${copy}`);
+    const candidates = [];
+    const head = firstJsonObject(text);
+    if (head) candidates.push(['phần đầu của db.json', head]);
+    if (fs.existsSync(file + '.bak')) candidates.push(['db.json.bak', fs.readFileSync(file + '.bak', 'utf8')]);
+    for (const [name, t] of candidates) {
+      try {
+        const data = JSON.parse(t);
+        if (data && typeof data === 'object' && (data.settings || data.orders || data.admin)) {
+          console.error(`[dữ liệu] Đã khôi phục từ ${name}.`);
+          return data;
+        }
+      } catch { /* thử nguồn tiếp theo */ }
+    }
+    throw new Error(`db.json bị hỏng và không tự khôi phục được. Bản sao ở ${copy}`);
+  }
+}
+
 export class DB {
   constructor(dir) {
     this.dir = dir;
     this.file = path.join(dir, 'db.json');
     fs.mkdirSync(dir, { recursive: true });
     let data = {};
-    if (fs.existsSync(this.file)) data = JSON.parse(fs.readFileSync(this.file, 'utf8'));
+    if (fs.existsSync(this.file)) data = loadJsonSafe(this.file);
     this.data = {
       settings: { ...DEFAULT_SETTINGS, ...(data.settings || {}) },
       plans: data.plans || structuredClone(DEFAULT_PLANS),
@@ -218,8 +261,10 @@ export class DB {
   }
   saveNow() {
     clearTimeout(this._timer);
-    const tmp = this.file + '.tmp';
+    // Tên file tạm riêng cho từng tiến trình: khi Hostinger khởi động lại, bản cũ và bản mới không ghi chồng lên nhau
+    const tmp = `${this.file}.${process.pid}.tmp`;
     fs.writeFileSync(tmp, JSON.stringify(this.data, null, 1));
+    try { if (fs.existsSync(this.file)) fs.copyFileSync(this.file, this.file + '.bak'); } catch { /* bỏ qua */ }
     fs.renameSync(tmp, this.file);
   }
 }
