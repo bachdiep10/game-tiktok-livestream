@@ -44,7 +44,7 @@
   <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
 
   <script type="module">
-    import { $, $$, api, esc, moneyFull, copy, toast, applyBrand, me, catalog, zaloLink } from '/js/common.js';
+    import { $, $$, api, esc, moneyFull, copy, toast, applyBrand, me, catalog, zaloLink, gameList } from '/js/common.js';
     const q = new URLSearchParams(location.search);
     const next = q.get('next');
     const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
@@ -100,12 +100,7 @@
             <span>Dùng gần nhất: <b>${fmt(l.lastSeen)}</b></span>
             <span>Lượt chuyển máy còn: <b>${l.movesLeft}</b></span>
           </div>
-          <div class="dl">${l.games.map(g => `
-            <${g.download ? `a href="${esc(g.download)}" target="_blank" rel="noopener"` : 'div'}>
-              <img src="${esc(g.image)}" alt=""><span class="grow"><b>${esc(g.name)}</b><br><small class="note">${g.download ? 'Bấm để tải game' : 'Link tải sẽ được gửi qua Zalo'}</small></span>
-              ${g.download ? '<span class="btn sm">Tải về</span>' : ''}
-            </${g.download ? 'a' : 'div'}>`).join('')}
-          </div>
+          ${gameList(l.games)}
           ${!l.allGames && l.slots > l.games.length ? `<p class="note">Còn ${l.slots - l.games.length} suất: game mới ra mắt sẽ tự thêm vào key này.</p>` : ''}
           ${l.allGames ? '<p class="note">Gói Trọn Bộ: mọi game mới tự có trong key này.</p>' : ''}
           ${l.machineName || l.activatedAt ? `<button class="btn ghost sm" style="margin-top:12px" data-move="${esc(l.key)}" ${l.status !== 'active' ? 'disabled' : ''}>🔄 Chuyển key sang máy khác</button>` : ''}

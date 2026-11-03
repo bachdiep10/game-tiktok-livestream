@@ -161,3 +161,9 @@ Mã nguồn game quán bar: `public/bar.html`, `public/bar-control.html`, `publi
 ## Website bán game + quản lý key
 
 Thư mục [`store/`](store/README.md) là website bán các game này kèm license key (1 key = 1 máy), trang quản trị và API kiểm tra key cho game.
+
+## Bán game có bản quyền (license key)
+
+- Mỗi game chạy cần key: chưa kích hoạt thì mở trang `http://127.0.0.1:3000/kich-hoat.html`. Mã nguồn khoá nằm trong `license/`.
+- Đóng gói bản bán (mỗi game 1 ZIP riêng, kèm `HUONG-DAN.txt`): `node tools/dong-goi-game.mjs` → thư mục `dist/`. Sau đó vào Quản trị > Game > Sửa > "Tải file lên".
+- Khi phát triển trên máy mình, chạy với `GAME_DEV=1` để bỏ qua bước kích hoạt.

@@ -210,6 +210,14 @@ input:focus, textarea:focus, select:focus { border-color: var(--brand); box-shad
 .rows b { text-align: right; }
 .dl { display: grid; gap: 10px; margin-top: 12px; }
 .dl a, .dl div { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 14px; background: var(--soft); border: 1px solid var(--line); text-decoration: none; }
+.dl .dl-item { padding: 0; display: block; background: var(--soft); border: 1px solid var(--line); border-radius: 14px; }
+.dl .dl-row { display: flex; align-items: center; gap: 12px; padding: 12px; }
+.guide { border-top: 1px solid var(--line); padding: 0 14px; }
+.guide summary { cursor: pointer; padding: 10px 0; font-weight: 600; font-size: 14.5px; color: var(--brand); }
+.guide ol { margin: 0 0 8px; padding-left: 22px; font-size: 14.5px; }
+.guide ol:empty { display: none; }
+.guide li { margin: 4px 0; }
+.guide p { margin: 4px 0 10px; font-size: 14.5px; }
 .dl img { width: 44px; height: 58px; object-fit: cover; object-position: top; border-radius: 8px; }
 .dl .grow { flex: 1; }
 .qr { display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: center; margin-top: 16px; }

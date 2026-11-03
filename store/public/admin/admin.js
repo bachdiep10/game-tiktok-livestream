@@ -169,7 +169,8 @@ function renderLicenses() {
             <div class="sub">Đã chuyển máy ${l.movesRecent} lần / ${S.config.settings.moveWindowDays} ngày</div></td>
         <td><span class="tag-s ${l.status}">${l.status === 'active' ? 'Hoạt động' : 'Đã khoá'}</span></td>
         <td><div class="acts">
-          ${l.machineId ? `<button data-act="reset" data-key="${esc(l.key)}">Gỡ máy</button>` : ''}
+          ${l.machineId ? `<button data-act="reset" data-key="${esc(l.key)}" title="Gỡ key khỏi máy đang dùng để khách kích hoạt máy khác">Reset máy</button>` : ''}
+          <button data-act="reissue" data-key="${esc(l.key)}" title="Tạo key mới thay key cũ (khi khách làm lộ key)">Đổi key mới</button>
           ${l.status === 'active' ? `<button class="bad" data-act="lock" data-key="${esc(l.key)}">Khoá</button>` : `<button class="ok" data-act="unlock" data-key="${esc(l.key)}">Mở khoá</button>`}
           <button data-act="editKey" data-key="${esc(l.key)}">Sửa</button>
           <button data-act="owner" data-key="${esc(l.key)}">Gắn TK</button>
@@ -255,7 +256,7 @@ function renderGames() {
       <img src="${esc(x.image)}" alt="">
       <div><h3>${esc(x.name)} ${x.isNew ? '<span class="tag-s claimed">MỚI</span>' : ''} ${x.visible ? '' : '<span class="tag-s locked">Đang ẩn</span>'}</h3>
         <div class="note">${esc(x.tagline)}</div>
-        <div class="note" style="font-size:12.5px">Mã: <code>${esc(x.id)}</code> · Thứ tự ${x.order} · ${x.download ? '✓ có link tải' : '⚠️ chưa có link tải'} · ${x.video ? '✓ có video' : 'chưa có video'}</div></div>
+        <div class="note" style="font-size:12.5px">Mã: <code>${esc(x.id)}</code> · Thứ tự ${x.order} · ${x.file ? `✓ file ${esc(x.file.name)} (${(x.file.size / 1048576).toFixed(1)} MB)` : x.download ? '✓ có link tải ngoài' : '⚠️ chưa có file game'} · bản ${esc(x.version || '?')} · ${x.video ? '✓ có video' : 'chưa có video'}</div></div>
       <div class="acts"><button data-act="editGame" data-id="${esc(x.id)}">Sửa</button>
         <button data-act="toggleGame" data-id="${esc(x.id)}">${x.visible ? 'Ẩn' : 'Hiện'}</button>
         <button class="bad" data-act="delGame" data-id="${esc(x.id)}">Xoá</button></div>
@@ -287,7 +288,15 @@ function gameDialog(g) {
         <div class="field full"><label>Điểm nổi bật (mỗi dòng 1 ý)</label><textarea name="features" rows="4">${esc((cur.features || []).join('\n'))}</textarea></div>
         ${uploader('image', 'Ảnh bìa (dọc 3:4 hoặc 9:16)', cur.image, 'image/*')}
         ${uploader('video', 'Video demo (mp4 dọc, dưới 30 giây là đẹp)', cur.video, 'video/mp4,video/webm', 'Video lớn nên nén trước, hoặc dán link mp4.')}
-        <div class="field full"><label>Link tải game cho khách</label><input name="download" value="${esc(cur.download)}" placeholder="https://drive.google.com/..."><small>Chỉ hiện cho khách đã thanh toán.</small></div>
+        <div class="field full"><label>File game cho khách tải (.zip)</label>
+          ${edit ? `<div class="upl"><span class="note" style="flex:1" id="fileInfo">${cur.file ? `✓ ${esc(cur.file.name)} · ${(cur.file.size / 1048576).toFixed(1)} MB · ${fmt(cur.file.uploadedAt)}` : 'Chưa có file'}</span>
+            <label class="btn ghost sm">Tải file lên<input type="file" accept=".zip,.exe,.rar,.7z" id="gameFile" hidden></label></div>
+            <small>File được giữ kín: chỉ khách có key của game này mới tải được, qua nút "Tải về" trong tài khoản.</small>`
+          : '<small>Lưu game trước, sau đó bấm Sửa để tải file game lên.</small>'}</div>
+        <div class="field"><label>Phiên bản</label><input name="version" value="${esc(cur.version || '')}" placeholder="1.0"></div>
+        <div class="field"><label>Hoặc link tải ngoài (dự phòng)</label><input name="download" value="${esc(cur.download)}" placeholder="https://drive.google.com/..."></div>
+        <div class="field full"><label>Hướng dẫn cài riêng cho game này (mỗi bước 1 dòng, bắt đầu bằng 1. 2. 3.)</label><textarea name="guide" rows="8">${esc(cur.guide || '')}</textarea><small>Hiện cho khách cạnh nút Tải về.</small></div>
+        <div class="field full"><label>Video hướng dẫn (không bắt buộc)</label><input name="guideVideo" value="${esc(cur.guideVideo || '')}" placeholder="https://youtube.com/..."></div>
         <div class="field"><label>Thứ tự hiển thị</label><input name="order" type="number" value="${cur.order ?? 0}"></div>
         <div class="field"><label>&nbsp;</label>
           <label class="chk"><input type="checkbox" name="visible" ${cur.visible ? 'checked' : ''}> Hiện trên web</label>
@@ -306,6 +315,15 @@ function gameDialog(g) {
       $(`[data-prev=${field}]`, el).innerHTML = field === 'video' ? `<video class="prev" src="${j.url}" muted controls></video>` : `<img class="prev" src="${j.url}" alt="">`;
       toast('Đã tải lên');
     });
+    $('#gameFile', el)?.addEventListener('change', async (ev) => {
+      const f = ev.target.files[0]; if (!f) return;
+      $('#fileInfo', el).textContent = `Đang tải lên ${f.name}…`;
+      const res = await fetch(`/api/admin/games/${encodeURIComponent(g.id)}/file?name=${encodeURIComponent(f.name)}`, { method: 'POST', body: f });
+      const j = await res.json().catch(() => ({ ok: false, error: 'Lỗi tải lên (file quá lớn?)' }));
+      if (!j.ok) { $('#fileInfo', el).textContent = j.error; return toast(j.error); }
+      $('#fileInfo', el).textContent = `✓ ${j.file.name} · ${(j.file.size / 1048576).toFixed(1)} MB`;
+      toast('Đã tải file game lên'); g.file = j.file;
+    });
     $('#gf', el).onsubmit = async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -313,6 +331,7 @@ function gameDialog(g) {
         name: fd.get('name'), tagline: fd.get('tagline'), description: fd.get('description'),
         features: String(fd.get('features')).split('\n').map(s => s.trim()).filter(Boolean),
         image: fd.get('image'), video: fd.get('video'), download: fd.get('download'),
+        version: fd.get('version'), guide: fd.get('guide'), guideVideo: fd.get('guideVideo'),
         order: fd.get('order'), visible: fd.get('visible') === 'on', isNew: fd.get('isNew') === 'on',
       };
       let r;
@@ -433,6 +452,13 @@ document.addEventListener('click', async (e) => {
   if (act === 'pay' && confirm(`Xác nhận đã nhận tiền đơn #${code}? Hệ thống sẽ tạo key cho khách.`)) { await call(`/api/admin/orders/${code}/mark-paid`, {}); toast('Đã tạo key'); refresh(); }
   if (act === 'cancel' && confirm(`Huỷ đơn #${code}?`)) { await call(`/api/admin/orders/${code}/cancel`, {}); refresh(); }
   if (act === 'link') copy(location.origin + b.dataset.link);
+  if (act === 'reissue' && confirm(`Đổi key ${key} thành key mới?\nKey cũ sẽ không dùng được nữa (game của khách bị khoá cho tới khi nhập key mới). Gói, game, tài khoản giữ nguyên.`)) {
+    const r = await call(`/api/admin/licenses/${enc(key)}/reissue`, {});
+    dialog(`<h3>Key mới</h3><p class="msub">Gửi key này cho khách. Key mới cũng hiện trong Tài khoản của khách.</p>
+      <div class="keybox"><code>${esc(r.key)}</code><button class="btn sm" data-copy="${esc(r.key)}">Sao chép</button></div>
+      <p class="note">Key cũ: <s>${esc(r.old)}</s></p>`);
+    refresh();
+  }
   if (act === 'reset' && confirm('Gỡ key khỏi máy hiện tại? Khách sẽ kích hoạt lại trên máy mới.')) { await call(`/api/admin/licenses/${enc(key)}/reset-machine`, {}); toast('Đã gỡ máy'); refresh(); }
   if (act === 'lock' && confirm('Khoá key này? Game của khách sẽ ngừng chạy.')) { await call(`/api/admin/licenses/${enc(key)}`, { status: 'locked' }, 'PATCH'); refresh(); }
   if (act === 'unlock') { await call(`/api/admin/licenses/${enc(key)}`, { status: 'active' }, 'PATCH'); refresh(); }

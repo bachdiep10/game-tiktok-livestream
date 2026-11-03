@@ -36,7 +36,7 @@
   <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
 
   <script type="module">
-    import { $, api, esc, copy, applyBrand } from '/js/common.js';
+    import { $, api, esc, copy, applyBrand, gameList } from '/js/common.js';
     const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN') : '—';
 
     function render(l, message) {
@@ -56,12 +56,8 @@
           <button class="btn ghost block" id="move" ${l.status !== 'active' ? 'disabled' : ''}>🔄 Chuyển key sang máy khác</button>
           <p class="note">Dùng khi đổi máy tính hoặc cài lại Windows. Key sẽ được gỡ khỏi máy cũ, sau đó bạn nhập key trên máy mới.</p>
           <h3 style="margin:24px 0 4px">Game trong key</h3>
-          <div class="dl">${l.games.map(g => `
-            <${g.download ? `a href="${esc(g.download)}" target="_blank" rel="noopener"` : 'div'}>
-              <img src="${esc(g.image)}" alt=""><span class="grow"><b>${esc(g.name)}</b></span>
-              ${g.download ? '<span class="btn sm">Tải về</span>' : ''}
-            </${g.download ? 'a' : 'div'}>`).join('')}
-          </div>
+          ${gameList(l.games, { canDownload: false })}
+          <a class="btn block" style="margin-top:14px" href="/tai-khoan.html">👤 Đăng nhập để tải game</a>
         </div>`;
       $('#move').addEventListener('click', async () => {
         if (!confirm('Gỡ key khỏi máy hiện tại? Game trên máy cũ sẽ ngừng chạy.')) return;

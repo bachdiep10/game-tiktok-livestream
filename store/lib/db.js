@@ -41,13 +41,34 @@ const DEFAULT_PLANS = [
   },
 ];
 
+export const GUIDE_CHANH_DIEN = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\ChanhDien. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Bấm đúp mo-cua-so-game.bat để mở cửa sổ game (Microsoft Edge, khung dọc).
+7. Trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ game.
+8. Muốn dùng ảnh nền, tượng Phật, nhạc riêng: sửa file config.json (xem hướng dẫn trong thư mục public/assets).
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
+export const GUIDE_QUAN_BAR = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\QuanBar. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-bar.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển quán bar: bấm các nút Giả lập để thử ("❤️ x30", "🎁 Quà 30 xu" đưa người lên sân khấu). Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Nhạc: chép file MP3 của bạn vào thư mục public\\assets\\nhac-bar (phát theo thứ tự tên file, lặp lại).
+7. Ảnh màn LED: chép ảnh vào public\\assets\\anh-led.
+8. Bấm đúp mo-cua-so-bar.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe nhạc, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 const DEFAULT_GAMES = [
   {
     id: 'chanh-dien', name: 'Chánh Điện Lễ Phật',
     tagline: 'Người xem vào LIVE thành Phật tử quỳ lạy trong chánh điện',
     description: 'Mỗi người xem vào LIVE có một nhân vật mang tên mình quỳ trước tượng Phật. Thả tim thì nhân vật lạy, gõ mõ. Bình luận "Nam mô A Di Đà Phật" để lễ Phật. Tặng quà thì hoa sen nở, chuông chùa ngân, có giọng đọc cảm ơn.',
     features: ['Nhân vật mang tên người xem', 'Thả tim = lạy Phật + tiếng mõ', 'Quà = hoa sen, chuông, đài sen', 'Giọng đọc AI tiếng Việt', 'Nhạc thiền tự tạo'],
-    image: '/media/chanh-dien.jpg', video: '/media/chanh-dien.mp4', download: '',
+    image: '/media/chanh-dien.jpg', video: '/media/chanh-dien.mp4', download: '', version: '1.9.9',
+    guide: GUIDE_CHANH_DIEN, guideVideo: '',
     visible: true, order: 1, isNew: false,
   },
   {
@@ -55,7 +76,8 @@ const DEFAULT_GAMES = [
     tagline: 'Người xem rơi xuống sàn nhảy, đua lên sân khấu VIP',
     description: 'Người xem vào LIVE rơi xuống sàn nhảy LED. Thả tim, bình luận, chia sẻ để tích điểm lên sân khấu VIP. Quà lớn kích hoạt "BÙNG NỔ" cả quán. Có DJ, bảng xếp hạng, MC đọc tên.',
     features: ['Sàn nhảy LED + sân khấu VIP', 'Tích điểm lên sân khấu', 'Thanh "BÙNG NỔ" khi nhiều quà', 'Màn LED chạy ảnh của bạn', 'Phát nhạc của bạn'],
-    image: '/media/quan-bar.jpg', video: '/media/quan-bar.mp4', download: '',
+    image: '/media/quan-bar.jpg', video: '/media/quan-bar.mp4', download: '', version: '1.9.9',
+    guide: GUIDE_QUAN_BAR, guideVideo: '',
     visible: true, order: 2, isNew: true,
   },
 ];
@@ -107,6 +129,11 @@ export class DB {
       secret: data.secret || '',
       seq: data.seq || 0,
     };
+    // Bổ sung hướng dẫn mặc định cho game có sẵn (dữ liệu tạo từ bản cũ)
+    for (const g of this.data.games) {
+      const def = DEFAULT_GAMES.find(d => d.id === g.id);
+      if (def && g.guide === undefined) { g.guide = def.guide; g.version = g.version || def.version; g.guideVideo = g.guideVideo || ''; }
+    }
     this._timer = null;
     this.saveNow();
   }

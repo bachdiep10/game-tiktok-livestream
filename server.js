@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { WebSocketServer } from 'ws';
+import { createGate } from './license/gate.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, 'public');
@@ -41,10 +42,12 @@ const MIME = {
   '.webm': 'audio/webm',
 };
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   let pathname = decodeURIComponent(url.pathname);
-  if (pathname === '/') pathname = '/game.html';
+  // Bản quyền: chưa kích hoạt key thì chuyển sang trang kích hoạt
+  if (await gate.handle(req, res, pathname)) return;
+  if (pathname === '/') pathname = gate.home();
   if (pathname === '/tts') {
     handleTts(url, res);
     return;
@@ -226,6 +229,11 @@ async function handleTts(url, res) {
 const wss = new WebSocketServer({ server, path: '/ws' });
 const VERSION = '1.9.9';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
+const gate = createGate({
+  rootDir: __dirname,
+  version: VERSION,
+  onLock: (reason) => { disconnectTikTok().catch(() => {}); setStatus({ connected: false, message: `🔒 ${reason}` }); },
+});
 
 function broadcast(msg) {
   const data = JSON.stringify(msg);
@@ -259,6 +267,10 @@ wss.on('connection', (ws) => {
     try {
       msg = JSON.parse(raw.toString());
     } catch {
+      return;
+    }
+    if (!gate.isOk()) {
+      ws.send(JSON.stringify({ type: 'status', status: { ...status, connected: false, message: `🔒 ${gate.error()} Mở http://127.0.0.1:${PORT}/kich-hoat.html để nhập key.` } }));
       return;
     }
     if (msg.cmd === 'connect') {
@@ -463,10 +475,14 @@ server.on('error', (err) => {
 
 server.listen(PORT, '0.0.0.0', () => {
   console.log('');
-  console.log(`  🙏 Chánh điện LIVE đã chạy (phiên bản ${VERSION})`);
-  console.log(`  - Màn hình game (thêm vào OBS / LIVE Studio): http://127.0.0.1:${PORT}/game.html`);
-  console.log(`  - Bảng điều khiển + giả lập:                   http://127.0.0.1:${PORT}/control.html`);
-  console.log(`  🪩 Quán bar: game  http://127.0.0.1:${PORT}/bar.html   ·  điều khiển  http://127.0.0.1:${PORT}/bar-control.html`);
+  console.log(`  🔑 Bản quyền: http://127.0.0.1:${PORT}/kich-hoat.html`);
+  const has = (f) => fs.existsSync(path.join(PUBLIC_DIR, f));
+  if (has('game.html')) {
+    console.log(`  🙏 Chánh điện LIVE đã chạy (phiên bản ${VERSION})`);
+    console.log(`  - Màn hình game (thêm vào OBS / LIVE Studio): http://127.0.0.1:${PORT}/game.html`);
+    console.log(`  - Bảng điều khiển + giả lập:                   http://127.0.0.1:${PORT}/control.html`);
+  }
+  if (has('bar.html')) console.log(`  🪩 Quán bar (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/bar.html   ·  điều khiển  http://127.0.0.1:${PORT}/bar-control.html`);
   console.log('');
   const startUser = process.env.TIKTOK_USERNAME || config.tiktokUsername;
   if (startUser) connectTikTok(startUser);

@@ -141,6 +141,33 @@ try {
   await j('PATCH', `/api/admin/licenses/${key}`, { status: 'active' });
   step('khoá key → game bị chặn; mở lại được');
 
+  // File game riêng tư + tải theo quyền
+  const up = await fetch(base + '/api/admin/games/quan-bar/file?name=QuanBar-1.9.9.zip', { method: 'POST', headers: { cookie: jars.admin }, body: Buffer.from('PK-fake-zip-quan-bar') });
+  assert.ok((await up.json()).ok);
+  const dl = async (url, who) => fetch(base + url, { headers: { cookie: jars[who] || '' }, redirect: 'manual' });
+  let r = await dl('/tai-ve/quan-bar', 'user');
+  assert.equal(r.status, 200); assert.equal(await r.text(), 'PK-fake-zip-quan-bar');
+  assert.match(r.headers.get('content-disposition'), /QuanBar-1\.9\.9\.zip/);
+  r = await dl('/tai-ve/quan-bar', 'other'); assert.equal(r.status, 302);
+  r = await dl('/tai-ve/quan-bar', 'nobody'); assert.equal(r.status, 302);
+  r = await dl(`/tai-ve/quan-bar?code=${ord.code}&t=${ord.token}`, 'nobody'); assert.equal(r.status, 200);
+  r = await dl(`/tai-ve/quan-bar?code=${ord.code}&t=000000000000000000000000`, 'nobody'); assert.equal(r.status, 302);
+  as('user');
+  const meG = await j('GET', '/api/account/me');
+  const gBar = meG.licenses.find(l => l.key === key).games.find(g => g.id === 'quan-bar');
+  assert.equal(gBar.download, '/tai-ve/quan-bar'); assert.match(gBar.guide, /run-bar\.bat/);
+  as('admin');
+  step('file game giữ kín: chỉ người có key mới tải được (tài khoản hoặc link đơn); có hướng dẫn riêng từng game');
+
+  const ri = await j('POST', `/api/admin/licenses/${key}/reissue`, {});
+  await j('POST', '/api/license/activate', { key, machineId: mB }, 404);
+  await j('POST', '/api/license/activate', { key: ri.key, machineId: mA });
+  as('user');
+  assert.ok((await j('GET', '/api/account/me')).licenses.some(l => l.key === ri.key));
+  assert.equal((await j('GET', `/api/orders/${ord.code}?t=${ord.token}`)).order.license.key, ri.key);
+  as('admin');
+  step('đổi key mới: key cũ hết hiệu lực, key mới dùng được, khách thấy key mới');
+
   const pub = await (await fetch(base + '/api/license/public-key')).text();
   const cacheFile = path.join(dataDir, 'client-cache.json');
   const k3 = await j('POST', '/api/admin/licenses', { planId: 'le', games: ['chanh-dien'], phone: '0911222333' });
@@ -170,5 +197,5 @@ try {
   process.exitCode = 1;
 } finally {
   srv.kill();
-  fs.rmSync(dataDir, { recursive: true, force: true });
+  await new Promise(r => setTimeout(r, 300)); fs.rmSync(dataDir, { recursive: true, force: true, maxRetries: 5 });
 }

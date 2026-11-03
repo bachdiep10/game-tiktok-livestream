@@ -22,7 +22,7 @@
   <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
 
   <script type="module">
-    import { $, api, esc, moneyFull, copy, applyBrand } from '/js/common.js';
+    import { $, api, esc, moneyFull, copy, applyBrand, gameList } from '/js/common.js';
     const q = new URLSearchParams(location.search);
     const code = q.get('code'), t = q.get('t');
     let timer;
@@ -75,12 +75,7 @@
           <div class="keybox"><code>${esc(l.key)}</code><button class="btn sm" data-copy="${esc(l.key)}">Sao chép</button></div>
           <p class="note">Mỗi key chạy trên 1 máy tính. Lưu lại trang này (đánh dấu trang) hoặc chụp màn hình key.</p>
           <h2 style="font-size:20px;margin:24px 0 4px">⬇ Tải game</h2>
-          <div class="dl">${l.games.map(g => `
-            <${g.download ? `a href="${esc(g.download)}" target="_blank" rel="noopener"` : 'div'}>
-              <img src="${esc(g.image)}" alt=""><span class="grow"><b>${esc(g.name)}</b><br><small class="note">${g.download ? 'Bấm để tải' : 'Link tải sẽ được gửi qua Zalo'}</small></span>
-              ${g.download ? '<span class="btn sm">Tải về</span>' : ''}
-            </${g.download ? 'a' : 'div'}>`).join('')}
-          </div>
+          ${gameList(l.games)}
           ${!l.allGames && l.slots > l.games.length ? `<p class="note">Còn ${l.slots - l.games.length} suất: game mới ra mắt sẽ tự thêm vào key này.</p>` : ''}
           ${l.allGames ? '<p class="note">Gói Trọn Bộ: game mới ra mắt tự có trong key này.</p>' : ''}
           <a class="btn block" style="margin-top:16px" href="/tai-khoan.html">👤 Xem trong Tài khoản của tôi</a>

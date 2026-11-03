@@ -55,7 +55,8 @@ export async function checkLicense({ server, game, key, publicKeyPem, cacheFile,
     });
     const j = await res.json();
     if (!j.ok) {
-      if (res.status !== 409 && res.status < 500) try { fs.unlinkSync(cacheFile); } catch {}
+      // Key bị từ chối: bỏ vé cũ nhưng nhớ key, để khi người bán mở khoá thì game tự chạy lại
+      if (res.status !== 409 && res.status < 500) try { fs.writeFileSync(cacheFile, JSON.stringify({ key })); } catch {}
       return { ok: false, needKey: res.status === 404, error: j.error };
     }
     const t = verifyTicket(publicKeyPem, j.ticket);

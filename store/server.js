@@ -23,7 +23,9 @@ function defaultDataDir() {
 }
 const DATA_DIR = defaultDataDir();
 const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
+const FILES_DIR = path.join(DATA_DIR, 'files'); // file game: chỉ tải được khi đã mua
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+fs.mkdirSync(FILES_DIR, { recursive: true });
 
 const db = new DB(DATA_DIR);
 const D = db.data;
@@ -82,7 +84,11 @@ function publicGame(g) {
 function licenseView(l, { withDownloads = false } = {}) {
   const ids = entitledGames(l, visibleGames());
   const games = ids.map(id => D.games.find(g => g.id === id)).filter(Boolean).map(g => ({
-    id: g.id, name: g.name, image: g.image, ...(withDownloads ? { download: g.download || '' } : {}),
+    id: g.id, name: g.name, image: g.image,
+    ...(withDownloads ? {
+      download: g.file || g.download ? `/tai-ve/${g.id}` : '', version: g.version || '',
+      fileSize: g.file?.size || 0, guide: g.guide || '', guideVideo: g.guideVideo || '',
+    } : {}),
   }));
   const plan = findPlan(l.planId);
   return {
@@ -137,7 +143,7 @@ function orderView(o) {
     checkoutUrl: o.status === 'pending' ? (o.checkoutUrl || '') : '',
     bank: o.status === 'pending' ? bank : null,
     claimedAt: o.claimedAt || null,
-    license: lic ? licenseView(lic, { withDownloads: true }) : null,
+    license: lic ? (v => ({ ...v, games: v.games.map(g => ({ ...g, download: g.download ? `${g.download}?code=${o.code}&t=${orderToken(o.code)}` : '' })) }))(licenseView(lic, { withDownloads: true })) : null,
     guideUrl: s.guideUrl,
   };
 }
@@ -590,6 +596,21 @@ app.patch('/api/admin/licenses/:key', (req, res) => {
   res.json({ ok: true });
 });
 
+// Đổi key mới (khi khách làm lộ key): key cũ hết dùng được, quyền lợi giữ nguyên
+app.post('/api/admin/licenses/:key/reissue', (req, res) => {
+  const lic = findLicense(req.params.key);
+  if (!lic) return fail(res, 404, 'Không có key.');
+  let key;
+  do key = newKey(); while (findLicense(key));
+  const old = lic.key;
+  lic.key = key;
+  lic.machineId = ''; lic.machineName = '';
+  lic.replaced = [...(lic.replaced || []), { key: old, at: now() }];
+  for (const o of D.orders) if (o.licenseKey === old) o.licenseKey = key;
+  db.save();
+  res.json({ ok: true, key, old });
+});
+
 app.post('/api/admin/licenses/:key/reset-machine', (req, res) => {
   const lic = findLicense(req.params.key);
   if (!lic) return fail(res, 404, 'Không có key.');
@@ -610,7 +631,8 @@ const slug = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').rep
   .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40);
 
 function applyGame(g, b) {
-  for (const f of ['name', 'tagline', 'image', 'video', 'download']) if (b[f] !== undefined) g[f] = clean(b[f], f === 'name' ? 80 : 500);
+  for (const f of ['name', 'tagline', 'image', 'video', 'download', 'guideVideo', 'version']) if (b[f] !== undefined) g[f] = clean(b[f], f === 'name' ? 80 : 500);
+  if (b.guide !== undefined) g.guide = clean(b.guide, 8000);
   if (b.description !== undefined) g.description = clean(b.description, 2000);
   if (Array.isArray(b.features)) g.features = b.features.map(x => clean(x, 120)).filter(Boolean).slice(0, 10);
   if (b.visible !== undefined) g.visible = Boolean(b.visible);
@@ -640,6 +662,29 @@ app.patch('/api/admin/games/:id', (req, res) => {
   const filled = !wasVisible && g.visible ? fillEmptySlots(D.licenses, g.id) : 0;
   db.save();
   res.json({ ok: true, game: g, filledCombo: filled });
+});
+
+app.post('/api/admin/games/:id/file', express.raw({ type: () => true, limit: '500mb' }), (req, res) => {
+  const g = D.games.find(x => x.id === req.params.id);
+  if (!g) return fail(res, 404, 'Không có game.');
+  const ext = path.extname(String(req.query.name || '')).toLowerCase();
+  if (!['.zip', '.exe', '.rar', '.7z'].includes(ext)) return fail(res, 400, 'Chỉ nhận file .zip, .exe, .rar, .7z');
+  if (!req.body?.length) return fail(res, 400, 'File rỗng.');
+  const stored = `${g.id}-${Date.now().toString(36)}${ext}`;
+  fs.writeFileSync(path.join(FILES_DIR, stored), req.body);
+  if (g.file?.stored) try { fs.unlinkSync(path.join(FILES_DIR, g.file.stored)); } catch { /* đã xoá */ }
+  g.file = { stored, name: path.basename(String(req.query.name)).slice(0, 120), size: req.body.length, uploadedAt: now() };
+  db.save();
+  res.json({ ok: true, file: g.file });
+});
+
+app.delete('/api/admin/games/:id/file', (req, res) => {
+  const g = D.games.find(x => x.id === req.params.id);
+  if (!g?.file) return fail(res, 404, 'Không có file.');
+  try { fs.unlinkSync(path.join(FILES_DIR, g.file.stored)); } catch { /* đã xoá */ }
+  delete g.file;
+  db.save();
+  res.json({ ok: true });
 });
 
 app.delete('/api/admin/games/:id', (req, res) => {
@@ -721,7 +766,7 @@ app.put('/api/admin/faq', (req, res) => {
 });
 
 const UPLOAD_TYPES = { '.jpg': 1, '.jpeg': 1, '.png': 1, '.webp': 1, '.gif': 1, '.mp4': 1, '.webm': 1 };
-app.post('/api/admin/upload', express.raw({ type: '*/*', limit: '80mb' }), (req, res) => {
+app.post('/api/admin/upload', express.raw({ type: () => true, limit: '80mb' }), (req, res) => {
   const ext = path.extname(String(req.query.name || '')).toLowerCase();
   if (!UPLOAD_TYPES[ext]) return fail(res, 400, 'Chỉ nhận ảnh (jpg, png, webp, gif) hoặc video (mp4, webm).');
   if (!req.body?.length) return fail(res, 400, 'File rỗng.');
@@ -733,6 +778,27 @@ app.post('/api/admin/upload', express.raw({ type: '*/*', limit: '80mb' }), (req,
 app.use('/api', (req, res) => fail(res, 404, 'Không có API này.'));
 
 // ---------- file tĩnh ----------
+// Tải game: chỉ khi tài khoản (hoặc link đơn hàng) có key còn hoạt động gồm game đó
+app.get('/tai-ve/:id', (req, res) => {
+  const g = D.games.find(x => x.id === req.params.id);
+  if (!g) return res.status(404).send('Không có game này.');
+  const owns = (l) => l && l.status === 'active' && entitledGames(l, visibleGames()).includes(g.id);
+  let allowed = false;
+  const u = currentUser(req);
+  if (u) allowed = D.licenses.some(l => l.userId === u.id && owns(l));
+  if (!allowed && req.query.code && req.query.t) {
+    const o = findOrder(req.query.code);
+    const t = String(req.query.t);
+    if (o && t.length === 24 && crypto.timingSafeEqual(Buffer.from(t), Buffer.from(orderToken(o.code)))) allowed = owns(o.licenseKey && findLicense(o.licenseKey));
+  }
+  if (!allowed) return res.redirect(`/tai-khoan.html?next=${encodeURIComponent(req.originalUrl)}`);
+  if (g.file?.stored && fs.existsSync(path.join(FILES_DIR, g.file.stored))) {
+    return res.download(path.join(FILES_DIR, g.file.stored), g.file.name || `${g.id}.zip`);
+  }
+  if (g.download) return res.redirect(g.download);
+  res.status(404).send('Game chưa có file tải. Vui lòng liên hệ người bán qua Zalo.');
+});
+
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 

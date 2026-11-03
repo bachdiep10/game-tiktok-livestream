@@ -59,6 +59,23 @@ export function zaloLink(v) {
   return /^https?:/.test(v) ? v : `https://zalo.me/${String(v).replace(/\D/g, '')}`;
 }
 
+// Danh sách game kèm nút tải + hướng dẫn riêng của từng game
+export function gameList(games, { canDownload = true } = {}) {
+  const size = (b) => b ? ` · ${(b / 1048576).toFixed(1)} MB` : '';
+  return `<div class="dl">${games.map(g => `
+    <div class="dl-item">
+      <div class="dl-row">
+        <img src="${esc(g.image)}" alt="">
+        <span class="grow"><b>${esc(g.name)}</b><br><small class="note">${g.download ? `Bản ${esc(g.version || 'mới nhất')}${size(g.fileSize)}` : 'Link tải sẽ được gửi qua Zalo'}</small></span>
+        ${g.download && canDownload ? `<a class="btn sm" href="${esc(g.download)}">⬇ Tải về</a>` : ''}
+      </div>
+      ${g.guide || g.guideVideo ? `<details class="guide"><summary>📖 Hướng dẫn cài ${esc(g.name)}</summary>
+        ${g.guideVideo ? `<p><a href="${esc(g.guideVideo)}" target="_blank" rel="noopener">▶ Xem video hướng dẫn</a></p>` : ''}
+        ${g.guide ? `<ol>${g.guide.split('\n').map(l => l.trim()).filter(Boolean).map(l => /^\d+[.)]\s*/.test(l) ? `<li>${esc(l.replace(/^\d+[.)]\s*/, ''))}</li>` : `</ol><p>${esc(l)}</p><ol>`).join('')}</ol>` : ''}
+      </details>` : ''}
+    </div>`).join('')}</div>`;
+}
+
 let mePromise;
 export function me(refresh) {
   if (refresh || !mePromise) mePromise = api('/api/account/me');
