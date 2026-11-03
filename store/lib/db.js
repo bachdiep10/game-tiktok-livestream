@@ -66,7 +66,7 @@ export const GUIDE_TRA_DA = `1. Cài Node.js bản LTS tại nodejs.org (chỉ l
 3. Bấm đúp run-tra-da.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
 4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
 5. Ở Bảng điều khiển: bấm các nút Giả lập ("trà đá", "điếu cày", "chém gió"...) để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
-6. Người xem bình luận: trà đá, trà chanh, điếu cày, kẹo lạc, hướng dương, chém gió, cờ tướng, đọc báo, nóng quá, dzô, tính tiền. Quà nhỏ mời kẹo lạc, quà từ 10 xu bao cả quán, quà từ 100 xu lên ghế VIP.
+6. Người xem bình luận: trà đá, trà chanh, điếu cày, kẹo lạc, hướng dương, chém gió, cờ tướng, đọc báo, nóng quá, dzô, tính tiền. Quà nhỏ mời kẹo lạc, quà từ 10 xu bao cả quán, quà từ 100 xu lên ghế VIP. Đủ 5 lượt chia sẻ thì đội trật tự đến dẹp quán, thả tim dồn dập (300 tim/phút) thì chó dữ xông vào, một lúc sau quán mở lại.
 7. Nhạc riêng (nếu muốn): chép MP3 vào public\\assets\\nhac-tra-da. Đổi câu chào, từ khoá lệnh: sửa config-tra-da.json.
 8. Bấm đúp mo-cua-so-tra-da.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
@@ -95,7 +95,7 @@ const DEFAULT_GAMES = [
     tagline: 'Người xem ra quán trà đá: gọi trà, rít điếu cày, chém gió',
     description: 'Người xem vào LIVE thành khách ngồi ghế nhựa ở quán trà đá vỉa hè. Bình luận "trà đá", "điếu cày", "kẹo lạc" thì cô chủ quán mang ra tận nơi. Bình luận "chém gió" để tán chuyện với người bên cạnh, "cờ tướng" để làm một ván. Quà bao cả quán một chầu, quà lớn được ngồi ghế VIP.',
     features: ['11 lệnh bình luận vui nhộn', 'Chém gió, đánh cờ với người bên cạnh', 'Quà = bao cả quán, ghế VIP', 'Giọng cô chủ quán AI tiếng Việt', 'Nhạc guitar + tiếng phố tự tạo'],
-    image: '/media/tra-da.jpg', video: '/media/tra-da.mp4', download: '', version: '2.0.0',
+    image: '/media/tra-da.jpg', video: '/media/tra-da.mp4', download: '', version: '2.0.1',
     guide: GUIDE_TRA_DA, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 3, isNew: true,

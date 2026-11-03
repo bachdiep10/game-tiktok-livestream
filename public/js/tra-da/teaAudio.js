@@ -468,3 +468,83 @@ export function whoosh() {
   n.start(t);
   n.stop(t + 0.35);
 }
+
+// còi tuýt tuýt
+export function whistle() {
+  const a = ctx();
+  if (!a || !throttle('whistle', 600)) return;
+  const t = a.currentTime;
+  for (const [dt, d] of [[0, 0.25], [0.35, 0.6]]) {
+    const o = a.createOscillator();
+    const lfo = a.createOscillator();
+    const lg = a.createGain();
+    const g = a.createGain();
+    o.type = 'sine';
+    o.frequency.value = 2900;
+    lfo.frequency.value = 38;
+    lg.gain.value = 160;
+    lfo.connect(lg).connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t + dt);
+    g.gain.exponentialRampToValueAtTime(0.14, t + dt + 0.02);
+    g.gain.setValueAtTime(0.14, t + dt + d - 0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dt + d);
+    o.connect(g).connect(master);
+    o.start(t + dt);
+    lfo.start(t + dt);
+    o.stop(t + dt + d + 0.05);
+    lfo.stop(t + dt + d + 0.05);
+  }
+}
+
+// gâu gâu
+export function bark() {
+  const a = ctx();
+  if (!a || !throttle('bark', 280)) return;
+  const t = a.currentTime;
+  for (const dt of [0, 0.22]) {
+    tone({ type: 'sawtooth', f0: 520, f1: 260, t: t + dt, vol: 0.12, attack: 0.01, decay: 0.12 });
+    burst({ t: t + dt, dur: 0.1, vol: 0.08, type: 'bandpass', freq: 900, q: 2 });
+  }
+}
+
+// cả quán nháo nhào bỏ chạy
+export function panic() {
+  const a = ctx();
+  if (!a || !throttle('panic', 1500)) return;
+  const t = a.currentTime;
+  for (let i = 0; i < 6; i++) {
+    const tt = t + i * 0.18 + Math.random() * 0.1;
+    const f = 500 + Math.random() * 400;
+    tone({ type: 'triangle', f0: f, f1: f * 1.6, t: tt, vol: 0.05, attack: 0.03, decay: 0.25 });
+  }
+  for (let i = 0; i < 10; i++) burst({ t: t + Math.random() * 1.2, dur: 0.05, vol: 0.07, type: 'bandpass', freq: 600 + Math.random() * 800 });
+}
+
+// tiếng ghế nhựa va vào nhau
+export function clack() {
+  const a = ctx();
+  if (!a || !throttle('clack', 70)) return;
+  const t = a.currentTime;
+  tone({ type: 'square', f0: 300 + Math.random() * 200, f1: 150, t, vol: 0.05, attack: 0.002, decay: 0.06 });
+}
+
+export function engine(dur = 2) {
+  const a = ctx();
+  if (!a || !throttle('engine', 1000)) return;
+  const t = a.currentTime;
+  const o = a.createOscillator();
+  const f = a.createBiquadFilter();
+  const g = a.createGain();
+  o.type = 'sawtooth';
+  o.frequency.setValueAtTime(48, t);
+  o.frequency.linearRampToValueAtTime(70, t + dur * 0.5);
+  o.frequency.linearRampToValueAtTime(45, t + dur);
+  f.type = 'lowpass';
+  f.frequency.value = 300;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.12, t + 0.2);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  o.connect(f).connect(g).connect(master);
+  o.start(t);
+  o.stop(t + dur + 0.05);
+}

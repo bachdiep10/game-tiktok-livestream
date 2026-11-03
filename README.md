@@ -175,6 +175,8 @@ Người xem vào LIVE đi bộ vào quán, ngồi ghế nhựa quanh bàn thấ
 
 Thả tim: nhân vật uống trà + tim bay. Theo dõi: được đội mũ cối "khách quen". Quà nhỏ: cô chủ mời kẹo lạc cả bàn. Quà từ 10 xu: bao cả quán một chầu trà đá, cả quán dzô. Quà từ 100 xu: lên ghế VIP (vương miện, kính đen, camera zoom), mưa xu, đoàn xe máy bấm còi. Thanh "Độ rôm rả" đầy thì cả quán cụng ly.
 
+**Dẹp quán / chó đuổi:** đủ `raidShares` (mặc định 5) lượt chia sẻ thì xe đội trật tự đến, mọi người bỏ chạy, bàn ghế bị thu lên xe; sau `raidSeconds` giây xe đi, quán mở lại, khách quay về chỗ. Thả tim `dogLikes` (300) tim trong 1 phút thì chó dữ xông vào đuổi. Quà tặng trong lúc dẹp quán được cảm ơn ngay, hiệu ứng chạy khi quán mở lại. Bảng lệnh hướng dẫn nằm phía trên màn hình (phía dưới điện thoại bị khung bình luận che).
+
 Chạy: `run-tra-da.bat` (bảng điều khiển `/tra-da-control.html`), cửa sổ game `mo-cua-so-tra-da.bat` (`/tra-da.html`). Cấu hình `config-tra-da.json`: tên quán, từ khoá lệnh (`commands`, gõ có dấu hay không dấu đều nhận), câu nói (`messages`), mức giọng (`voiceLevel`: it / vua / nhieu), số khách không tên (`ambientCrowd`), mốc quà (`giftTiers`). Nhạc riêng: chép MP3 vào `public/assets/nhac-tra-da`. Nền riêng: mở `/tra-da.html?export=1` để tải nền trống, sửa xong đặt vào `backgroundImage`.
 
 Toàn bộ hình vẽ (phố, nhà ống, cây bàng, ô dù, nhân vật, xe máy) và âm thanh (guitar, tiếng phố, rót trà, điếu cày) đều tự tạo bằng code.

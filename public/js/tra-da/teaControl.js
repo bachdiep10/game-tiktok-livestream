@@ -90,6 +90,11 @@ const actions = {
   follow: () => sim({ type: 'follow', user: namedUser() }),
   share: () => sim({ type: 'share', user: namedUser() }),
   voiceTest: () => sim({ type: 'voiceTest' }),
+  raid: () => sim({ type: 'raid' }),
+  dog: () => sim({ type: 'dog' }),
+  share5: () => {
+    for (let i = 0; i < 5; i++) setTimeout(() => sim({ type: 'share', user: namedUser() }), i * 300);
+  },
   gift1: () => sim({ type: 'gift', user: namedUser(), giftName: 'Hoa hồng', diamonds: 1, repeatCount: 1, coins: 1 }),
   gift10: () => sim({ type: 'gift', user: namedUser(), giftName: 'Bánh Donut', diamonds: 30, repeatCount: 1, coins: 30 }),
   gift100: () => sim({ type: 'gift', user: namedUser(), giftName: 'Pháo hoa', diamonds: 299, repeatCount: 1, coins: 299 }),

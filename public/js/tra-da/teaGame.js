@@ -4,9 +4,9 @@
 import {
   W, H, CURB_Y, ROAD_Y, FOOT_Y, SEATS, TABLES, VIP, STALL, JUG_TAP, OWNER_MOUTH,
   scaleAtY, drawStatic, drawCanopy, drawStool, drawBench, drawTable, drawUmbrella, drawStallFront,
-  drawVipChair, drawMotorbike, drawTeaGlass, drawPipe, roundRectPath as rr,
+  drawVipChair, drawMotorbike, drawTeaGlass, drawPipe, drawTruck, drawDog, roundRectPath as rr,
 } from './street.js';
-import { lookFor, crowdLook, OWNER_LOOK, drawPerson } from './people.js';
+import { lookFor, crowdLook, OWNER_LOOK, OFFICER_LOOK, drawPerson } from './people.js';
 import * as sfx from './teaAudio.js';
 import * as voice from '../audio.js';
 
@@ -45,6 +45,16 @@ const DEFAULTS = {
   captions: true,
   narration: true,
   narrationSeconds: 50,
+  // Sự kiện dẹp quán: đủ số lượt chia sẻ thì đội trật tự đến thu bàn ghế, mọi người bỏ chạy,
+  // hết giờ quán mở lại. Thả tim dồn dập (dogLikes tim trong 60 giây) thì chó dữ xông vào.
+  raidEnabled: true,
+  raidShares: 5,
+  raidSeconds: 20,
+  raidLabel: 'ĐỘI TRẬT TỰ',
+  dogEnabled: true,
+  dogLikes: 300,
+  dogSeconds: 11,
+  raidCooldownSeconds: 90,
   commands: {
     lemon: ['trà chanh', 'trachanh'],
     drink: ['trà đá', 'trada', 'cốc trà', 'uống trà'],
@@ -81,6 +91,10 @@ const DEFAULTS = {
     gift: ['Cảm ơn {name} đã tặng {gift}, cô mời cả bàn kẹo lạc', '{name} tặng {gift}, quý hoá quá'],
     mediumGift: ['{name} tặng {gift}, bao cả quán một chầu trà đá', 'Cả quán ơi, {name} bao một chầu trà đá. Dzô'],
     bigGift: ['Đại gia {name} tặng {gift}, bao cả phố. Mời {name} lên ghế VIP', 'Ối giời ơi, {name} tặng {gift}. Mời đại gia ngồi ghế VIP'],
+    raid: ['Đội trật tự đến kìa. Dẹp quán nhanh lên cả nhà ơi', 'Chết rồi, xe trật tự đến. Chạy thôi, chạy thôi'],
+    raidEnd: ['Đội trật tự đi rồi. Kê lại bàn ghế, mở quán thôi cả nhà', 'Xe đi rồi, ra ngồi lại đi, trà đá vẫn còn nguyên'],
+    dog: ['Ối chó dữ xông vào quán. Chạy đi cả nhà', 'Con chó nhà ai thế này. Chạy mau'],
+    dogEnd: ['Chó đi rồi, mọi người ngồi lại uống trà nào', 'Hú hồn, chó chạy mất rồi. Vào quán ngồi đi'],
     hype: ['Quán đông như hội. Cả quán một hai ba dzô', 'Vui quá cả nhà ơi. Một hai ba dzô'],
     reminder: [
       'Bình luận trà đá để cô mang trà ra',
@@ -248,7 +262,7 @@ const flights = []; // đồ bay từ quầy tới khách
 const particles = [];
 const toasts = [];
 const bikes = [];
-const owner = { act: 'idle', until: 0, bubble: null, mouthUntil: 0 };
+const owner = { act: 'idle', until: 0, bubble: null, mouthUntil: 0, state: 'sit', x: 0, y: 0, move: null };
 let vip = null;
 let vipUntil = 0;
 const cam = { x: W / 2, y: H / 2, z: 1 };
@@ -309,13 +323,14 @@ function newPerson(id, look, real, user = null) {
   return p;
 }
 
-function walkTo(p, tx, ty, then) {
+function walkTo(p, tx, ty, then, speed = 0.45) {
   p.state = 'walk';
   p.from = { x: p.x, y: p.y };
   p.to = { x: tx, y: ty };
   p.t0 = now;
-  p.dur = clamp(Math.hypot(tx - p.x, ty - p.y) / 0.45, 700, 2600);
+  p.dur = clamp(Math.hypot(tx - p.x, ty - p.y) / speed, speed > 0.6 ? 500 : 700, 2600);
   p.then = then;
+  p.running = speed > 0.6;
 }
 
 function ensureGuest(user, { walkIn = true, announceJoin = false } = {}) {
@@ -337,7 +352,10 @@ function ensureGuest(user, { walkIn = true, announceJoin = false } = {}) {
   g = newPerson(user.id, lookFor(user.id), true, user);
   if (!g) return null;
   guests.set(user.id, g);
-  if (walkIn) {
+  if (raid) {
+    g.x = SEATS[g.seat].x < W / 2 ? -80 : W + 80;
+    g.state = 'away';
+  } else if (walkIn) {
     const s = SEATS[g.seat];
     const fromLeft = s.x < W / 2;
     g.x = fromLeft ? -60 : W + 60;
@@ -507,8 +525,16 @@ function announce(text, priority = 0, force = false) {
 }
 
 // ------------------------------------------------------------------ lệnh bình luận
+let lastRaidToast = 0;
 function runCommand(g, act) {
   const name = g.user.name;
+  if (raid || g.state !== 'sit') {
+    if (raid && now - lastRaidToast > 4000) {
+      lastRaidToast = now;
+      addToast(raid.kind === 'dog' ? '🐕 Chó đang đuổi, chờ chút nhé!' : '🚨 Quán đang bị dẹp, chờ mở lại nhé!', '#ffab91');
+    }
+    return;
+  }
   switch (act) {
     case 'drink':
     case 'lemon':
@@ -700,6 +726,12 @@ function handleEvent(ev) {
       if (!g) break;
       const n = clamp(Number(ev.count) || 1, 1, 100);
       g.likes += n;
+      likeLog.push({ t: now, n });
+      while (likeLog.length && now - likeLog[0].t > 60000) likeLog.shift();
+      if (config.dogEnabled !== false && canRaid() && likeLog.reduce((a, b) => a + b.n, 0) >= Math.max(20, Number(config.dogLikes) || 300)) {
+        likeLog.length = 0;
+        startRaid('dog');
+      }
       if (g.state === 'sit' && (g.act === 'idle' || now > g.actUntil)) {
         setAct(g, 'drink', 2600);
         g.fill = 0.7;
@@ -734,8 +766,10 @@ function handleEvent(ev) {
       confetti(h.x, h.y, 30);
       sfx.sparkle();
       addToast(`📣 ${truncate(user.name, 18)} rủ bạn ra quán`, '#7cf7ff');
-      announce(line('share', { name: user.name }), 0);
+      if (!raid) announce(line('share', { name: user.name }), 0);
       addHype(10);
+      if (!raid) sharesSinceRaid++;
+      if (config.raidEnabled !== false && sharesSinceRaid >= Math.max(1, Number(config.raidShares) || 5) && canRaid()) startRaid('police');
       break;
     }
     case 'giftStreak': {
@@ -748,6 +782,12 @@ function handleEvent(ev) {
     }
     case 'gift': {
       if (!user) break;
+      if (raid) {
+        // đang dẹp quán: cảm ơn trước, hiệu ứng quà chạy khi quán mở lại
+        raidQueue.push(ev);
+        addToast(`🎁 ${truncate(user.name, 16)} tặng ${truncate(ev.giftName || 'quà', 16)}`, '#ffe9a8');
+        break;
+      }
       const g = ensureGuest(user);
       if (!g) break;
       const coinsN = Number(ev.coins) || (Number(ev.diamonds) || 1) * (Number(ev.repeatCount) || 1);
@@ -790,10 +830,26 @@ function handleEvent(ev) {
       }
       break;
     }
+    case 'raid':
+      if (!raid) startRaid('police');
+      break;
+    case 'dog':
+      if (!raid) startRaid('dog');
+      break;
     case 'voiceTest':
       announce('Xin chào cả nhà. Mời mọi người ra quán làm cốc trà đá cho mát. Bình luận trà đá để cô mang ra nhé', 2, true);
       break;
     case 'reset':
+      raidTimers.forEach(clearTimeout);
+      raidTimers.length = 0;
+      raid = null;
+      gone.clear();
+      truck = null;
+      officers.length = 0;
+      dog = null;
+      owner.state = 'sit';
+      raidQueue.length = 0;
+      sharesSinceRaid = 0;
       for (const g of guests.values()) if (g.seat >= 0) seatOwner[g.seat] = null;
       guests.clear();
       vip = null;
@@ -806,6 +862,252 @@ function handleEvent(ev) {
     default:
       break;
   }
+}
+
+// ------------------------------------------------------------------ dẹp quán / chó đuổi
+let raid = null; // { kind: 'police' | 'dog', t0, until }
+let lastRaidEnd = -1e9;
+let sharesSinceRaid = 0;
+const likeLog = [];
+const raidQueue = [];
+const gone = new Set(); // đồ đã bị thu: 's<id>', 't<id>', 'bench0', 'bench1', 'vip', 'stall'
+let truck = null;
+const officers = [];
+let dog = null;
+const raidTimers = [];
+function later(ms, fn) {
+  raidTimers.push(setTimeout(fn, ms));
+}
+function canRaid() {
+  return !raid && now - lastRaidEnd > Math.max(0, Number(config.raidCooldownSeconds ?? 90)) * 1000;
+}
+
+function moveObj(o, tx, ty, ms, then) {
+  o.move = { from: { x: o.x, y: o.y }, to: { x: tx, y: ty }, t0: now, dur: ms, then };
+}
+function stepObj(o) {
+  if (!o.move) return;
+  const k = clamp((now - o.move.t0) / o.move.dur, 0, 1);
+  o.x = lerp(o.move.from.x, o.move.to.x, k);
+  o.y = lerp(o.move.from.y, o.move.to.y, k);
+  if (k >= 1) {
+    const fn = o.move.then;
+    o.move = null;
+    if (fn) fn();
+  }
+}
+
+function fleeAll() {
+  let i = 0;
+  for (const p of allPeople()) {
+    if (p.state === 'leave' || p.state === 'away') continue;
+    const d = i++;
+    later(d * 40, () => {
+      if (p.state === 'leave' || p.state === 'away') return;
+      p.act = 'idle';
+      p.partner = null;
+      p.scaredUntil = now + 4000;
+      if (p.real && Math.random() < 0.45) say(p, pick(['Chạy thôi!', 'Ối giời ơi!', 'Cầm cốc chạy!', 'Chạy mau!!', 'Khoan đã, chưa trả tiền!']), 1800);
+      const left = p.x < W / 2;
+      walkTo(p, left ? -90 : W + 90, clamp(p.y + rand(-60, 120), 900, CURB_Y - 20), 'away', 1.1);
+    });
+  }
+  sfx.panic();
+}
+
+function reopen() {
+  const kind = raid ? raid.kind : 'police';
+  raid = null;
+  lastRaidEnd = now;
+  sharesSinceRaid = 0;
+  // kê lại bàn ghế
+  const items = [...gone];
+  items.forEach((id, i) => later(i * 35, () => {
+    gone.delete(id);
+    if (i % 3 === 0) sfx.clack();
+  }));
+  if (truck) truck.cargo = 0;
+  later(items.length * 35 + 300, () => {
+    announce(line(kind === 'dog' ? 'dogEnd' : 'raidEnd'), 1);
+    addToast('☕ Quán mở lại rồi!', '#c5e1a5');
+    sfx.sparkle();
+    let k = 0;
+    for (const p of allPeople()) {
+      if (p.state !== 'away') continue;
+      const sp = seatPos(p);
+      later(k++ * 140, () => {
+        if (p.state !== 'away') return;
+        if (p.seat < 0 && p !== vip) {
+          p.gone = true;
+          return;
+        }
+        p.x = sp.x < W / 2 ? -80 : W + 80;
+        walkTo(p, sp.x, sp.y, 'sit');
+      });
+    }
+    // quà tặng lúc đang dẹp quán
+    const queued = raidQueue.splice(0);
+    queued.forEach((ev, j) => later(2500 + j * 1500, () => handleEvent(ev)));
+  });
+}
+
+function startRaid(kind) {
+  raid = { kind, t0: now };
+  raidTimers.forEach(clearTimeout);
+  raidTimers.length = 0;
+  if (vip) vipUntil += 60000;
+  if (kind === 'dog') {
+    const D = Math.max(6, Number(config.dogSeconds) || 11) * 1000;
+    raid.until = now + D;
+    addToast('🐕 CHÓ DỮ XÔNG VÀO QUÁN!', '#ffab91');
+    announce(line('dog'), 1, true);
+    dog = { x: -120, y: 1300, dir: 1, target: null, retarget: 0, barkUntil: now + 1500, barkAt: now, leaving: false };
+    sfx.bark();
+    later(300, fleeAll);
+    later(800, () => sayOwner('Đuổi con chó đi!! Xuỵt xuỵt!', 2600));
+    later(D - 2200, () => {
+      if (dog) dog.leaving = true;
+    });
+    later(D, () => {
+      dog = null;
+      reopen();
+    });
+    return;
+  }
+  // đội trật tự
+  const R2 = Math.max(12, Number(config.raidSeconds) || 20) * 1000;
+  raid.until = now + R2;
+  addToast(`🚨 ${config.raidLabel || DEFAULTS.raidLabel} ĐẾN! CHẠY ĐI!`, '#ff8a80');
+  announce(line('raid'), 1, true);
+  sfx.whistle();
+  sfx.engine(2.2);
+  truck = { x: W + 260, y: ROAD_Y + 178, cargo: 0 };
+  moveObj(truck, 560, truck.y, 1800);
+  later(300, fleeAll);
+  // cô chủ quán ôm bình trà chạy
+  later(500, () => {
+    owner.state = 'run';
+    owner.x = STALL.ownerX;
+    owner.y = STALL.y;
+    sayOwner('Dẹp nhanh lên!!', 1500);
+    moveObj(owner, -120, STALL.y + 60, 1400, () => {
+      owner.state = 'away';
+    });
+  });
+  // đội trật tự xuống xe
+  later(1900, () => {
+    sfx.whistle();
+    const spots = [[380, 1240], [700, 1130]];
+    spots.forEach(([tx, ty], i) => {
+      const o = { x: 520 + i * 120, y: ROAD_Y + 40, look: OFFICER_LOOK, state: 'walk', seed: i * 3, bubble: null, real: false, hat: 'officer' };
+      officers.push(o);
+      moveObj(o, tx, ty, 1500, () => {
+        o.state = 'stand';
+        say(o, i === 0 ? 'Không được lấn chiếm vỉa hè!' : 'Thu hết bàn ghế lên xe!', 2600);
+      });
+    });
+  });
+  // thu bàn ghế lên xe
+  later(2700, () => {
+    const list = [];
+    list.push({ id: 'stall', item: 'stall', x: STALL.jugX, y: STALL.y - 120 });
+    list.push({ id: 'vip', item: 'stool', color: '#6d3b1f', x: VIP.x, y: VIP.y - 60 });
+    SEATS.forEach((st) => {
+      if (!st.bench) list.push({ id: `s${st.id}`, item: 'stool', color: st.color, x: st.x, y: st.y - 30 });
+    });
+    TABLES.forEach((t) => list.push({ id: `t${t.id}`, item: 'table', x: t.x, y: t.y - 40 }));
+    list.push({ id: 'bench0', item: 'bench', x: 230, y: 900 }, { id: 'bench1', item: 'bench', x: 850, y: 900 });
+    const span = Math.max(2500, R2 * 0.3);
+    list.forEach((it, i) => later((i / list.length) * span, () => {
+      if (!truck) return;
+      gone.add(it.id);
+      flights.push({
+        item: it.item, color: it.color, to: null, from: { x: it.x, y: it.y },
+        toXY: { x: truck.x + rand(-20, 140), y: truck.y - 170 }, t0: now, dur: 650,
+        onArrive: () => {
+          if (truck) truck.cargo++;
+          sfx.clack();
+        },
+      });
+    }));
+    later(span + 400, () => {
+      officers.forEach((o) => say(o, pick(['Vỉa hè thông thoáng rồi!', 'Lần sau không được bày ra nữa nhé!']), 2600));
+      sfx.whistle();
+    });
+  });
+  // rút quân
+  later(R2 - 4200, () => {
+    officers.forEach((o) => {
+      o.state = 'walk';
+      moveObj(o, truck ? truck.x + 40 : 560, ROAD_Y + 40, 1400, () => {
+        const i = officers.indexOf(o);
+        if (i >= 0) officers.splice(i, 1);
+      });
+    });
+  });
+  later(R2 - 2400, () => {
+    if (!truck) return;
+    sfx.engine(2.2);
+    moveObj(truck, -420, truck.y, 2200, () => {
+      truck = null;
+    });
+  });
+  // cô chủ quay lại trước, rồi mở quán
+  later(R2 - 600, () => {
+    owner.state = 'run';
+    owner.x = -120;
+    owner.y = STALL.y + 60;
+    moveObj(owner, STALL.ownerX, STALL.y, 1100, () => {
+      owner.state = 'sit';
+      sayOwner('Mở quán lại thôi!', 2200);
+    });
+  });
+  later(R2, reopen);
+}
+
+function updateRaid(dt) {
+  if (truck) stepObj(truck);
+  for (const o of officers) stepObj(o);
+  if (owner.state === 'run') stepObj(owner);
+  if (dog) {
+    if (dog.leaving) {
+      dog.target = { x: W + 200, y: dog.y };
+    } else if (!dog.target || now > dog.retarget) {
+      const runners = allPeople().filter((p) => p.state === 'walk');
+      const p = runners.length ? pick(runners) : null;
+      dog.target = p ? { x: p.x, y: p.y } : { x: rand(120, W - 120), y: rand(1000, 1560) };
+      dog.retarget = now + rand(700, 1300);
+    }
+    const dx = dog.target.x - dog.x;
+    const dy = dog.target.y - dog.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const sp = 560 * dt;
+    if (d > 8) {
+      dog.x += (dx / d) * Math.min(sp, d);
+      dog.y += (dy / d) * Math.min(sp, d);
+    }
+    if (Math.abs(dx) > 4) dog.dir = dx > 0 ? 1 : -1;
+    dog.y = clamp(dog.y, 940, CURB_Y - 10);
+    if (now > dog.barkUntil + 600 && Math.random() < dt * 1.5) {
+      dog.barkUntil = now + 1100;
+      dog.barkAt = now;
+      sfx.bark();
+    }
+  }
+}
+
+function drawOfficer(o) {
+  const s = scaleAtY(o.y) * 1.08;
+  ctx.save();
+  ctx.translate(o.x, o.y);
+  ctx.scale(s, s);
+  drawPerson(ctx, o.look, {
+    sit: false, act: o.state === 'walk' ? 'walk' : 'point', t: now + o.seed * 500,
+    walk: o.move ? (now - o.move.t0) * 0.014 : 0, hat: 'officer',
+    mouth: o.bubble && now < o.bubble.until ? Math.abs(Math.sin(now * 0.025)) : 0,
+    blink: (now + o.seed * 900) % 4000 < 120,
+  });
+  ctx.restore();
 }
 
 function makeVip(g) {
@@ -858,6 +1160,7 @@ function spawnBike(celebrate = false) {
 
 // ------------------------------------------------------------------ khách không tên
 function refillCrowd() {
+  if (raid) return;
   const target = Math.max(0, (Number(config.ambientCrowd) || 0) - guests.size);
   const alive = crowd.filter((c) => c.state !== 'leave');
   if (alive.length < target && freeSeats().length > 4) {
@@ -877,6 +1180,7 @@ function refillCrowd() {
 function update(dt) {
   const idleMs = Math.max(1, Number(config.idleMinutes) || 15) * 60000;
   for (const p of allPeople()) {
+    if (p.state === 'away') continue;
     if (p.state === 'walk' || p.state === 'leave') {
       if (p.to && now >= p.t0) {
         const k = clamp((now - p.t0) / p.dur, 0, 1);
@@ -886,7 +1190,12 @@ function update(dt) {
         if (k >= 1) {
           if (p.then === 'gone') {
             p.gone = true;
+          } else if (p.then === 'away') {
+            p.state = 'away';
+            p.to = null;
+            p.running = false;
           } else {
+            p.running = false;
             p.state = 'sit';
             p.to = null;
             sfx.pop();
@@ -956,12 +1265,14 @@ function update(dt) {
   crowd = crowd.filter((c) => !c.gone);
   if (vip && now > vipUntil) returnFromVip(vip);
 
+  updateRaid(dt);
   // đồ bay
   for (let i = flights.length - 1; i >= 0; i--) {
     const f = flights[i];
     if (now >= f.t0 + f.dur) {
       flights.splice(i, 1);
       if (f.to) arrive(f);
+      if (f.onArrive) f.onArrive();
     }
   }
   // hạt
@@ -1016,12 +1327,13 @@ function personParams(p) {
   const talking = p.bubble && now < p.bubble.until && now - p.bubble.born < 2200;
   return {
     sit: sitting,
-    act: sitting ? (p.act === 'pipe' && p.pipePuffed ? 'idle' : p.act) : p.state === 'leave' && p.act === 'wave' && now < p.actUntil ? 'wave' : 'walk',
+    act: sitting ? (p.act === 'pipe' && p.pipePuffed ? 'idle' : p.act) : p.state === 'leave' && p.act === 'wave' && now < p.actUntil ? 'wave' : p.running ? 'run' : 'walk',
+    scared: now < (p.scaredUntil || 0),
     k, t,
     lean: p.partner ? Math.sign(p.partner.x - p.x) * 0.8 : 0,
     mouth: talking || p.act === 'toast' ? Math.abs(Math.sin(t * 0.025)) : p.act === 'candy' || p.act === 'seeds' ? Math.abs(Math.sin(t * 0.03)) * 0.5 : 0,
     blink: (t % 4200) < 130,
-    walk: p.walkPhase || 0,
+    walk: (p.walkPhase || 0) * (p.running ? 1.8 : 1),
     dizzy: now < p.dizzyUntil,
     happy: now < p.happyUntil,
     hat: p.hat,
@@ -1032,6 +1344,7 @@ function personParams(p) {
 }
 
 function drawPersonAt(p) {
+  if (p.state === 'away') return;
   const sitting = p.state === 'sit';
   const sp = sitting ? seatPos(p) : { x: p.x, y: p.y, s: scaleAtY(p.y) };
   ctx.save();
@@ -1042,7 +1355,7 @@ function drawPersonAt(p) {
 }
 
 function drawTag(p) {
-  if (!p.real || !p.user) return;
+  if (!p.real || !p.user || p.state === 'away') return;
   const sitting = p.state === 'sit';
   const sp = sitting ? seatPos(p) : { x: p.x, y: p.y, s: scaleAtY(p.y) };
   const s = Math.max(0.62, sp.s);
@@ -1102,7 +1415,7 @@ function drawBubbleAt(x, bottomY, text, s, born, color = '#fff') {
 }
 
 function drawBubble(p) {
-  if (!p.bubble || now > p.bubble.until) return;
+  if (!p.bubble || now > p.bubble.until || p.state === 'away') return;
   const sitting = p.state === 'sit';
   const sp = sitting ? seatPos(p) : { x: p.x, y: p.y, s: scaleAtY(p.y) };
   const top = sp.y - (sitting ? 182 : 196) * sp.s - (p.real ? 30 * Math.max(0.62, sp.s) : 0) - (p.hat ? 16 * sp.s : 0);
@@ -1110,6 +1423,16 @@ function drawBubble(p) {
 }
 
 function drawOwner() {
+  if (owner.state === 'away') return;
+  if (owner.state === 'run') {
+    const sc = scaleAtY(owner.y) * 1.1;
+    ctx.save();
+    ctx.translate(owner.x, owner.y);
+    ctx.scale(sc, sc);
+    drawPerson(ctx, OWNER_LOOK, { sit: false, act: 'run', t: now, walk: (now - owner.move.t0) * 0.022, scared: true, mouth: 0.8 });
+    ctx.restore();
+    return;
+  }
   const s = scaleAtY(STALL.y) * 1.45;
   ctx.save();
   ctx.translate(STALL.ownerX, STALL.y - 8);
@@ -1140,6 +1463,7 @@ function drawTables() {
   // bàn có người chơi cờ thì hiện bàn cờ
   const items = [];
   for (const t of TABLES) {
+    if (gone.has(`t${t.id}`)) continue;
     const occ = t.seats.filter((id) => seatOwner[id] && seatOwner[id].state === 'sit').length;
     items.push({ y: t.y - 1, draw: () => drawTable(ctx, t, Math.max(occ, 0)) });
     const a = seatOwner[t.seats[0]];
@@ -1215,6 +1539,23 @@ function drawFlights() {
         ctx.fill();
       }
     } else if (f.item === 'pipe') drawPipe(ctx, 0, 40, 0.55, 0.3);
+    else if (f.item === 'stool') drawStool(ctx, 0, 20, 0.75, f.color);
+    else if (f.item === 'table' || f.item === 'bench') {
+      ctx.fillStyle = f.item === 'table' ? '#1e88e5' : '#6d4c37';
+      rr(ctx, f.item === 'table' ? -30 : -60, -8, f.item === 'table' ? 60 : 120, 14, 4);
+      ctx.fill();
+      ctx.fillRect(-24, 4, 6, 18);
+      ctx.fillRect(18, 4, 6, 18);
+    } else if (f.item === 'stall') {
+      ctx.fillStyle = '#eceff1';
+      rr(ctx, -30, -40, 60, 70, 10);
+      ctx.fill();
+      ctx.fillStyle = '#d32f2f';
+      ctx.fillRect(-30, -18, 60, 16);
+      ctx.fillStyle = '#1976d2';
+      rr(ctx, -33, -48, 66, 14, 6);
+      ctx.fill();
+    }
     else if (f.item === 'money') {
       ctx.fillStyle = '#7cb342';
       rr(ctx, -18, -9, 36, 18, 2);
@@ -1329,23 +1670,25 @@ function drawWorld() {
     ctx.drawImage(bg, 0, 0);
     if (config.showTree !== false) drawCanopy(ctx, now);
   }
-  if (config.showUmbrella !== false) drawUmbrella(ctx, now);
+  if (config.showUmbrella !== false && !gone.has('stall')) drawUmbrella(ctx, now);
   // vật thể sắp theo chiều sâu
   const items = [];
   items.push({ y: STALL.y - 2, draw: drawOwner });
-  items.push({ y: STALL.y, draw: () => drawStallFront(ctx) });
-  items.push({ y: VIP.y - 1, draw: () => drawVipChair(ctx, vip ? 0.6 + Math.sin(now * 0.005) * 0.4 : 0) });
+  if (!gone.has('stall')) items.push({ y: STALL.y, draw: () => drawStallFront(ctx) });
+  if (!gone.has('vip')) items.push({ y: VIP.y - 1, draw: () => drawVipChair(ctx, vip ? 0.6 + Math.sin(now * 0.005) * 0.4 : 0) });
+  for (const o of officers) items.push({ y: o.y, draw: () => drawOfficer(o) });
+  if (dog) items.push({ y: dog.y, draw: () => drawDog(ctx, dog.x, dog.y, scaleAtY(dog.y) * 1.1, dog.dir, now, now < dog.barkUntil) });
   // ghế dài sát tường
   const bench = SEATS.filter((s) => s.bench);
   if (bench.length) {
     const left = bench.filter((s) => s.x < W / 2);
     const right = bench.filter((s) => s.x >= W / 2);
-    for (const grp of [left, right]) {
-      if (grp.length) items.push({ y: grp[0].y - 2, draw: () => drawBench(ctx, grp[0].x, grp[grp.length - 1].x, grp[0].y, grp[0].s) });
+    for (const [gi, grp] of [left, right].entries()) {
+      if (grp.length && !gone.has(`bench${gi}`)) items.push({ y: grp[0].y - 2, draw: () => drawBench(ctx, grp[0].x, grp[grp.length - 1].x, grp[0].y, grp[0].s) });
     }
   }
   for (const s of SEATS) {
-    if (s.bench) continue;
+    if (s.bench || gone.has(`s${s.id}`)) continue;
     items.push({ y: s.y - 1.5, draw: () => drawStool(ctx, s.x, s.y, s.s, s.color) });
   }
   items.push(...drawTables());
@@ -1361,10 +1704,13 @@ function drawWorld() {
   // xe máy dưới lòng đường (gần nhất)
   bikes.sort((a, b) => a.y - b.y);
   for (const b of bikes) drawMotorbike(ctx, b, now);
+  if (truck) drawTruck(ctx, truck.x, truck.y, truck.cargo, now, config.raidLabel || DEFAULTS.raidLabel);
   // bảng tên + bong bóng chat trên cùng
   const ppl = allPeople().sort((a, b) => a.y - b.y);
   for (const p of ppl) drawTag(p);
   for (const p of ppl) drawBubble(p);
+  for (const o of officers) drawBubble(o);
+  if (dog && now < dog.barkUntil) drawBubbleAt(dog.x, dog.y - 110 * scaleAtY(dog.y), 'Gâu gâu! 🐕', 1, dog.barkAt, '#ffe0b2');
   if (owner.bubble && now < owner.bubble.until) drawBubbleAt(OWNER_MOUTH.x, OWNER_MOUTH.y - 50, owner.bubble.text, 0.95, owner.bubble.born, '#fff3e0');
 }
 
@@ -1428,16 +1774,20 @@ function drawHeader() {
     ctx.textAlign = 'left';
     ctx.fillText(text, bx + 12, y + 20);
   };
-  chip(`☕ ${teaCount} cốc trà`, 16, 176, 'left');
-  chip(`💨 ${chemCount} vụ chém gió`, 16, 222, 'left');
-  chip(`👥 ${guests.size} khách`, W - 16, 176, 'right');
+  chip(`☕ ${teaCount} cốc trà`, 16, 272, 'left');
+  chip(`💨 ${chemCount} vụ chém gió`, 16, 318, 'left');
+  chip(`👥 ${guests.size} khách`, W - 16, 272, 'right');
+  if (config.raidEnabled !== false) {
+    const need = Math.max(1, Number(config.raidShares) || 5);
+    chip(raid ? (raid.kind === 'dog' ? '🐕 Chó đang đuổi!' : '🚨 Đang bị dẹp quán!') : `📣 ${Math.min(sharesSinceRaid, need)}/${need} share: trật tự đến!`, 16, 364, 'left');
+  }
   ctx.restore();
   // độ rôm rả
   const max = Math.max(20, Number(config.hypeMax) || 200);
   const k = clamp(hype / max, 0, 1);
   const bw = 300;
   const bx = W - 16 - bw;
-  const by = 224;
+  const by = 320;
   ctx.save();
   ctx.fillStyle = 'rgba(30,20,10,0.65)';
   rr(ctx, bx, by, bw, 34, 17);
@@ -1459,7 +1809,7 @@ function drawHeader() {
   if (top.length) {
     ctx.save();
     const lx = W - 16 - 300;
-    let ly = 270;
+    let ly = 364;
     ctx.fillStyle = 'rgba(30,20,10,0.6)';
     rr(ctx, lx, ly, 300, 36 + top.length * 34, 14);
     ctx.fill();
@@ -1485,7 +1835,7 @@ function drawHeader() {
 }
 
 function drawToasts() {
-  let y = 410;
+  let y = 620;
   for (let i = toasts.length - 1; i >= 0; i--) {
     const t = toasts[i];
     const age = now - t.born;
@@ -1528,7 +1878,7 @@ function drawCaption() {
   const w = Math.min(W - 40, Math.max(...lines.map((l) => ctx.measureText(l).width)) + 110);
   const h = 22 + lines.length * 36;
   const x = (W - w) / 2;
-  const y = 1690;
+  const y = 520;
   ctx.fillStyle = 'rgba(255,248,230,0.95)';
   rr(ctx, x, y, w, h, 20);
   ctx.fill();
@@ -1555,30 +1905,28 @@ const FOOT_CMDS = [
   ['☕', 'trà đá'], ['🍋', 'trà chanh'], ['🎋', 'điếu cày'], ['🥜', 'kẹo lạc'], ['🌻', 'hướng dương'], ['💨', 'chém gió'],
   ['♟️', 'cờ tướng'], ['📰', 'đọc báo'], ['🪭', 'nóng quá'], ['🍻', 'dzô'], ['👋', 'tính tiền'],
 ];
-function drawFooter() {
+// Bảng lệnh đặt ở phía trên: phía dưới màn hình điện thoại bị khung bình luận TikTok che
+function drawGuide() {
   ctx.save();
-  ctx.fillStyle = 'rgba(25,15,8,0.82)';
-  ctx.fillRect(0, FOOT_Y, W, H - FOOT_Y);
-  ctx.fillStyle = '#ffcc80';
-  ctx.font = `800 21px ${FONT}`;
-  ctx.textAlign = 'center';
+  const top = 168;
+  ctx.fillStyle = 'rgba(25,15,8,0.78)';
+  rr(ctx, 10, top, W - 20, 92, 18);
+  ctx.fill();
+  ctx.font = `700 22px ${FONT}`;
   ctx.textBaseline = 'middle';
-  ctx.fillText('BÌNH LUẬN ĐỂ GỌI ĐỒ  •  ❤️ THẢ TIM ĐỂ UỐNG  •  🎁 QUÀ = BAO CẢ QUÁN', W / 2, FOOT_Y + 22);
-  ctx.font = `700 21px ${FONT}`;
-  // 2 hàng nút lệnh
   const rows = [FOOT_CMDS.slice(0, 6), FOOT_CMDS.slice(6)];
   rows.forEach((row, r) => {
     const widths = row.map(([e, t]) => ctx.measureText(`${e} ${t}`).width + 22);
-    const total = widths.reduce((a, b) => a + b, 0) + (row.length - 1) * 8;
+    const total = widths.reduce((a2, b2) => a2 + b2, 0) + (row.length - 1) * 8;
     let x = (W - total) / 2;
-    const y = FOOT_Y + 46 + r * 40;
+    const y = top + 8 + r * 42;
     row.forEach(([e, t], i) => {
-      ctx.fillStyle = 'rgba(255,255,255,0.12)';
-      rr(ctx, x, y, widths[i], 32, 16);
+      ctx.fillStyle = 'rgba(255,255,255,0.14)';
+      rr(ctx, x, y, widths[i], 34, 17);
       ctx.fill();
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'left';
-      ctx.fillText(`${e} ${t}`, x + 11, y + 17);
+      ctx.fillText(`${e} ${t}`, x + 11, y + 18);
       x += widths[i] + 8;
     });
   });
@@ -1617,17 +1965,17 @@ function frame(ts) {
   drawHeader();
   drawToasts();
   drawCaption();
-  drawFooter();
+  drawGuide();
   if (audioBlocked) {
     ctx.save();
     ctx.fillStyle = 'rgba(0,0,0,0.7)';
-    rr(ctx, W / 2 - 250, 330, 500, 56, 28);
+    rr(ctx, W / 2 - 250, 700, 500, 56, 28);
     ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.font = `700 24px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('🔇 Bấm vào game để bật tiếng', W / 2, 359);
+    ctx.fillText('🔇 Bấm vào game để bật tiếng', W / 2, 729);
     ctx.restore();
   }
   requestAnimationFrame(frame);

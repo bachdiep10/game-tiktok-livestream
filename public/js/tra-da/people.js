@@ -51,6 +51,11 @@ export function crowdLook(i) {
 }
 
 // bà chủ quán (nhân vật riêng của game)
+export const OFFICER_LOOK = {
+  skin: '#e6b48f', hair: '#1d1410', style: 'short', shirt: '#6b7a3a', shirt2: '#6b7a3a', pattern: 'collar',
+  shorts: '#3a4420', pants: '#3a4420', sandal: '#1a1a1a', glasses: false, beard: false,
+};
+
 export const OWNER_LOOK = {
   skin: '#e9b48c', hair: '#2b1d16', style: 'bun', shirt: '#7e57c2', shirt2: '#f8bbd0', pattern: 'flower',
   shorts: '#3e2723', sandal: '#e53935', glasses: false, beard: false, owner: true,
@@ -111,6 +116,10 @@ function hands(p, up) {
       return { L: [-20, -76 + up], R: [44, -76 + up] };
     case 'cheer':
       return { L: [-30, -160 + up], R: [30, -160 + up] };
+    case 'run':
+      return { L: [-30, -120 + up + Math.sin((p.walk || 0) * 2) * 10], R: [30, -120 + up - Math.sin((p.walk || 0) * 2) * 10] };
+    case 'point':
+      return { L: [-18, -70 + up], R: [48, -128 + up] };
     case 'walk':
       return { L: [-22, -66 + up + Math.sin((p.walk || 0) + Math.PI) * 4], R: [22, -66 + up + Math.sin(p.walk || 0) * 4] };
     default:
@@ -264,6 +273,14 @@ function drawFace(ctx, L, p, hy, r) {
     ctx.ellipse(sx * r * 0.58 + lean, hy + r * 0.36, r * 0.16, r * 0.09, 0, 0, TAU);
     ctx.fill();
   }
+  if (p.scared) {
+    ctx.fillStyle = '#7fd3ff';
+    ctx.beginPath();
+    ctx.moveTo(r * 0.85, hy - r * 0.55);
+    ctx.quadraticCurveTo(r * 1.05, hy - r * 0.2, r * 0.85, hy - r * 0.1);
+    ctx.quadraticCurveTo(r * 0.65, hy - r * 0.2, r * 0.85, hy - r * 0.55);
+    ctx.fill();
+  }
   if (L.beard) {
     ctx.fillStyle = 'rgba(40,25,15,0.35)';
     ctx.beginPath();
@@ -406,8 +423,8 @@ export function drawPerson(ctx, L, p = {}) {
     const w = p.walk || 0;
     for (const sx of [-1, 1]) {
       const lift = Math.max(0, Math.sin(w + (sx > 0 ? 0 : Math.PI))) * 10;
-      ctx.strokeStyle = L.skin;
-      ctx.lineWidth = 12;
+      ctx.strokeStyle = L.pants || L.skin;
+      ctx.lineWidth = L.pants ? 14 : 12;
       ctx.beginPath();
       ctx.moveTo(sx * 10, -62);
       ctx.lineTo(sx * 11, -4 - lift);
@@ -483,6 +500,18 @@ export function drawPerson(ctx, L, p = {}) {
     ctx.fillStyle = '#ffd54a';
     ctx.beginPath();
     ctx.arc(0, hy - r * 0.95, 4, 0, TAU);
+    ctx.fill();
+  } else if (p.hat === 'officer') {
+    // mũ kê-pi (không phù hiệu)
+    ctx.fillStyle = '#4e5b2c';
+    ctx.beginPath();
+    ctx.ellipse(0, hy - r * 0.62, r * 1.12, r * 0.42, 0, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = '#3a4420';
+    ctx.fillRect(-r * 0.95, hy - r * 0.55, r * 1.9, r * 0.28);
+    ctx.fillStyle = '#1f2412';
+    ctx.beginPath();
+    ctx.ellipse(0, hy - r * 0.26, r * 0.9, r * 0.16, 0, 0, Math.PI);
     ctx.fill();
   } else if (p.hat === 'crown') {
     ctx.fillStyle = '#ffd54a';
