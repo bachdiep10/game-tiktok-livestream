@@ -1,0 +1,83 @@
+{
+  "_ghi_chu": "Cấu hình game Trà đá vỉa hè. Sửa xong lưu lại rồi tải lại trang game (F5).",
+  "shopName": "TRÀ ĐÁ VỈA HÈ",
+  "subtitle": "Bình luận để gọi đồ • Thả tim để uống • Tặng quà để bao cả quán",
+  "backgroundImage": "",
+  "showHouses": true,
+  "showWires": true,
+  "showTree": true,
+  "showUmbrella": true,
+  "showMotorbikes": true,
+  "showLeaves": true,
+  "ambientCrowd": 10,
+  "idleMinutes": 15,
+  "hypeMax": 200,
+  "giftTiers": {
+    "medium": 10,
+    "big": 100
+  },
+  "vipSeconds": 25,
+  "cameraZoom": 1.7,
+  "sound": true,
+  "music": true,
+  "musicFiles": [],
+  "musicVolume": 0.3,
+  "ambienceVolume": 0.12,
+  "voice": true,
+  "voiceLevel": "vua",
+  "voiceGapSeconds": 12,
+  "voiceJoin": true,
+  "voiceEngine": "auto",
+  "ttsVoice": "vi-VN-HoaiMyNeural",
+  "captions": true,
+  "narration": true,
+  "narrationSeconds": 50,
+  "commands": {
+    "lemon": ["trà chanh", "trachanh"],
+    "drink": ["trà đá", "trada", "cốc trà", "uống trà"],
+    "candy": ["kẹo lạc", "keolac", "kẹo vừng"],
+    "seeds": ["hướng dương", "hạt dưa", "cắn hạt"],
+    "pipe": ["điếu cày", "dieucay", "thuốc lào", "rít điếu"],
+    "talk": ["chém gió", "chemgio", "tám chuyện", "buôn chuyện"],
+    "chess": ["cờ tướng", "đánh cờ", "chơi cờ", "ván cờ"],
+    "paper": ["đọc báo", "xem báo"],
+    "fan": ["nóng quá", "quạt"],
+    "toast": ["dzô", "cụng ly", "cạn ly", "một hai ba", "123 dzo"],
+    "leave": ["tính tiền", "về thôi", "đi về"]
+  },
+  "messages": {
+    "join": [
+      "Mời {name} vào ngồi, làm cốc trà đá cho mát",
+      "{name} đến rồi đấy à, kéo ghế ngồi đi",
+      "Ơ {name}, lâu lắm mới thấy ra quán",
+      "Chào {name}, hôm nay uống trà đá hay trà chanh"
+    ],
+    "follow": [
+      "Cảm ơn {name} đã theo dõi, từ nay là khách quen của quán",
+      "{name} thành khách quen rồi, tặng cái mũ cối"
+    ],
+    "gift": [
+      "Cảm ơn {name} đã tặng {gift}, cô mời cả bàn kẹo lạc",
+      "{name} tặng {gift}, quý hoá quá"
+    ],
+    "mediumGift": [
+      "{name} tặng {gift}, bao cả quán một chầu trà đá",
+      "Cả quán ơi, {name} bao một chầu trà đá. Dzô"
+    ],
+    "bigGift": [
+      "Đại gia {name} tặng {gift}, bao cả phố. Mời {name} lên ghế VIP",
+      "Ối giời ơi, {name} tặng {gift}. Mời đại gia ngồi ghế VIP"
+    ],
+    "reminder": [
+      "Bình luận trà đá để cô mang trà ra",
+      "Ai muốn rít điếu cày thì bình luận điếu cày",
+      "Bình luận chém gió để ngồi tán chuyện với người bên cạnh",
+      "Thả tim để nhân vật của bạn uống trà",
+      "Tặng quà để bao cả quán một chầu trà đá",
+      "Bình luận cờ tướng để làm một ván với người bên cạnh",
+      "Theo dõi kênh để thành khách quen, được tặng mũ cối",
+      "Bình luận kẹo lạc hoặc hướng dương để có đồ nhâm nhi",
+      "Bình luận dzô để cả bàn cụng ly"
+    ]
+  }
+}

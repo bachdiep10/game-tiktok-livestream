@@ -1,17 +1,17 @@
 // Đóng gói từng game thành 1 file ZIP riêng để bán (game nào đi game đấy), có khoá bản quyền.
 //
-//   node tools/dong-goi-game.mjs                 → đóng gói cả 2 game
+//   node tools/dong-goi-game.mjs                 → đóng gói cả 3 game
 //   node tools/dong-goi-game.mjs chanh-dien      → chỉ game Chánh điện
 //   Tuỳ chọn: --server https://netxioviet.com   (máy chủ key, mặc định netxioviet.com)
 //             --pem duong-dan/license-public.pem (nếu không có sẽ tải từ máy chủ)
 //
-// Kết quả: dist/ChanhDien-<phiên bản>.zip, dist/QuanBar-<phiên bản>.zip
+// Kết quả: dist/ChanhDien-<phiên bản>.zip, dist/QuanBar-<phiên bản>.zip, dist/TraDa-<phiên bản>.zip
 // Sau đó vào Quản trị > Game > Sửa > "Tải file lên" để khách có key tải về.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR } from '../store/lib/db.js';
+import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -36,6 +36,11 @@ const PRODUCTS = {
     files: ['run-bar.bat', 'mo-cua-so-bar.bat', 'config-bar.json', 'public/bar.html', 'public/bar-control.html', 'public/js/bar',
       'public/assets/nhac-bar/DAT-NHAC-VAO-DAY.txt', 'public/assets/anh-led/DAT-ANH-VAO-DAY.txt'],
     patch: { 'public/bar-control.html': [/ <a href="control.html"[^>]*>[^<]*<\/a>/, ''] },
+  },
+  'tra-da': {
+    name: 'Trà Đá Vỉa Hè', folder: 'TraDa', control: '/tra-da-control.html', guide: GUIDE_TRA_DA,
+    files: ['run-tra-da.bat', 'mo-cua-so-tra-da.bat', 'config-tra-da.json', 'public/tra-da.html', 'public/tra-da-control.html', 'public/js/tra-da',
+      'public/assets/nhac-tra-da/DAT-NHAC-VAO-DAY.txt'],
   },
 };
 
@@ -64,7 +69,8 @@ function zip(dir, out) {
   }
 }
 
-const pem = await publicKey();
+// Không lấy được khoá (mất mạng) thì vẫn đóng gói: game tự tải khoá từ máy chủ qua HTTPS lần đầu kích hoạt.
+const pem = await publicKey().catch((e) => { console.warn(`⚠ ${e.message}. Đóng gói không kèm khoá công khai.`); return ''; });
 const dist = path.join(ROOT, 'dist');
 fs.mkdirSync(dist, { recursive: true });
 
@@ -78,7 +84,7 @@ for (const [id, p] of Object.entries(PRODUCTS)) {
     fs.writeFileSync(fp, fs.readFileSync(fp, 'utf8').replace(re, by));
   }
   fs.writeFileSync(path.join(dir, 'product.json'), JSON.stringify({ game: id, name: p.name, control: p.control, server: SERVER, version: VERSION }, null, 2));
-  fs.writeFileSync(path.join(dir, 'license', 'license-public.pem'), pem);
+  if (pem) fs.writeFileSync(path.join(dir, 'license', 'license-public.pem'), pem);
   const guide = `${p.name.toUpperCase()} - HƯỚNG DẪN CÀI ĐẶT (bản ${VERSION})\r\n\r\n${p.guide.replace(/\n/g, '\r\n')}\r\n\r\nMua key, xem key, chuyển máy: ${SERVER}/tai-khoan.html\r\n`;
   fs.writeFileSync(path.join(dir, 'HUONG-DAN.txt'), '﻿' + guide);
   const out = path.join(dist, `${p.folder}-${VERSION}.zip`);

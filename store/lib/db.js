@@ -61,6 +61,16 @@ export const GUIDE_QUAN_BAR = `1. Cài Node.js bản LTS tại nodejs.org (chỉ
 8. Bấm đúp mo-cua-so-bar.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe nhạc, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_TRA_DA = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\TraDa. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-tra-da.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập ("trà đá", "điếu cày", "chém gió"...) để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Người xem bình luận: trà đá, trà chanh, điếu cày, kẹo lạc, hướng dương, chém gió, cờ tướng, đọc báo, nóng quá, dzô, tính tiền. Quà nhỏ mời kẹo lạc, quà từ 10 xu bao cả quán, quà từ 100 xu lên ghế VIP.
+7. Nhạc riêng (nếu muốn): chép MP3 vào public\\assets\\nhac-tra-da. Đổi câu chào, từ khoá lệnh: sửa config-tra-da.json.
+8. Bấm đúp mo-cua-so-tra-da.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 const DEFAULT_GAMES = [
   {
     id: 'chanh-dien', name: 'Chánh Điện Lễ Phật',
@@ -79,6 +89,16 @@ const DEFAULT_GAMES = [
     image: '/media/quan-bar.jpg', video: '/media/quan-bar.mp4', download: '', version: '1.9.9',
     guide: GUIDE_QUAN_BAR, guideVideo: '',
     visible: true, order: 2, isNew: true,
+  },
+  {
+    id: 'tra-da', name: 'Trà Đá Vỉa Hè',
+    tagline: 'Người xem ra quán trà đá: gọi trà, rít điếu cày, chém gió',
+    description: 'Người xem vào LIVE thành khách ngồi ghế nhựa ở quán trà đá vỉa hè. Bình luận "trà đá", "điếu cày", "kẹo lạc" thì cô chủ quán mang ra tận nơi. Bình luận "chém gió" để tán chuyện với người bên cạnh, "cờ tướng" để làm một ván. Quà bao cả quán một chầu, quà lớn được ngồi ghế VIP.',
+    features: ['11 lệnh bình luận vui nhộn', 'Chém gió, đánh cờ với người bên cạnh', 'Quà = bao cả quán, ghế VIP', 'Giọng cô chủ quán AI tiếng Việt', 'Nhạc guitar + tiếng phố tự tạo'],
+    image: '/media/tra-da.jpg', video: '/media/tra-da.mp4', download: '', version: '2.0.0',
+    guide: GUIDE_TRA_DA, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 3, isNew: true,
   },
 ];
 
@@ -128,7 +148,17 @@ export class DB {
       admin: data.admin || { passwordHash: '', salt: '' },
       secret: data.secret || '',
       seq: data.seq || 0,
+      seededGames: data.seededGames || (data.games ? data.games.map(g => g.id) : DEFAULT_GAMES.map(g => g.id)),
     };
+    // Game mặc định mới ra (vd. Trà Đá Vỉa Hè) được thêm sẵn ở trạng thái ẩn vào dữ liệu cũ.
+    // Quản trị tải file game lên rồi bật "Hiện" là key combo còn suất tự nhận game.
+    // Game đã từng thêm rồi bị xoá thì không thêm lại.
+    for (const def of DEFAULT_GAMES) {
+      if (this.data.seededGames.includes(def.id)) continue;
+      this.data.seededGames.push(def.id);
+      if (this.data.games.some(g => g.id === def.id)) continue;
+      this.data.games.push({ ...structuredClone(def), visible: false, createdAt: Date.now() });
+    }
     // Bổ sung hướng dẫn mặc định cho game có sẵn (dữ liệu tạo từ bản cũ)
     for (const g of this.data.games) {
       const def = DEFAULT_GAMES.find(d => d.id === g.id);

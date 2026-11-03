@@ -158,6 +158,27 @@ Sàn còn có vài bóng người nhảy **không tên** cho đỡ vắng; mỗi
 
 Mã nguồn game quán bar: `public/bar.html`, `public/bar-control.html`, `public/js/bar/`.
 
+# 🧋 Trà đá vỉa hè LIVE (game thứ ba, dùng chung máy chủ)
+
+Người xem vào LIVE đi bộ vào quán, ngồi ghế nhựa quanh bàn thấp trên vỉa hè. Cô chủ quán (giọng AI HoaiMy) mang đồ ra tận chỗ.
+
+| Bình luận | Nhân vật làm gì |
+| --- | --- |
+| trà đá / trà chanh | Cô chủ rót trà, cốc bay tới, nhân vật uống ực ực |
+| điếu cày (thuốc lào) | Rít điếu cày ục ục, phả khói, mắt xoay vì say |
+| kẹo lạc / hướng dương | Nhâm nhi, vụn kẹo và vỏ hạt rơi |
+| chém gió | Tán chuyện với người cùng bàn (câu chém gió vui ngẫu nhiên), gió xoáy bay ra |
+| cờ tướng | Đánh cờ với người cùng bàn, có người "chiếu tướng" thắng |
+| đọc báo, nóng quá (quạt nan) | Đọc báo / phe phẩy quạt |
+| dzô / cụng ly | Cả bàn nâng cốc |
+| tính tiền | Trả tiền, vẫy tay rồi đi về |
+
+Thả tim: nhân vật uống trà + tim bay. Theo dõi: được đội mũ cối "khách quen". Quà nhỏ: cô chủ mời kẹo lạc cả bàn. Quà từ 10 xu: bao cả quán một chầu trà đá, cả quán dzô. Quà từ 100 xu: lên ghế VIP (vương miện, kính đen, camera zoom), mưa xu, đoàn xe máy bấm còi. Thanh "Độ rôm rả" đầy thì cả quán cụng ly.
+
+Chạy: `run-tra-da.bat` (bảng điều khiển `/tra-da-control.html`), cửa sổ game `mo-cua-so-tra-da.bat` (`/tra-da.html`). Cấu hình `config-tra-da.json`: tên quán, từ khoá lệnh (`commands`, gõ có dấu hay không dấu đều nhận), câu nói (`messages`), mức giọng (`voiceLevel`: it / vua / nhieu), số khách không tên (`ambientCrowd`), mốc quà (`giftTiers`). Nhạc riêng: chép MP3 vào `public/assets/nhac-tra-da`. Nền riêng: mở `/tra-da.html?export=1` để tải nền trống, sửa xong đặt vào `backgroundImage`.
+
+Toàn bộ hình vẽ (phố, nhà ống, cây bàng, ô dù, nhân vật, xe máy) và âm thanh (guitar, tiếng phố, rót trà, điếu cày) đều tự tạo bằng code.
+
 ## Website bán game + quản lý key
 
 Thư mục [`store/`](store/README.md) là website bán các game này kèm license key (1 key = 1 máy), trang quản trị và API kiểm tra key cho game.

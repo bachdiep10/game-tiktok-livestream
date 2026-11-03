@@ -11,6 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const CONFIG_PATH = path.join(__dirname, 'config.json');
 const BAR_CONFIG_PATH = path.join(__dirname, 'config-bar.json');
+const TRA_DA_CONFIG_PATH = path.join(__dirname, 'config-tra-da.json');
 
 function loadConfig(file = CONFIG_PATH) {
   try {
@@ -57,15 +58,16 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(loadConfig()));
     return;
   }
-  if (pathname === '/bar-music.json') {
-    // danh sách bài hát trong thư mục public/assets/nhac-bar, xếp theo tên file
-    const dir = path.join(PUBLIC_DIR, 'assets', 'nhac-bar');
+  if (pathname === '/bar-music.json' || pathname === '/tra-da-music.json') {
+    // danh sách bài hát trong thư mục nhạc của game (public/assets/nhac-bar, nhac-tra-da), xếp theo tên file
+    const folder = pathname === '/bar-music.json' ? 'nhac-bar' : 'nhac-tra-da';
+    const dir = path.join(PUBLIC_DIR, 'assets', folder);
     let list = [];
     try {
       list = fs.readdirSync(dir)
         .filter((f) => /\.(mp3|m4a|aac|ogg|wav|webm|opus)$/i.test(f))
         .sort((a, b) => a.localeCompare(b, 'vi', { numeric: true }))
-        .map((f) => `assets/nhac-bar/${encodeURIComponent(f)}`);
+        .map((f) => `assets/${folder}/${encodeURIComponent(f)}`);
     } catch {
       /* chưa có thư mục */
     }
@@ -108,6 +110,11 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': type, 'Cache-Control': 'no-store' });
       res.end(data);
     });
+    return;
+  }
+  if (pathname === '/tra-da-config.json') {
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(loadConfig(TRA_DA_CONFIG_PATH)));
     return;
   }
   if (pathname === '/bar-config.json') {
@@ -227,7 +234,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '1.9.9';
+const VERSION = '2.0.0';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 const gate = createGate({
   rootDir: __dirname,
@@ -482,6 +489,7 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`  - Màn hình game (thêm vào OBS / LIVE Studio): http://127.0.0.1:${PORT}/game.html`);
     console.log(`  - Bảng điều khiển + giả lập:                   http://127.0.0.1:${PORT}/control.html`);
   }
+  if (has('tra-da.html')) console.log(`  🧋 Trà đá vỉa hè (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/tra-da.html   ·  điều khiển  http://127.0.0.1:${PORT}/tra-da-control.html`);
   if (has('bar.html')) console.log(`  🪩 Quán bar (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/bar.html   ·  điều khiển  http://127.0.0.1:${PORT}/bar-control.html`);
   console.log('');
   const startUser = process.env.TIKTOK_USERNAME || config.tiktokUsername;
