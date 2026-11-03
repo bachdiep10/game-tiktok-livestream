@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DB } from './lib/db.js';
 import * as payos from './lib/payos.js';
+import { parseBankEmail, findOrderCode, fetchNewMails } from './lib/bankmail.js';
 import { newKey, normalizeKey, loadKeyPair, signTicket, entitledGames, fillEmptySlots, movesInWindow } from './lib/license.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -72,7 +73,8 @@ function publicSettings() {
     brandName: s.brandName, tagline: s.tagline, heroEyebrow: s.heroEyebrow, heroTitle: s.heroTitle,
     heroSubtitle: s.heroSubtitle, heroVideo: s.heroVideo, promo: s.promo,
     contactZalo: s.contactZalo, contactFacebook: s.contactFacebook, contactTiktok: s.contactTiktok, contactPhone: s.contactPhone,
-    guideUrl: s.guideUrl, moveLimit: s.moveLimit, moveWindowDays: s.moveWindowDays,
+    guideUrl: s.guideUrl, moveLimit: s.moveLimit, moveWindowDays: s.moveWindowDays, offlineDays: s.offlineDays,
+    sellerName: s.sellerName, sellerEmail: s.sellerEmail, sellerAddress: s.sellerAddress, sellerTaxId: s.sellerTaxId, refundDays: s.refundDays,
   };
 }
 
@@ -312,10 +314,10 @@ app.post('/api/account/register', rateLimit('register', 10, 600000), (req, res) 
   const pw = String(req.body.password || '');
   if (!name) return fail(res, 400, 'Vui lòng nhập họ tên.');
   if (normPhone(phone).length < 9) return fail(res, 400, 'Số điện thoại chưa đúng.');
-  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail(res, 400, 'Email chưa đúng.');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail(res, 400, email ? 'Email chưa đúng.' : 'Vui lòng nhập email.');
   if (pw.length < 6) return fail(res, 400, 'Mật khẩu cần ít nhất 6 ký tự.');
   if (findUserByLogin(phone)) return fail(res, 400, 'Số điện thoại này đã có tài khoản. Hãy đăng nhập.');
-  if (email && findUserByLogin(email)) return fail(res, 400, 'Email này đã có tài khoản. Hãy đăng nhập.');
+  if (findUserByLogin(email)) return fail(res, 400, 'Email này đã có tài khoản. Hãy đăng nhập.');
   const salt = crypto.randomBytes(16).toString('hex');
   const u = { id: crypto.randomBytes(8).toString('hex'), name, phone, email, salt, passHash: hashUserPw(pw, salt), createdAt: now(), lastLogin: now() };
   D.users.push(u);
@@ -376,7 +378,7 @@ app.post('/api/account/profile', needUser, (req, res) => {
   if (b.name !== undefined) u.name = clean(b.name, 80) || u.name;
   if (b.email !== undefined) {
     const email = clean(b.email, 120).toLowerCase();
-    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail(res, 400, 'Email chưa đúng.');
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail(res, 400, email ? 'Email chưa đúng.' : 'Vui lòng nhập email.');
     const other = email && findUserByLogin(email);
     if (other && other.id !== u.id) return fail(res, 400, 'Email đã dùng cho tài khoản khác.');
     u.email = email;
@@ -515,7 +517,7 @@ app.get('/api/admin/overview', (req, res) => {
     orders: { paid: paid.length, pending: D.orders.filter(o => o.status === 'pending').length, claimed: D.orders.filter(o => o.status === 'pending' && o.claimedAt).length },
     licenses: { total: D.licenses.length, active: D.licenses.filter(l => l.machineId).length, locked: D.licenses.filter(l => l.status !== 'active').length },
     byPlan,
-    payment: { payos: payos.isConfigured(D.settings), bank: Boolean(D.settings.bankCode && D.settings.bankAccount) },
+    payment: { payos: payos.isConfigured(D.settings), bank: Boolean(D.settings.bankCode && D.settings.bankAccount), email: imapReady() },
   });
 });
 
@@ -541,6 +543,117 @@ app.post('/api/admin/orders/:code/cancel', (req, res) => {
   if (!o) return fail(res, 404, 'Không có đơn.');
   if (o.status === 'paid') return fail(res, 400, 'Đơn đã thanh toán; muốn thu hồi thì khoá key.');
   o.status = 'cancelled';
+  db.save();
+  res.json({ ok: true });
+});
+
+// ---------- Tự xác nhận chuyển khoản qua email biến động số dư ----------
+const imapReady = () => Boolean(D.settings.imapEnabled && D.settings.imapUser && D.settings.imapPass);
+
+// Ghi 1 giao dịch tiền vào; khớp mã đơn LG<số> và đủ tiền thì tự trả key. Trả về bản ghi (hoặc null nếu trùng).
+function recordBankTxn({ messageId, amount, content, receivedAt, source = 'email' }) {
+  if (messageId && D.bankTxns.some(t => t.messageId === messageId)) return null;
+  const t = {
+    id: (D.bankTxns.reduce((m, x) => Math.max(m, x.id), 0) || 0) + 1,
+    messageId: messageId || '', source, amount, content: clean(content, 300),
+    orderCode: null, status: 'unmatched', note: '', receivedAt: receivedAt || now(), createdAt: now(),
+  };
+  const code = findOrderCode(content);
+  const o = code && findOrder(code);
+  if (!code) t.note = 'Không thấy mã đơn trong nội dung';
+  else if (!o) t.note = `Không có đơn #${code}`;
+  else {
+    t.orderCode = o.code;
+    if (o.status === 'paid') t.note = 'Đơn này đã thanh toán trước đó';
+    else if (amount < o.amount) t.note = `Thiếu tiền: đơn ${o.amount.toLocaleString('vi-VN')}đ`;
+    else {
+      if (o.status === 'cancelled') o.status = 'pending';
+      fulfill(o, 'bank');
+      t.status = 'matched';
+    }
+  }
+  D.bankTxns.push(t);
+  if (D.bankTxns.length > 2000) D.bankTxns.splice(0, D.bankTxns.length - 2000);
+  db.save();
+  console.log(`[ngân hàng] +${amount} "${t.content}" → ${t.status}${t.note ? ` (${t.note})` : ''}`);
+  return t;
+}
+
+let bankBusy = false;
+async function checkBankEmails() {
+  if (bankBusy || !imapReady()) return { skipped: true };
+  bankBusy = true;
+  const s = D.settings;
+  let added = 0, matched = 0;
+  try {
+    const r = await fetchNewMails({ host: s.imapHost, port: s.imapPort, user: s.imapUser, pass: s.imapPass, folder: s.imapFolder, from: s.imapFrom }, D.bank.state);
+    for (const m of r.mails) {
+      const p = parseBankEmail(m.text);
+      if (!p || !p.credit) continue;
+      const t = recordBankTxn({ messageId: m.messageId, amount: p.amount, content: p.content, receivedAt: m.date });
+      if (t) { added++; if (t.status === 'matched') matched++; }
+    }
+    D.bank.state = r.state;
+    D.bank.lastError = '';
+  } catch (e) {
+    D.bank.lastError = String(e.responseText || e.message || e).slice(0, 300);
+    console.error('[ngân hàng] lỗi đọc email:', D.bank.lastError);
+  } finally {
+    D.bank.lastRun = now();
+    db.save();
+    bankBusy = false;
+  }
+  return { added, matched, error: D.bank.lastError };
+}
+setInterval(() => { checkBankEmails().catch(() => {}); }, 60000).unref();
+setTimeout(() => { checkBankEmails().catch(() => {}); }, 5000).unref();
+
+app.get('/api/admin/bank', (req, res) => {
+  const list = [...D.bankTxns].sort((a, b) => b.receivedAt - a.receivedAt).slice(0, 300);
+  res.json({ ok: true, txns: list, enabled: Boolean(D.settings.imapEnabled), ready: imapReady(), lastRun: D.bank.lastRun, lastError: D.bank.lastError });
+});
+
+app.post('/api/admin/bank/check', async (req, res) => {
+  if (!imapReady()) return fail(res, 400, 'Chưa bật hoặc chưa nhập đủ Gmail và mật khẩu ứng dụng trong Cài đặt.');
+  while (bankBusy) await new Promise(r => setTimeout(r, 300));
+  res.json({ ok: true, ...(await checkBankEmails()) });
+});
+
+app.post('/api/admin/bank/test-parse', (req, res) => {
+  const p = parseBankEmail(String(req.body.text || '').slice(0, 20000));
+  if (!p) return res.json({ ok: true, result: null });
+  const code = findOrderCode(p.content);
+  // "Ghi nhận": dùng khi email bị sót, admin dán email vào để xử lý như email tự đọc (dán lại lần 2 không cộng trùng)
+  if (req.body.record) {
+    if (!p.credit) return fail(res, 400, 'Đây là giao dịch tiền ra, không ghi nhận.');
+    const id = 'paste-' + crypto.createHash('sha256').update(String(req.body.text)).digest('hex').slice(0, 24);
+    const t = recordBankTxn({ messageId: id, amount: p.amount, content: p.content, source: 'paste' });
+    if (!t) return fail(res, 400, 'Email này đã ghi nhận rồi.');
+    return res.json({ ok: true, txn: t });
+  }
+  const o = code && findOrder(code);
+  res.json({ ok: true, result: { ...p, orderCode: code, order: o ? { code: o.code, amount: o.amount, status: o.status } : null } });
+});
+
+// Giao dịch sai nội dung: admin chọn đơn để trả key
+app.post('/api/admin/bank/:id/assign', (req, res) => {
+  const t = D.bankTxns.find(x => x.id === Number(req.params.id));
+  if (!t) return fail(res, 404, 'Không có giao dịch.');
+  if (t.status === 'matched' || t.status === 'manual') return fail(res, 400, 'Giao dịch này đã xử lý.');
+  const o = findOrder(String(req.body.orderCode || '').replace(/\D/g, ''));
+  if (!o) return fail(res, 404, 'Không tìm thấy đơn.');
+  if (o.status === 'cancelled') o.status = 'pending';
+  fulfill(o, 'bank-manual');
+  Object.assign(t, { status: 'manual', orderCode: o.code, note: `Admin gán vào đơn #${o.code}` });
+  db.save();
+  res.json({ ok: true });
+});
+
+app.post('/api/admin/bank/:id/ignore', (req, res) => {
+  const t = D.bankTxns.find(x => x.id === Number(req.params.id));
+  if (!t) return fail(res, 404, 'Không có giao dịch.');
+  if (t.status === 'matched' || t.status === 'manual') return fail(res, 400, 'Giao dịch này đã xử lý.');
+  t.status = 'ignored';
   db.save();
   res.json({ ok: true });
 });
@@ -727,17 +840,20 @@ app.patch('/api/admin/licenses/:key/owner', (req, res) => {
 });
 
 app.get('/api/admin/config', (req, res) => {
-  res.json({ ok: true, settings: D.settings, plans: D.plans, faq: D.faq, publicKey: keys.publicPem });
+  res.json({ ok: true, settings: { ...D.settings, imapPass: '' }, imapPassSet: Boolean(D.settings.imapPass), plans: D.plans, faq: D.faq, publicKey: keys.publicPem });
 });
 
 app.put('/api/admin/settings', (req, res) => {
   const b = req.body || {};
+  // Đổi Gmail/thư mục thì đọc lại từ đầu (2 ngày gần nhất)
+  if ((b.imapUser !== undefined && clean(b.imapUser, 1000) !== D.settings.imapUser) || (b.imapFolder !== undefined && clean(b.imapFolder, 1000) !== D.settings.imapFolder)) D.bank.state = {};
   for (const [k, v] of Object.entries(b)) {
     if (!(k in D.settings)) continue;
+    if (k === 'imapPass') { if (String(v).trim()) D.settings.imapPass = String(v).replace(/\s+/g, '').slice(0, 200); continue; }
     D.settings[k] = typeof D.settings[k] === 'number' ? Math.max(0, Number(v) || 0) : clean(v, 1000);
   }
   db.save();
-  res.json({ ok: true, settings: D.settings });
+  res.json({ ok: true, settings: { ...D.settings, imapPass: '' } });
 });
 
 app.put('/api/admin/plans', (req, res) => {
@@ -798,6 +914,9 @@ app.get('/tai-ve/:id', (req, res) => {
   if (g.download) return res.redirect(g.download);
   res.status(404).send('Game chưa có file tải. Vui lòng liên hệ người bán qua Zalo.');
 });
+
+// Trang chính sách: /chinh-sach/<tên trang>
+app.get(['/chinh-sach', '/chinh-sach/:slug'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'chinh-sach.html')));
 
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));

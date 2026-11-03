@@ -159,10 +159,14 @@ const DEFAULT_SETTINGS = {
   heroVideo: '/media/quan-bar.mp4',
   promo: 'Gói Combo rẻ hơn mua lẻ 3 game. Game mới ra hằng tháng.',
   contactZalo: '', contactFacebook: '', contactTiktok: '', contactPhone: '',
+  // Thông tin người bán (hiện ở chân trang và các trang chính sách)
+  sellerName: '', sellerEmail: '', sellerAddress: '', sellerTaxId: '', refundDays: 7,
   // Chuyển khoản thủ công (dùng khi chưa cài PayOS): mã ngân hàng theo VietQR, ví dụ "MB", "VCB", "TCB"
   bankCode: '', bankAccount: '', bankOwner: '',
   // PayOS: lấy ở my.payos.vn > Kênh thanh toán
   payosClientId: '', payosApiKey: '', payosChecksumKey: '',
+  // Tự xác nhận chuyển khoản bằng email biến động số dư (ACB...) qua IMAP
+  imapEnabled: 0, imapHost: 'imap.gmail.com', imapPort: 993, imapUser: '', imapPass: '', imapFolder: 'INBOX', imapFrom: 'acb.com.vn',
   publicUrl: '',
   moveLimit: 3, moveWindowDays: 30,
   offlineDays: 3,
@@ -184,6 +188,8 @@ export class DB {
       orders: data.orders || [],
       licenses: data.licenses || [],
       users: data.users || [],
+      bankTxns: data.bankTxns || [],
+      bank: data.bank || { state: {}, lastRun: 0, lastError: '' },
       admin: data.admin || { passwordHash: '', salt: '' },
       secret: data.secret || '',
       seq: data.seq || 0,

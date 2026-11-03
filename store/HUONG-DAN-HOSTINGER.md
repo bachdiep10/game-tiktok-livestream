@@ -35,3 +35,16 @@ Vào trang web đó > **Triển khai lại** (hoặc tải ZIP mới lên). Dữ
 ## Gặp lỗi
 - Trang báo lỗi 503 hoặc không mở được: xem **Nhật ký build/runtime** trong hPanel, chụp màn hình gửi lại.
 - Nếu muốn để dữ liệu ở chỗ khác: thêm biến môi trường `DATA_DIR`, ví dụ `~/livegame-data`.
+
+## Tự xác nhận chuyển khoản bằng email ACB (bản 1.5)
+
+1. Trong app/ngân hàng ACB, bật nhận email biến động số dư về một Gmail.
+2. Trong Gmail đó: bật Xác minh 2 bước, rồi vào myaccount.google.com › Bảo mật › Mật khẩu ứng dụng, tạo một mật khẩu 16 ký tự.
+3. Vào Quản trị › Cài đặt › "Tự xác nhận chuyển khoản qua email ngân hàng": chọn Bật, nhập Gmail và mật khẩu ứng dụng, rồi Lưu.
+4. Vào Quản trị › Biến động số dư, bấm "Kiểm tra email ngay". Trạng thái phải báo "Đang chạy".
+
+Web đọc email mỗi phút. Khách chuyển đúng nội dung `LG…` và đủ tiền thì nhận key ngay. Giao dịch sai nội dung hoặc thiếu tiền hiện trong mục Biến động số dư để bạn bấm "Gán đơn".
+
+## Trang chính sách
+
+Có sẵn 5 trang ở `/chinh-sach/...`, link nằm ở chân trang. Thông tin người bán (tên, MST/CCCD, email, địa chỉ, số ngày hoàn tiền) nhập ở Quản trị › Cài đặt › Thông tin người bán.

@@ -61,8 +61,9 @@
             ${mode === 'register' ? `
               <div class="field"><label>Họ tên</label><input name="name" required maxlength="80" autocomplete="name"></div>
               <div class="field"><label>Số điện thoại / Zalo</label><input name="phone" required inputmode="tel" autocomplete="tel"><small>Dùng để đăng nhập và để chúng tôi hỗ trợ bạn.</small></div>
-              <div class="field"><label>Email (không bắt buộc)</label><input name="email" type="email" autocomplete="email"></div>
+              <div class="field"><label>Email</label><input name="email" type="email" required autocomplete="email"></div>
               <div class="field"><label>Mật khẩu</label><input name="password" type="password" required minlength="6" autocomplete="new-password"><small>Ít nhất 6 ký tự.</small></div>
+              <p class="note" style="font-size:13px">Khi đăng ký, bạn đồng ý với <a href="/chinh-sach/dieu-khoan" target="_blank">Điều khoản sử dụng</a> và <a href="/chinh-sach/bao-mat" target="_blank">Chính sách quyền riêng tư</a>.</p>
             ` : `
               <div class="field"><label>Số điện thoại hoặc email</label><input name="login" required autocomplete="username"></div>
               <div class="field"><label>Mật khẩu</label><input name="password" type="password" required autocomplete="current-password"></div>
@@ -154,7 +155,7 @@
           <h2 class="h2">⚙️ Thông tin & mật khẩu</h2>
           <form id="pf" class="two" style="margin-top:14px">
             <div class="field"><label>Họ tên</label><input name="name" value="${esc(u.name)}"></div>
-            <div class="field"><label>Email</label><input name="email" type="email" value="${esc(u.email || '')}"></div>
+            <div class="field"><label>Email</label><input name="email" type="email" required value="${esc(u.email || '')}"></div>
             <div class="field"><label>Mật khẩu cũ</label><input name="oldPassword" type="password" autocomplete="current-password"><small>Chỉ cần nhập khi đổi mật khẩu.</small></div>
             <div class="field"><label>Mật khẩu mới</label><input name="newPassword" type="password" autocomplete="new-password"></div>
             <div class="err" id="perr" style="grid-column:1/-1"></div>

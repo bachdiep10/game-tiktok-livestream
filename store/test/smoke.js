@@ -8,6 +8,7 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { verifyWebhook } from '../lib/payos.js';
+import { parseBankEmail, findOrderCode, parseVnd } from '../lib/bankmail.js';
 import { checkLicense } from '../client/license-client.js';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -44,10 +45,11 @@ try {
   as('other');
   await j('POST', '/api/account/register', { name: 'Giả mạo', phone: '+84912345678', password: 'abcdef' }, 400);
   await j('POST', '/api/account/login', { login: '0912345678', password: 'sai' }, 401);
-  await j('POST', '/api/account/register', { name: 'Khách B', phone: '0977000111', password: 'abcdef' });
+  await j('POST', '/api/account/register', { name: 'Khách B', phone: '0977000111', password: 'abcdef' }, 400);
+  await j('POST', '/api/account/register', { name: 'Khách B', phone: '0977000111', email: 'b@x.vn', password: 'abcdef' });
   as('user');
   await j('POST', '/api/orders', { planId: 'combo', games: ['chanh-dien', 'quan-bar'] }, 503);
-  step('chưa đăng nhập không mua được; đăng ký tài khoản; SĐT trùng bị chặn; chưa cài thanh toán thì không tạo đơn');
+  step('chưa đăng nhập không mua được; đăng ký tài khoản (bắt buộc email); SĐT trùng bị chặn; chưa cài thanh toán thì không tạo đơn');
   as('admin');
 
   await j('GET', '/api/admin/overview', undefined, 401);
@@ -190,6 +192,48 @@ try {
 
   await j('POST', '/api/payos/webhook', { data: {}, signature: 'x' });
   step('webhook giả không làm gì');
+
+
+  // Email biến động số dư ACB
+  assert.equal(parseVnd('1.000.000'), 1000000); assert.equal(parseVnd('229,000.00'), 229000);
+  const acb = (amt, nd) => `ACB xin trân trọng thông báo tài khoản 12345678 của Quý khách đã thay đổi số dư như sau:\nSố tiền thay đổi: ${amt} VND\nSố dư hiện tại: 5,000,000.00 VND\nNội dung giao dịch: ${nd}\nThời gian: 03/11/2026 21:00`;
+  let pe = parseBankEmail(acb('+229,000.00', 'NGUYEN VAN A chuyen tien LG 1762 1800 0001 FT2611'));
+  assert.deepEqual([pe.credit, pe.amount], [true, 229000]); assert.equal(findOrderCode(pe.content), 176218000001);
+  assert.equal(parseBankEmail(acb('-50,000.00', 'rut tien')).credit, false);
+  assert.equal(parseBankEmail('<p>Ghi có: <b>+89.000 VND</b></p><p>Diễn giải: MBVCB.123.LG176218000099.abc</p>'.replace(/<[^>]+>/g, '\n')).amount, 89000);
+  assert.equal(findOrderCode('MBVCB.123.LG176218000099.abc'), 176218000099);
+  assert.equal(findOrderCode('thanh toan don hang'), null);
+  as('user');
+  const ord2 = await j('POST', '/api/orders', { planId: 'le', games: ['chanh-dien'] });
+  as('admin');
+  let tp = (await j('POST', '/api/admin/bank/test-parse', { text: acb('+89,000.00', `KHACH A LG${ord2.code}`) })).result;
+  assert.equal(tp.order.code, ord2.code);
+  const short = await j('POST', '/api/admin/bank/test-parse', { text: acb('+50,000.00', `KHACH A LG${ord2.code}`), record: true });
+  assert.equal(short.txn.status, 'unmatched'); assert.match(short.txn.note, /Thiếu tiền/);
+  const okTx = await j('POST', '/api/admin/bank/test-parse', { text: acb('+89,000.00', `KHACH A LG ${ord2.code}`), record: true });
+  assert.equal(okTx.txn.status, 'matched');
+  await j('POST', '/api/admin/bank/test-parse', { text: acb('+89,000.00', `KHACH A LG ${ord2.code}`), record: true }, 400);
+  as('user');
+  let o2 = (await j('GET', `/api/orders/${ord2.code}?t=${ord2.token}`)).order;
+  assert.equal(o2.status, 'paid'); assert.ok(o2.license.key);
+  as('admin');
+  const wrong = await j('POST', '/api/admin/bank/test-parse', { text: acb('+229,000.00', 'chuyen tien mua game'), record: true });
+  assert.equal(wrong.txn.status, 'unmatched');
+  as('user');
+  const ord3 = await j('POST', '/api/orders', { planId: 'le', games: ['quan-bar'] });
+  as('admin');
+  await j('POST', `/api/admin/bank/${wrong.txn.id}/assign`, { orderCode: ord3.code });
+  await j('POST', `/api/admin/bank/${wrong.txn.id}/assign`, { orderCode: ord3.code }, 400);
+  const bl = await j('GET', '/api/admin/bank');
+  assert.equal(bl.txns.find(t => t.id === wrong.txn.id).status, 'manual');
+  assert.equal(bl.ready, false);
+  await j('POST', '/api/admin/bank/check', {}, 400);
+  await j('PUT', '/api/admin/settings', { imapUser: 'shop@gmail.com', imapPass: 'abcd efgh ijkl mnop' });
+  let cfg = await j('GET', '/api/admin/config');
+  assert.equal(cfg.settings.imapPass, ''); assert.equal(cfg.imapPassSet, true);
+  await j('PUT', '/api/admin/settings', { imapPass: '' });
+  assert.equal((await j('GET', '/api/admin/config')).imapPassSet, true);
+  step('email biến động số dư ACB: đủ tiền tự trả key, thiếu tiền/sai nội dung chờ admin, không cộng trùng; mật khẩu Gmail không lộ ra');
 
   console.log('\nTẤT CẢ ĐỀU QUA ✅');
 } catch (e) {

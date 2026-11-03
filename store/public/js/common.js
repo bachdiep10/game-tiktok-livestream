@@ -1,3 +1,4 @@
+import { footerHtml } from '/js/policies.js';
 // Dùng chung cho các trang bán hàng
 export const $ = (s, el = document) => el.querySelector(s);
 export const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -51,6 +52,7 @@ export async function applyBrand() {
   me().then(r => {
     $$('[data-account]').forEach(el => { el.textContent = r.user ? `👤 ${r.user.name.split(' ').slice(-1)[0]}` : 'Đăng nhập'; });
   }).catch(() => {});
+  $$('footer .wrap').forEach(el => { if (!el.querySelector('.foot-links')) el.insertAdjacentHTML('beforeend', footerHtml(s)); });
   if (!document.title.includes(s.brandName)) document.title = `${document.title} · ${s.brandName}`;
   return c;
 }

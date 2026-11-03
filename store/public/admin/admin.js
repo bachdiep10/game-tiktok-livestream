@@ -43,7 +43,7 @@ function start() {
   $$('#tabs a').forEach(a => a.onclick = () => go(a.dataset.tab));
   $('#logout').onclick = async () => { await api('/api/admin/logout', {}); location.reload(); };
   go(location.hash.slice(1) || 'overview');
-  setInterval(() => { if (S.tab === 'orders' || S.tab === 'overview') refresh(true); }, 20000);
+  setInterval(() => { if (S.tab === 'orders' || S.tab === 'overview' || S.tab === 'bank') refresh(true); }, 20000);
 }
 
 function go(tab) {
@@ -59,6 +59,7 @@ async function refresh(silent) {
   const t = S.tab;
   if (t === 'overview') await renderOverview();
   if (t === 'orders') { S.orders = (await call('/api/admin/orders')).orders; renderOrders(); }
+  if (t === 'bank') { S.bank = await call('/api/admin/bank'); renderBank(); }
   if (t === 'licenses') { await loadGamesConfig(); S.licenses = (await call('/api/admin/licenses')).licenses; renderLicenses(); }
   if (t === 'games') { await loadGamesConfig(); renderGames(); }
   if (t === 'users') { S.users = (await call('/api/admin/users')).users; renderUsers(); }
@@ -88,7 +89,7 @@ async function renderOverview() {
   updatePill();
   const warn = !o.payment.payos && !o.payment.bank
     ? `<div class="box-s" style="border-color:rgba(255,181,71,.5)"><h2>⚠️ Chưa cài thanh toán</h2><p class="note">Khách chưa mua được. Vào <a href="#settings" data-go="settings">Cài đặt</a> để nhập PayOS (tự xác nhận tiền) hoặc tài khoản ngân hàng (bạn tự xác nhận).</p></div>`
-    : !o.payment.payos ? `<div class="box-s"><h2>💡 Đang dùng chuyển khoản thủ công</h2><p class="note">Bạn cần tự bấm "Đã nhận tiền" cho từng đơn. Cài PayOS trong <a href="#settings" data-go="settings">Cài đặt</a> để hệ thống tự gửi key khi khách trả tiền.</p></div>` : '';
+    : !o.payment.payos && !o.payment.email ? `<div class="box-s"><h2>💡 Đang dùng chuyển khoản thủ công</h2><p class="note">Bạn cần tự bấm "Đã nhận tiền" cho từng đơn. Bật đọc email ngân hàng ACB hoặc cài PayOS trong <a href="#settings" data-go="settings">Cài đặt</a> để hệ thống tự gửi key khi khách trả tiền.</p></div>` : '';
   view('overview').innerHTML = `
     <h1>Tổng quan</h1>
     ${warn}
@@ -386,6 +387,41 @@ function faqRow(f) {
   return `<div class="faq-ed"><input data-q placeholder="Câu hỏi" value="${esc(f.q)}"><textarea data-a rows="2" placeholder="Trả lời">${esc(f.a)}</textarea><div class="acts"><button type="button" class="bad" onclick="this.closest('.faq-ed').remove()">Xoá</button></div></div>`;
 }
 
+
+// ---------- biến động số dư ----------
+const TXN_LABEL = { matched: ['Đã tự trả key', 'paid'], unmatched: ['Cần xử lý', 'pending'], manual: ['Đã xử lý tay', 'active'], ignored: ['Bỏ qua', 'cancelled'] };
+function renderBank() {
+  const b = S.bank;
+  if ($('#bankText') && document.activeElement === $('#bankText')) return; // đang gõ thì không vẽ lại
+  const status = !b.enabled ? '<span class="tag-s pending">Đang tắt</span>' : !b.ready ? '<span class="tag-s pending">Thiếu Gmail / mật khẩu ứng dụng</span>'
+    : b.lastError ? `<span class="tag-s cancelled">Lỗi</span> ${esc(b.lastError)}` : '<span class="tag-s paid">Đang chạy, kiểm tra mỗi phút</span>';
+  const rows = b.txns.map(t => {
+    const [label, cls] = TXN_LABEL[t.status] || [t.status, ''];
+    const open = t.status === 'unmatched';
+    return `<tr><td>${fmt(t.receivedAt)}</td><td><b>+${moneyFull(t.amount)}</b></td><td style="max-width:320px;word-break:break-word">${esc(t.content)}</td>
+      <td><span class="tag-s ${cls}">${label}</span>${t.note ? `<div class="sub">${esc(t.note)}</div>` : ''}</td>
+      <td>${t.orderCode ? `#${t.orderCode}` : ''}</td>
+      <td>${open ? `<button class="btn sm" data-act="bankAssign" data-id="${t.id}">Gán đơn</button> <button class="btn sm ghost" data-act="bankIgnore" data-id="${t.id}">Bỏ qua</button>` : ''}</td></tr>`;
+  }).join('');
+  view('bank').innerHTML = `
+    <h1>Biến động số dư</h1>
+    <div class="box-s"><h2>Tự xác nhận chuyển khoản</h2>
+      <p class="note">Web đọc email báo số dư của ngân hàng (ACB) gửi về Gmail. Nội dung chuyển khoản có mã đơn <code>LG…</code> và đủ tiền thì tự gửi key cho khách.
+      Giao dịch sai nội dung hoặc thiếu tiền nằm ở đây để bạn gán vào đơn. Cài Gmail trong <a href="#settings" data-go="settings">Cài đặt</a>.</p>
+      <p>Trạng thái: ${status}${b.lastRun ? ` · lần đọc cuối ${fmt(b.lastRun)}` : ''}</p>
+      <button class="btn sm" data-act="bankCheck" ${b.ready ? '' : 'disabled'}>Kiểm tra email ngay</button>
+    </div>
+    <div class="box-s"><h2>Thử đọc email mẫu</h2>
+      <p class="note">Dán nội dung một email báo số dư để xem web đọc ra số tiền và mã đơn thế nào. Email bị sót thì bấm "Ghi nhận" để xử lý như email tự đọc (dán lại lần nữa không bị tính trùng).</p>
+      <textarea id="bankText" rows="5" style="width:100%" placeholder="Dán nội dung email ACB vào đây"></textarea>
+      <div class="bar" style="margin-top:8px"><button class="btn sm" data-act="bankParse">Thử đọc</button><button class="btn sm ghost" data-act="bankRecord">Ghi nhận giao dịch</button></div>
+      <div id="bankParseOut" class="note"></div>
+    </div>
+    <div class="box-s"><h2>Giao dịch tiền vào</h2>
+      ${b.txns.length ? `<div class="tbl-wrap"><table><thead><tr><th>Thời gian</th><th>Số tiền</th><th>Nội dung</th><th>Kết quả</th><th>Đơn</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="note">Chưa có giao dịch nào.</p>'}
+    </div>`;
+}
+
 // ---------- cài đặt ----------
 function renderSettings() {
   const s = S.config.settings;
@@ -407,15 +443,30 @@ function renderSettings() {
         ${f('contactZalo', 'Zalo', 'Số điện thoại hoặc link zalo.me')}${f('contactPhone', 'Số điện thoại')}
         ${f('contactFacebook', 'Facebook', 'Link fanpage')}${f('contactTiktok', 'TikTok', 'Link kênh TikTok')}
       </div></div>
+      <div class="box-s"><h2>Thông tin người bán</h2><p class="note">Hiện ở chân trang và các <a href="/chinh-sach/chinh-sach-ban-hang" target="_blank">trang chính sách</a>. Để trống mục nào thì mục đó không hiện.</p><div class="form-grid">
+        ${f('sellerName', 'Tên người / đơn vị bán hàng', 'VD: Hộ kinh doanh Nguyễn Văn A')}${f('sellerTaxId', 'Mã số thuế hoặc CCCD', '')}
+        ${f('sellerEmail', 'Email liên hệ')}${f('refundDays', 'Số ngày được hoàn tiền khi chưa kích hoạt key', '0 = không hoàn tiền khi đổi ý', 'number')}
+        ${f('sellerAddress', 'Địa chỉ', '', 'text', true)}
+      </div></div>
       <div class="box-s"><h2>Thanh toán PayOS (tự động)</h2>
         <p class="note">Đăng ký tại payos.vn, liên kết tài khoản ngân hàng, tạo Kênh thanh toán rồi chép 3 mã vào đây. Khách trả tiền xong, hệ thống tự gửi key.
         Trong PayOS, đặt Webhook URL là <code>${esc(webhook)}</code> (cần tên miền thật, không dùng được localhost).</p><div class="form-grid">
         ${f('payosClientId', 'Client ID')}${f('payosApiKey', 'Api Key', '', 'password')}
         ${f('payosChecksumKey', 'Checksum Key', '', 'password')}${f('publicUrl', 'Địa chỉ website', 'VD: https://gamelive.vn — dùng cho link quay về sau thanh toán.')}
       </div></div>
-      <div class="box-s"><h2>Chuyển khoản thủ công</h2><p class="note">Dùng khi chưa có PayOS. Khách quét mã VietQR, bạn kiểm tra tài khoản rồi bấm "Đã nhận tiền" trong mục Đơn hàng.</p><div class="form-grid">
-        ${f('bankCode', 'Mã ngân hàng', 'VD: MB, VCB, TCB, ACB, VPB, BIDV')}${f('bankAccount', 'Số tài khoản')}
+      <div class="box-s"><h2>Tài khoản nhận chuyển khoản</h2><p class="note">Khách quét mã VietQR có sẵn số tiền và nội dung <code>LG…</code>. Bật đọc email ngân hàng bên dưới để tự xác nhận, nếu không thì bạn bấm "Đã nhận tiền" trong mục Đơn hàng.</p><div class="form-grid">
+        ${f('bankCode', 'Mã ngân hàng', 'VD: ACB, MB, VCB, TCB, VPB, BIDV')}${f('bankAccount', 'Số tài khoản')}
         ${f('bankOwner', 'Tên chủ tài khoản', 'Viết hoa không dấu', 'text', true)}
+      </div></div>
+      <div class="box-s"><h2>Tự xác nhận chuyển khoản qua email ngân hàng</h2>
+        <p class="note">Bật nhận email biến động số dư của ACB về một Gmail. Trong Gmail đó: bật Xác minh 2 bước, rồi vào myaccount.google.com › Bảo mật › Mật khẩu ứng dụng để tạo mật khẩu 16 ký tự và dán vào đây.
+        Web kiểm tra email mỗi phút, khách chuyển đúng nội dung <code>LG…</code> và đủ tiền là nhận key ngay. Xem kết quả ở mục <a href="#bank" data-go="bank">Biến động số dư</a>.</p><div class="form-grid">
+        <div class="field"><label>Bật tự xác nhận</label><select name="imapEnabled"><option value="0" ${!s.imapEnabled ? 'selected' : ''}>Tắt</option><option value="1" ${s.imapEnabled ? 'selected' : ''}>Bật</option></select></div>
+        ${f('imapUser', 'Gmail nhận email ngân hàng', 'VD: shop@gmail.com')}
+        <div class="field"><label>Mật khẩu ứng dụng Gmail</label><input name="imapPass" type="password" autocomplete="new-password" placeholder="${S.config.imapPassSet ? '•••••••• (đã lưu, để trống = giữ nguyên)' : '16 ký tự'}"><small>Không phải mật khẩu Gmail thường.</small></div>
+        ${f('imapFrom', 'Chỉ đọc email gửi từ', 'Mặc định acb.com.vn. Để trống = đọc mọi email.')}
+        ${f('imapHost', 'Máy chủ IMAP', 'Gmail: imap.gmail.com')}${f('imapPort', 'Cổng', 'Gmail: 993', 'number')}
+        ${f('imapFolder', 'Thư mục', 'Mặc định INBOX')}
       </div></div>
       <div class="box-s"><h2>Quy định key</h2><div class="form-grid">
         ${f('moveLimit', 'Số lần khách tự chuyển máy', '', 'number')}${f('moveWindowDays', 'Trong bao nhiêu ngày', '', 'number')}
@@ -449,6 +500,27 @@ document.addEventListener('click', async (e) => {
   if (!b) return;
   const { act, code, key, id } = b.dataset;
   const enc = encodeURIComponent;
+  if (act === 'bankCheck') { b.disabled = true; try { const r = await call('/api/admin/bank/check', {}); toast(r.error ? `Lỗi: ${r.error}` : `Đã đọc: ${r.added} giao dịch mới, ${r.matched} đơn tự trả key`); } finally { refresh(); } }
+  if (act === 'bankParse' || act === 'bankRecord') {
+    const text = $('#bankText').value.trim();
+    if (!text) return toast('Dán nội dung email trước');
+    if (act === 'bankRecord') {
+      if (!confirm('Ghi nhận giao dịch này? Nếu khớp đơn và đủ tiền, khách sẽ nhận key ngay.')) return;
+      const r = await call('/api/admin/bank/test-parse', { text, record: true });
+      toast(r.txn.status === 'matched' ? `Đã trả key cho đơn #${r.txn.orderCode}` : `Đã ghi nhận: ${r.txn.note}`);
+      $('#bankText').value = ''; $('#bankText').blur(); return refresh();
+    }
+    const r = (await call('/api/admin/bank/test-parse', { text })).result;
+    $('#bankParseOut').innerHTML = !r ? '❌ Không đọc được số tiền trong email này.'
+      : `${r.credit ? '✅ Tiền vào' : '⛔ Tiền ra (bỏ qua)'}: <b>${moneyFull(r.amount)}</b> · Nội dung: <code>${esc(r.content || '(trống)')}</code><br>
+         ${r.orderCode ? (r.order ? `Đơn #${r.order.code}: ${moneyFull(r.order.amount)}, ${r.order.status === 'paid' ? 'đã thanh toán' : r.amount >= r.order.amount ? 'đủ tiền → sẽ tự trả key' : 'thiếu tiền'}` : `Mã đơn #${r.orderCode} không tồn tại`) : 'Không thấy mã đơn LG… trong nội dung'}`;
+  }
+  if (act === 'bankAssign') {
+    const code = prompt('Nhập mã đơn (số sau chữ LG) để trả key cho giao dịch này:');
+    if (!code) return;
+    await call(`/api/admin/bank/${id}/assign`, { orderCode: code.trim() }); toast('Đã trả key cho đơn'); refresh();
+  }
+  if (act === 'bankIgnore' && confirm('Bỏ qua giao dịch này?')) { await call(`/api/admin/bank/${id}/ignore`, {}); refresh(); }
   if (act === 'pay' && confirm(`Xác nhận đã nhận tiền đơn #${code}? Hệ thống sẽ tạo key cho khách.`)) { await call(`/api/admin/orders/${code}/mark-paid`, {}); toast('Đã tạo key'); refresh(); }
   if (act === 'cancel' && confirm(`Huỷ đơn #${code}?`)) { await call(`/api/admin/orders/${code}/cancel`, {}); refresh(); }
   if (act === 'link') copy(location.origin + b.dataset.link);

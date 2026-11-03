@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chính sách</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="/"><span class="logo-mark">🎮</span><span data-brand>LiveGame</span></a>
+      <nav class="nav"><a href="/#game">Game</a><a href="/#bang-gia">Bảng giá</a><a class="acc" href="/tai-khoan.html" data-account>Đăng nhập</a><a class="btn sm ghost" data-zalo target="_blank" rel="noopener">Zalo hỗ trợ</a></nav>
+    </div>
+  </header>
+  <main class="page">
+    <div class="wrap">
+      <nav class="policy-tabs" id="tabs"></nav>
+      <article class="panel policy" id="doc"></article>
+    </div>
+  </main>
+  <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
+
+  <script type="module">
+    import { $, applyBrand } from '/js/common.js';
+    import { POLICIES, policyHtml, sellerBlock } from '/js/policies.js';
+    const c = await applyBrand();
+    const slug = location.pathname.split('/')[2] || POLICIES[0].slug;
+    const p = POLICIES.find(x => x.slug === slug) || POLICIES[0];
+    document.title = `${p.title} · ${c.settings.brandName}`;
+    $('#tabs').innerHTML = POLICIES.map(x => `<a href="/chinh-sach/${x.slug}" class="${x.slug === p.slug ? 'on' : ''}">${x.title}</a>`).join('');
+    $('#doc').innerHTML = `<h1>${p.title}</h1>
+      ${policyHtml(p.slug, c)}
+      <h2>Thông tin liên hệ</h2>
+      ${sellerBlock(c.settings, location.host)}`;
+  </script>
+</body>
+</html>
