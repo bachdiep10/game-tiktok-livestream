@@ -3,6 +3,7 @@
 import express from 'express';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DB } from './lib/db.js';
@@ -11,7 +12,16 @@ import { newKey, normalizeKey, loadKeyPair, signTicket, entitledGames, fillEmpty
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT) || 8080;
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+// Thư mục dữ liệu (đơn hàng, key, ảnh tải lên) phải nằm NGOÀI thư mục code để không bị xoá khi cập nhật.
+// Trên Hostinger, code nằm ở .../domains/<tên miền>/hbuilds/... → dữ liệu để ở .../domains/<tên miền>/livegame-data
+function defaultDataDir() {
+  const env = process.env.DATA_DIR;
+  if (env) return env.startsWith('~') ? path.join(os.homedir(), env.slice(1)) : env;
+  const i = __dirname.indexOf(`${path.sep}hbuilds${path.sep}`);
+  if (i > 0) return path.join(__dirname.slice(0, i), 'livegame-data');
+  return path.join(__dirname, 'data');
+}
+const DATA_DIR = defaultDataDir();
 const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
 fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
@@ -581,7 +591,8 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`\n  Cửa hàng:  http://localhost:${PORT}`);
+  console.log(`\n  Dữ liệu:   ${DATA_DIR}`);
+  console.log(`  Cửa hàng:  http://localhost:${PORT}`);
   console.log(`  Quản trị:  http://localhost:${PORT}/admin/`);
   if (!D.admin.passwordHash) console.log('  Lần đầu vào trang quản trị sẽ được yêu cầu tạo mật khẩu.');
   if (!payos.isConfigured(D.settings) && !D.settings.bankCode) console.log('  Chưa cài thanh toán: vào Quản trị > Cài đặt để nhập PayOS hoặc tài khoản ngân hàng.\n');
