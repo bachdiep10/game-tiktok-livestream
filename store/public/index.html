@@ -20,6 +20,7 @@
         <a href="#bang-gia">Bảng giá</a>
         <a href="#hoi-dap">Hỏi đáp</a>
         <a href="/tra-cuu.html">Tra cứu key</a>
+        <a class="acc" href="/tai-khoan.html" data-account>Đăng nhập</a>
         <a class="btn sm" href="#bang-gia">Mua ngay</a>
       </nav>
     </div>
@@ -53,7 +54,7 @@
       <div class="wrap">
         <div class="sec-head"><div><div class="kicker">Cách dùng</div><h2>Từ lúc mua đến lúc LIVE</h2></div></div>
         <div class="steps">
-          <div class="step"><div class="n">1</div><h3>Chọn gói, thanh toán</h3><p>Quét mã QR ngân hàng. Thanh toán xong trang web hiện ngay key và link tải.</p></div>
+          <div class="step"><div class="n">1</div><h3>Tạo tài khoản, chọn gói</h3><p>Quét mã QR ngân hàng. Thanh toán xong, key và link tải nằm trong tài khoản của bạn.</p></div>
           <div class="step"><div class="n">2</div><h3>Tải game, nhập key</h3><p>Bấm đúp để chạy, dán key. Key tự gắn với máy tính của bạn.</p></div>
           <div class="step"><div class="n">3</div><h3>Nhập tên kênh TikTok</h3><p>Game tự đọc bình luận, tim, quà, người vào phiên LIVE của bạn.</p></div>
           <div class="step"><div class="n">4</div><h3>Thêm vào LIVE Studio</h3><p>Chọn cửa sổ game trong TikTok LIVE Studio hoặc OBS, rồi lên sóng.</p></div>
@@ -117,9 +118,7 @@
           <label id="pickLabel">Chọn game</label>
           <div class="pick" id="pick"></div>
         </div>
-        <div class="field"><label for="fName">Họ tên</label><input id="fName" name="name" required maxlength="80" autocomplete="name"></div>
-        <div class="field"><label for="fPhone">Số điện thoại / Zalo</label><input id="fPhone" name="phone" required inputmode="tel" autocomplete="tel"><small>Dùng để tra cứu key và chuyển máy về sau.</small></div>
-        <div class="field"><label for="fEmail">Email (không bắt buộc)</label><input id="fEmail" name="email" type="email" autocomplete="email"></div>
+        <div class="buy-as" id="buyAs"></div>
         <div class="total"><span>Tổng thanh toán</span><b id="buyTotal"></b></div>
         <div class="err" id="buyErr"></div>
         <button class="btn block" id="buyBtn" type="submit">Thanh toán</button>

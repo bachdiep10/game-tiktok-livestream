@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Tài khoản của tôi</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+  <style>
+    .auth { max-width: 460px; }
+    .tabs { display: grid; grid-template-columns: 1fr 1fr; background: var(--soft); border-radius: 12px; padding: 4px; margin-bottom: 20px; }
+    .tabs button { font: inherit; font-weight: 700; border: 0; background: none; padding: 10px; border-radius: 9px; cursor: pointer; color: var(--muted); }
+    .tabs button.on { background: #fff; color: var(--text); box-shadow: var(--card-shadow); }
+    .acc-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .avatar { width: 56px; height: 56px; border-radius: 16px; background: var(--grad); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 22px; }
+    .acc-head .grow { flex: 1; min-width: 180px; }
+    .acc-head h1 { font-size: 24px; margin: 0; }
+    .lic { border: 1px solid var(--line); border-radius: 16px; padding: 18px; margin-top: 14px; background: #fff; }
+    .lic-top { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .lic-top h3 { margin: 0; font-size: 18px; }
+    .meta { display: flex; gap: 18px; flex-wrap: wrap; color: var(--muted); font-size: 14px; margin: 6px 0 10px; }
+    .meta b { color: var(--text); font-weight: 600; }
+    .orders { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+    .orders td, .orders th { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); }
+    .orders th { color: var(--muted); font-weight: 600; font-size: 13px; }
+    .wrap-panel { max-width: 860px; }
+    .h2 { font-size: 20px; margin: 0 0 4px; }
+    .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; align-items: start; }
+    @media (max-width: 600px) { .two { grid-template-columns: 1fr; } .orders .hide-m { display: none; } }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="/"><span class="logo-mark">🎮</span><span data-brand>LiveGame</span></a>
+      <nav class="nav"><a href="/#game">Game</a><a href="/#bang-gia">Bảng giá</a><a class="btn sm ghost" data-zalo target="_blank" rel="noopener">Zalo hỗ trợ</a></nav>
+    </div>
+  </header>
+  <main class="page"><div class="wrap" id="root"><div class="panel"><span class="spinner"></span> Đang tải…</div></div></main>
+  <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
+
+  <script type="module">
+    import { $, $$, api, esc, moneyFull, copy, toast, applyBrand, me, catalog, zaloLink } from '/js/common.js';
+    const q = new URLSearchParams(location.search);
+    const next = q.get('next');
+    const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
+
+    function authView(mode = 'login') {
+      const why = q.get('ly-do') === 'mua' ? '<p class="note" style="margin:0 0 16px;color:var(--brand);font-weight:600">Đăng nhập hoặc tạo tài khoản để mua. Key và game sẽ lưu trong tài khoản của bạn.</p>' : '';
+      $('#root').innerHTML = `
+        <div class="panel auth">
+          <h1 style="font-size:26px;margin:0 0 6px">${mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}</h1>
+          <p class="note" style="margin:0 0 18px">Quản lý key, tải game, chuyển máy ở một nơi.</p>
+          ${why}
+          <div class="tabs"><button data-mode="login" class="${mode === 'login' ? 'on' : ''}">Đăng nhập</button><button data-mode="register" class="${mode === 'register' ? 'on' : ''}">Đăng ký</button></div>
+          <form id="af">
+            ${mode === 'register' ? `
+              <div class="field"><label>Họ tên</label><input name="name" required maxlength="80" autocomplete="name"></div>
+              <div class="field"><label>Số điện thoại / Zalo</label><input name="phone" required inputmode="tel" autocomplete="tel"><small>Dùng để đăng nhập và để chúng tôi hỗ trợ bạn.</small></div>
+              <div class="field"><label>Email (không bắt buộc)</label><input name="email" type="email" autocomplete="email"></div>
+              <div class="field"><label>Mật khẩu</label><input name="password" type="password" required minlength="6" autocomplete="new-password"><small>Ít nhất 6 ký tự.</small></div>
+            ` : `
+              <div class="field"><label>Số điện thoại hoặc email</label><input name="login" required autocomplete="username"></div>
+              <div class="field"><label>Mật khẩu</label><input name="password" type="password" required autocomplete="current-password"></div>
+            `}
+            <div class="err" id="aerr"></div>
+            <button class="btn block">${mode === 'login' ? 'Đăng nhập' : 'Tạo tài khoản'}</button>
+          </form>
+          ${mode === 'login' ? '<p class="note" style="text-align:center;margin:16px 0 0">Quên mật khẩu? <a href="#" id="forgot">Nhắn Zalo hỗ trợ</a> để được cấp lại.</p>' : ''}
+        </div>`;
+      $$('[data-mode]').forEach(b => b.onclick = () => authView(b.dataset.mode));
+      $('#forgot')?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const s = (await catalog()).settings;
+        if (s.contactZalo) window.open(zaloLink(s.contactZalo), '_blank'); else toast('Vui lòng liên hệ người bán để cấp lại mật khẩu.');
+      });
+      $('#af').onsubmit = async (e) => {
+        e.preventDefault();
+        $('#aerr').textContent = '';
+        const body = Object.fromEntries(new FormData(e.target));
+        try {
+          await api(mode === 'login' ? '/api/account/login' : '/api/account/register', body);
+          if (next && next.startsWith('/') && !next.startsWith('//')) { location.href = next; return; }
+          load();
+        } catch (err) { $('#aerr').textContent = err.message; }
+      };
+    }
+
+    function licCard(l) {
+      return `
+        <div class="lic">
+          <div class="lic-top"><h3>${esc(l.planName)}</h3><span class="status ${l.status === 'active' ? 'paid' : 'cancelled'}">${l.status === 'active' ? '✓ Đang hoạt động' : '✕ Đã khoá'}</span></div>
+          <div class="keybox"><code>${esc(l.key)}</code><button class="btn sm" data-copy="${esc(l.key)}">Sao chép</button></div>
+          <div class="meta">
+            <span>Máy: <b>${l.machineName ? esc(l.machineName) : (l.activatedAt ? 'đã kích hoạt' : 'chưa kích hoạt')}</b></span>
+            <span>Dùng gần nhất: <b>${fmt(l.lastSeen)}</b></span>
+            <span>Lượt chuyển máy còn: <b>${l.movesLeft}</b></span>
+          </div>
+          <div class="dl">${l.games.map(g => `
+            <${g.download ? `a href="${esc(g.download)}" target="_blank" rel="noopener"` : 'div'}>
+              <img src="${esc(g.image)}" alt=""><span class="grow"><b>${esc(g.name)}</b><br><small class="note">${g.download ? 'Bấm để tải game' : 'Link tải sẽ được gửi qua Zalo'}</small></span>
+              ${g.download ? '<span class="btn sm">Tải về</span>' : ''}
+            </${g.download ? 'a' : 'div'}>`).join('')}
+          </div>
+          ${!l.allGames && l.slots > l.games.length ? `<p class="note">Còn ${l.slots - l.games.length} suất: game mới ra mắt sẽ tự thêm vào key này.</p>` : ''}
+          ${l.allGames ? '<p class="note">Gói Trọn Bộ: mọi game mới tự có trong key này.</p>' : ''}
+          ${l.machineName || l.activatedAt ? `<button class="btn ghost sm" style="margin-top:12px" data-move="${esc(l.key)}" ${l.status !== 'active' ? 'disabled' : ''}>🔄 Chuyển key sang máy khác</button>` : ''}
+        </div>`;
+    }
+
+    function accountView(d) {
+      const u = d.user;
+      const pending = d.orders.filter(o => o.status === 'pending');
+      $('#root').innerHTML = `
+        <div class="panel wrap-panel">
+          <div class="acc-head">
+            <div class="avatar">${esc(u.name.trim().split(' ').slice(-1)[0][0] || '?')}</div>
+            <div class="grow"><h1>${esc(u.name)}</h1><div class="note">${esc(u.phone)}${u.email ? ` · ${esc(u.email)}` : ''}</div></div>
+            <a class="btn sm" href="/#bang-gia">＋ Mua thêm game</a>
+            <button class="btn ghost sm" id="logout">Đăng xuất</button>
+          </div>
+        </div>
+
+        ${pending.length ? `<div class="panel wrap-panel" style="border-color:rgba(217,123,0,.4)">
+          <h2 class="h2">⏳ Đơn chờ thanh toán</h2>
+          ${pending.map(o => `<div class="rows"><div><span>#${o.code} · ${esc(o.planName)} · ${moneyFull(o.amount)}</span><b><a class="btn sm" href="${esc(o.link)}">${o.claimedAt ? 'Đang chờ xác nhận' : 'Thanh toán'}</a></b></div></div>`).join('')}
+        </div>` : ''}
+
+        <div class="panel wrap-panel">
+          <h2 class="h2">🔑 Key & game của tôi</h2>
+          <p class="note" style="margin:0">Mỗi key chạy trên 1 máy tính. Đổi máy thì bấm "Chuyển key sang máy khác".${d.guideUrl ? ` <a href="${esc(d.guideUrl)}" target="_blank" rel="noopener">Xem hướng dẫn cài đặt</a>` : ''}</p>
+          ${d.licenses.length ? d.licenses.map(licCard).join('') : `<div class="lic" style="text-align:center"><p style="margin:0 0 12px">Bạn chưa có key nào.</p><a class="btn" href="/#bang-gia">Xem bảng giá</a></div>`}
+        </div>
+
+        <div class="panel wrap-panel">
+          <h2 class="h2">🧾 Lịch sử đơn hàng</h2>
+          ${d.orders.length ? `<table class="orders"><thead><tr><th>Mã đơn</th><th class="hide-m">Ngày</th><th>Gói</th><th>Số tiền</th><th>Trạng thái</th></tr></thead><tbody>
+            ${d.orders.map(o => `<tr><td><a href="${esc(o.link)}">#${o.code}</a></td><td class="hide-m">${fmt(o.createdAt)}</td><td>${esc(o.planName)}</td><td>${moneyFull(o.amount)}</td>
+              <td><span class="status ${o.status}" style="font-size:12.5px;padding:3px 10px">${{ paid: 'Đã thanh toán', pending: o.claimedAt ? 'Chờ xác nhận' : 'Chờ thanh toán', cancelled: 'Đã huỷ' }[o.status]}</span></td></tr>`).join('')}
+          </tbody></table>` : '<p class="note">Chưa có đơn hàng.</p>'}
+        </div>
+
+        <div class="panel wrap-panel">
+          <h2 class="h2">➕ Thêm key đã mua trước đó</h2>
+          <p class="note" style="margin:0 0 14px">Key mua trước khi có tài khoản, hoặc key người bán gửi qua Zalo.</p>
+          <form id="cf" class="two">
+            <div class="field"><label>License key hoặc mã đơn</label><input name="key" required placeholder="LG-XXXX-XXXX-XXXX-XXXX"></div>
+            <div class="field"><label>SĐT đã dùng khi mua</label><input name="phone" required inputmode="tel" value="${esc(u.phone)}"></div>
+            <div class="err" id="cerr" style="grid-column:1/-1"></div>
+            <div><button class="btn sm">Thêm vào tài khoản</button></div>
+          </form>
+        </div>
+
+        <div class="panel wrap-panel">
+          <h2 class="h2">⚙️ Thông tin & mật khẩu</h2>
+          <form id="pf" class="two" style="margin-top:14px">
+            <div class="field"><label>Họ tên</label><input name="name" value="${esc(u.name)}"></div>
+            <div class="field"><label>Email</label><input name="email" type="email" value="${esc(u.email || '')}"></div>
+            <div class="field"><label>Mật khẩu cũ</label><input name="oldPassword" type="password" autocomplete="current-password"><small>Chỉ cần nhập khi đổi mật khẩu.</small></div>
+            <div class="field"><label>Mật khẩu mới</label><input name="newPassword" type="password" autocomplete="new-password"></div>
+            <div class="err" id="perr" style="grid-column:1/-1"></div>
+            <div><button class="btn sm">Lưu</button></div>
+          </form>
+        </div>`;
+
+      $('#logout').onclick = async () => { await api('/api/account/logout', {}); location.href = '/'; };
+      $$('[data-move]').forEach(b => b.onclick = async () => {
+        if (!confirm('Gỡ key khỏi máy hiện tại? Game trên máy cũ sẽ ngừng chạy, sau đó bạn nhập key trên máy mới.')) return;
+        try { const r = await api('/api/account/move', { key: b.dataset.move }); toast(r.message); load(); } catch (e) { alert(e.message); }
+      });
+      $('#cf').onsubmit = async (e) => {
+        e.preventDefault(); $('#cerr').textContent = '';
+        try { await api('/api/account/claim', Object.fromEntries(new FormData(e.target))); toast('Đã thêm key vào tài khoản'); load(); }
+        catch (err) { $('#cerr').textContent = err.message; }
+      };
+      $('#pf').onsubmit = async (e) => {
+        e.preventDefault(); $('#perr').textContent = '';
+        try { await api('/api/account/profile', Object.fromEntries(new FormData(e.target))); toast('Đã lưu'); load(); }
+        catch (err) { $('#perr').textContent = err.message; }
+      };
+    }
+
+    document.addEventListener('click', e => {
+      const c = e.target.closest('[data-copy]');
+      if (c) { e.preventDefault(); copy(c.dataset.copy); }
+    });
+
+    async function load() {
+      const d = await me(true);
+      if (!d.user) return authView(q.get('dang-ky') !== null ? 'register' : 'login');
+      document.title = 'Tài khoản của tôi';
+      accountView(d);
+    }
+    applyBrand().catch(() => {});
+    load().catch(e => { $('#root').innerHTML = `<div class="panel">Lỗi: ${esc(e.message)}</div>`; });
+  </script>
+</body>
+</html>

@@ -103,7 +103,7 @@ function fulfill(order, via) {
     key, planId: order.planId, slots: plan?.slots ?? order.games.length, allGames: Boolean(plan?.allGames),
     games: [...order.games], status: 'active', orderCode: order.code,
     customer: { ...order.customer }, machineId: '', machineName: '', activatedAt: null, lastSeen: null,
-    moves: [], createdAt: now(), note: '',
+    moves: [], createdAt: now(), note: '', userId: order.userId || '',
   };
   // Combo khi cửa hàng chưa đủ game: tự thêm game có sẵn mà khách chưa chọn
   if (!lic.allGames && lic.slots > lic.games.length) {
@@ -153,11 +153,9 @@ app.get('/api/catalog', (req, res) => {
 app.post('/api/orders', rateLimit('order', 20, 600000), async (req, res) => {
   const plan = findPlan(req.body.planId);
   if (!plan) return fail(res, 400, 'Gói không hợp lệ.');
-  const name = clean(req.body.name, 80);
-  const phone = cleanPhone(req.body.phone);
-  const email = clean(req.body.email, 120);
-  if (!name) return fail(res, 400, 'Vui lòng nhập họ tên.');
-  if (phone.replace(/\D/g, '').length < 9) return fail(res, 400, 'Số điện thoại / Zalo chưa đúng.');
+  const user = currentUser(req);
+  if (!user) return fail(res, 401, 'Vui lòng đăng nhập hoặc đăng ký tài khoản để mua.');
+  const { name, phone, email } = user;
   const avail = visibleGames().map(g => g.id);
   let games = [];
   if (!plan.allGames) {
@@ -173,7 +171,7 @@ app.post('/api/orders', rateLimit('order', 20, 600000), async (req, res) => {
   const order = {
     code, planId: plan.id, games, amount: plan.price,
     customer: { name, phone, email }, status: 'pending', createdAt: now(),
-    transferContent: `LG${code}`, checkoutUrl: '', licenseKey: '',
+    transferContent: `LG${code}`, checkoutUrl: '', licenseKey: '', userId: user.id,
   };
   const token = orderToken(code);
   if (payos.isConfigured(D.settings)) {
@@ -252,18 +250,140 @@ app.post('/api/lookup', rateLimit('lookup', 15, 600000), (req, res) => {
   res.json({ ok: true, license: licenseView(lic, { withDownloads: true }) });
 });
 
-app.post('/api/lookup/move', rateLimit('move', 10, 600000), (req, res) => {
-  const lic = lookupLicense(req.body.query, req.body.phone);
-  if (!lic) return fail(res, 404, 'Không tìm thấy key.');
-  if (lic.status !== 'active') return fail(res, 403, 'Key đang bị khoá, vui lòng liên hệ hỗ trợ.');
-  if (!lic.machineId) return res.json({ ok: true, license: licenseView(lic), message: 'Key chưa gắn máy nào, bạn có thể kích hoạt trên máy mới ngay.' });
+function moveMachine(lic) {
+  if (lic.status !== 'active') return { error: 'Key đang bị khoá, vui lòng liên hệ hỗ trợ.' };
+  if (!lic.machineId) return { message: 'Key chưa gắn máy nào, bạn có thể kích hoạt trên máy mới ngay.' };
   if (movesInWindow(lic, D.settings.moveWindowDays) >= D.settings.moveLimit) {
-    return fail(res, 403, `Bạn đã chuyển máy ${D.settings.moveLimit} lần trong ${D.settings.moveWindowDays} ngày. Vui lòng liên hệ hỗ trợ.`);
+    return { error: `Bạn đã chuyển máy ${D.settings.moveLimit} lần trong ${D.settings.moveWindowDays} ngày. Vui lòng liên hệ hỗ trợ.` };
   }
   lic.moves = [...(lic.moves || []), now()];
   lic.machineId = ''; lic.machineName = '';
   db.save();
-  res.json({ ok: true, license: licenseView(lic), message: 'Đã gỡ key khỏi máy cũ. Mở game trên máy mới và nhập key để kích hoạt.' });
+  return { message: 'Đã gỡ key khỏi máy cũ. Mở game trên máy mới và nhập key để kích hoạt.' };
+}
+
+app.post('/api/lookup/move', rateLimit('move', 10, 600000), (req, res) => {
+  const lic = lookupLicense(req.body.query, req.body.phone);
+  if (!lic) return fail(res, 404, 'Không tìm thấy key.');
+  const r = moveMachine(lic);
+  if (r.error) return fail(res, 403, r.error);
+  res.json({ ok: true, license: licenseView(lic), message: r.message });
+});
+
+// ---------- Tài khoản khách hàng ----------
+const hashUserPw = (pw, salt) => crypto.scryptSync(String(pw), salt, 64).toString('hex');
+const normPhone = (p) => cleanPhone(p).replace(/\D/g, '').replace(/^84/, '0');
+const findUser = (id) => D.users.find(u => u.id === id);
+function findUserByLogin(login) {
+  const l = String(login || '').trim().toLowerCase();
+  if (!l) return null;
+  if (l.includes('@')) return D.users.find(u => u.email && u.email.toLowerCase() === l) || null;
+  const p = normPhone(l);
+  return p.length >= 9 ? D.users.find(u => normPhone(u.phone) === p) || null : null;
+}
+function userSig(u, exp) { return hmac(`user:${u.id}:${exp}:${u.passHash.slice(0, 16)}`); }
+function currentUser(req) {
+  const c = parseCookies(req).lg_user || '';
+  const [id, exp, sig] = c.split('.');
+  const u = id && findUser(id);
+  if (!u || !exp || Number(exp) < now() || !sig) return null;
+  const expect = userSig(u, exp);
+  return sig.length === expect.length && crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(expect)) ? u : null;
+}
+const USER_DAYS = 30;
+function setUserSession(req, res, u) {
+  const exp = now() + USER_DAYS * 86400000;
+  const secure = req.secure ? '; Secure' : '';
+  res.setHeader('Set-Cookie', `lg_user=${u.id}.${exp}.${userSig(u, exp)}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${USER_DAYS * 86400}${secure}`);
+}
+const needUser = (req, res, next) => { const u = currentUser(req); if (!u) return fail(res, 401, 'Vui lòng đăng nhập.'); req.user = u; next(); };
+const userPublic = (u) => ({ id: u.id, name: u.name, phone: u.phone, email: u.email, createdAt: u.createdAt });
+
+app.post('/api/account/register', rateLimit('register', 10, 600000), (req, res) => {
+  const name = clean(req.body.name, 80);
+  const phone = cleanPhone(req.body.phone);
+  const email = clean(req.body.email, 120).toLowerCase();
+  const pw = String(req.body.password || '');
+  if (!name) return fail(res, 400, 'Vui lòng nhập họ tên.');
+  if (normPhone(phone).length < 9) return fail(res, 400, 'Số điện thoại chưa đúng.');
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail(res, 400, 'Email chưa đúng.');
+  if (pw.length < 6) return fail(res, 400, 'Mật khẩu cần ít nhất 6 ký tự.');
+  if (findUserByLogin(phone)) return fail(res, 400, 'Số điện thoại này đã có tài khoản. Hãy đăng nhập.');
+  if (email && findUserByLogin(email)) return fail(res, 400, 'Email này đã có tài khoản. Hãy đăng nhập.');
+  const salt = crypto.randomBytes(16).toString('hex');
+  const u = { id: crypto.randomBytes(8).toString('hex'), name, phone, email, salt, passHash: hashUserPw(pw, salt), createdAt: now(), lastLogin: now() };
+  D.users.push(u);
+  db.save();
+  setUserSession(req, res, u);
+  res.json({ ok: true, user: userPublic(u) });
+});
+
+app.post('/api/account/login', rateLimit('ulogin', 15, 600000), (req, res) => {
+  const u = findUserByLogin(req.body.login);
+  const ok = u && crypto.timingSafeEqual(Buffer.from(hashUserPw(req.body.password || '', u.salt)), Buffer.from(u.passHash));
+  if (!ok) return fail(res, 401, 'Sai số điện thoại/email hoặc mật khẩu.');
+  u.lastLogin = now();
+  db.save();
+  setUserSession(req, res, u);
+  res.json({ ok: true, user: userPublic(u) });
+});
+
+app.post('/api/account/logout', (req, res) => {
+  res.setHeader('Set-Cookie', 'lg_user=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0');
+  res.json({ ok: true });
+});
+
+app.get('/api/account/me', (req, res) => {
+  const u = currentUser(req);
+  if (!u) return res.json({ ok: true, user: null });
+  const orders = D.orders.filter(o => o.userId === u.id).sort((a, b) => b.createdAt - a.createdAt).map(o => ({
+    code: o.code, status: o.status, amount: o.amount, planName: findPlan(o.planId)?.name || o.planId,
+    gameNames: o.games.map(id => D.games.find(g => g.id === id)?.name || id), createdAt: o.createdAt, paidAt: o.paidAt || null,
+    claimedAt: o.claimedAt || null, licenseKey: o.licenseKey || '', link: `/don-hang.html?code=${o.code}&t=${orderToken(o.code)}`,
+  }));
+  const licenses = D.licenses.filter(l => l.userId === u.id).sort((a, b) => b.createdAt - a.createdAt).map(l => licenseView(l, { withDownloads: true }));
+  res.json({ ok: true, user: userPublic(u), orders, licenses, guideUrl: D.settings.guideUrl });
+});
+
+// Thêm key mua trước đó (hoặc người bán gửi qua Zalo) vào tài khoản: cần key + SĐT lúc mua
+app.post('/api/account/claim', rateLimit('claim-key', 15, 600000), needUser, (req, res) => {
+  const lic = lookupLicense(req.body.key, req.body.phone);
+  if (!lic) return fail(res, 404, 'Không tìm thấy key, hoặc số điện thoại không khớp với lúc mua.');
+  if (lic.userId && lic.userId !== req.user.id) return fail(res, 403, 'Key này đã thuộc tài khoản khác. Vui lòng liên hệ hỗ trợ.');
+  lic.userId = req.user.id;
+  if (lic.orderCode) { const o = findOrder(lic.orderCode); if (o && !o.userId) o.userId = req.user.id; }
+  db.save();
+  res.json({ ok: true });
+});
+
+app.post('/api/account/move', rateLimit('move', 10, 600000), needUser, (req, res) => {
+  const lic = findLicense(req.body.key);
+  if (!lic || lic.userId !== req.user.id) return fail(res, 404, 'Không tìm thấy key trong tài khoản.');
+  const r = moveMachine(lic);
+  if (r.error) return fail(res, 403, r.error);
+  res.json({ ok: true, message: r.message });
+});
+
+app.post('/api/account/profile', needUser, (req, res) => {
+  const u = req.user;
+  const b = req.body;
+  if (b.name !== undefined) u.name = clean(b.name, 80) || u.name;
+  if (b.email !== undefined) {
+    const email = clean(b.email, 120).toLowerCase();
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return fail(res, 400, 'Email chưa đúng.');
+    const other = email && findUserByLogin(email);
+    if (other && other.id !== u.id) return fail(res, 400, 'Email đã dùng cho tài khoản khác.');
+    u.email = email;
+  }
+  if (b.newPassword) {
+    if (!crypto.timingSafeEqual(Buffer.from(hashUserPw(b.oldPassword || '', u.salt)), Buffer.from(u.passHash))) return fail(res, 400, 'Mật khẩu cũ không đúng.');
+    if (String(b.newPassword).length < 6) return fail(res, 400, 'Mật khẩu mới cần ít nhất 6 ký tự.');
+    u.salt = crypto.randomBytes(16).toString('hex');
+    u.passHash = hashUserPw(b.newPassword, u.salt);
+    setUserSession(req, res, u);
+  }
+  db.save();
+  res.json({ ok: true, user: userPublic(u) });
 });
 
 // ---------- API cho game trên máy khách ----------
@@ -425,6 +545,7 @@ app.get('/api/admin/licenses', (req, res) => {
     planName: findPlan(l.planId)?.name || l.planId,
     gameNames: entitledGames(l, visibleGames()).map(id => D.games.find(g => g.id === id)?.name || id),
     movesRecent: movesInWindow(l, D.settings.moveWindowDays),
+    owner: l.userId ? (u => u ? `${u.name} · ${u.phone}` : '')(findUser(l.userId)) : '',
   }));
   res.json({ ok: true, licenses: list });
 });
@@ -444,6 +565,7 @@ app.post('/api/admin/licenses', (req, res) => {
       customer: { name: clean(req.body.name, 80), phone: cleanPhone(req.body.phone), email: clean(req.body.email, 120) },
       machineId: '', machineName: '', activatedAt: null, lastSeen: null, moves: [], createdAt: now(),
       note: clean(req.body.note, 300) || 'Tạo tay',
+      userId: (req.body.phone && findUserByLogin(req.body.phone)?.id) || '',
     };
     D.licenses.push(lic);
     created.push(key);
@@ -525,6 +647,36 @@ app.delete('/api/admin/games/:id', (req, res) => {
   if (i < 0) return fail(res, 404, 'Không có game.');
   if (D.licenses.some(l => l.games.includes(req.params.id))) return fail(res, 400, 'Đã có key dùng game này. Hãy ẩn game thay vì xoá.');
   D.games.splice(i, 1);
+  db.save();
+  res.json({ ok: true });
+});
+
+app.get('/api/admin/users', (req, res) => {
+  const list = [...D.users].sort((a, b) => b.createdAt - a.createdAt).map(u => ({
+    ...userPublic(u), lastLogin: u.lastLogin,
+    orders: D.orders.filter(o => o.userId === u.id).length,
+    paid: D.orders.filter(o => o.userId === u.id && o.status === 'paid').reduce((s, o) => s + o.amount, 0),
+    keys: D.licenses.filter(l => l.userId === u.id).map(l => l.key),
+  }));
+  res.json({ ok: true, users: list });
+});
+
+app.post('/api/admin/users/:id/reset-password', (req, res) => {
+  const u = findUser(req.params.id);
+  if (!u) return fail(res, 404, 'Không có khách này.');
+  const pw = crypto.randomBytes(4).toString('hex');
+  u.salt = crypto.randomBytes(16).toString('hex');
+  u.passHash = hashUserPw(pw, u.salt);
+  db.save();
+  res.json({ ok: true, password: pw });
+});
+
+app.patch('/api/admin/licenses/:key/owner', (req, res) => {
+  const lic = findLicense(req.params.key);
+  if (!lic) return fail(res, 404, 'Không có key.');
+  const u = req.body.login ? findUserByLogin(req.body.login) : null;
+  if (req.body.login && !u) return fail(res, 404, 'Không tìm thấy tài khoản với SĐT/email này.');
+  lic.userId = u ? u.id : '';
   db.save();
   res.json({ ok: true });
 });

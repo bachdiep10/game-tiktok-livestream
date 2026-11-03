@@ -48,10 +48,19 @@ export async function applyBrand() {
   $$('[data-year]').forEach(el => { el.textContent = new Date().getFullYear(); });
   const zalo = $('[data-zalo]');
   if (zalo) { if (s.contactZalo) zalo.href = zaloLink(s.contactZalo); else zalo.remove(); }
+  me().then(r => {
+    $$('[data-account]').forEach(el => { el.textContent = r.user ? `👤 ${r.user.name.split(' ').slice(-1)[0]}` : 'Đăng nhập'; });
+  }).catch(() => {});
   if (!document.title.includes(s.brandName)) document.title = `${document.title} · ${s.brandName}`;
   return c;
 }
 
 export function zaloLink(v) {
   return /^https?:/.test(v) ? v : `https://zalo.me/${String(v).replace(/\D/g, '')}`;
+}
+
+let mePromise;
+export function me(refresh) {
+  if (refresh || !mePromise) mePromise = api('/api/account/me');
+  return mePromise;
 }

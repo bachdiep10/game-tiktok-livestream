@@ -61,6 +61,7 @@ async function refresh(silent) {
   if (t === 'orders') { S.orders = (await call('/api/admin/orders')).orders; renderOrders(); }
   if (t === 'licenses') { await loadGamesConfig(); S.licenses = (await call('/api/admin/licenses')).licenses; renderLicenses(); }
   if (t === 'games') { await loadGamesConfig(); renderGames(); }
+  if (t === 'users') { S.users = (await call('/api/admin/users')).users; renderUsers(); }
   if (t === 'plans') { await loadGamesConfig(); renderPlans(); }
   if (t === 'settings') { await loadGamesConfig(); renderSettings(); }
 }
@@ -163,7 +164,7 @@ function renderLicenses() {
       <tbody>${list.map(l => `<tr>
         <td><code>${esc(l.key)}</code> <a href="#" data-copy="${esc(l.key)}">📋</a><div class="sub">${fmt(l.createdAt)}${l.orderCode ? ` · đơn #${l.orderCode}` : ''}</div>${l.note ? `<div class="sub">📝 ${esc(l.note)}</div>` : ''}</td>
         <td>${esc(l.planName)}<div class="sub">${l.allGames ? 'Tất cả game' : l.gameNames.map(esc).join(', ')}${!l.allGames && l.slots > l.games.length ? ` · còn ${l.slots - l.games.length} suất` : ''}</div></td>
-        <td>${esc(l.customer?.name || '—')}<div class="sub">${esc(l.customer?.phone || '')}</div></td>
+        <td>${esc(l.customer?.name || '—')}<div class="sub">${esc(l.customer?.phone || '')}</div><div class="sub">${l.owner ? `👤 TK: ${esc(l.owner)}` : '<i>chưa gắn tài khoản</i>'}</div></td>
         <td>${l.machineId ? `${esc(l.machineName || 'Không tên')}<div class="sub">mã ${esc(l.machineId)} · ${fmt(l.lastSeen)}</div>` : '<span class="sub">Chưa gắn máy</span>'}
             <div class="sub">Đã chuyển máy ${l.movesRecent} lần / ${S.config.settings.moveWindowDays} ngày</div></td>
         <td><span class="tag-s ${l.status}">${l.status === 'active' ? 'Hoạt động' : 'Đã khoá'}</span></td>
@@ -171,6 +172,7 @@ function renderLicenses() {
           ${l.machineId ? `<button data-act="reset" data-key="${esc(l.key)}">Gỡ máy</button>` : ''}
           ${l.status === 'active' ? `<button class="bad" data-act="lock" data-key="${esc(l.key)}">Khoá</button>` : `<button class="ok" data-act="unlock" data-key="${esc(l.key)}">Mở khoá</button>`}
           <button data-act="editKey" data-key="${esc(l.key)}">Sửa</button>
+          <button data-act="owner" data-key="${esc(l.key)}">Gắn TK</button>
           <button class="bad" data-act="delKey" data-key="${esc(l.key)}">Xoá</button>
         </div></td></tr>`).join('')}</tbody></table></div>` : '<div class="tbl-wrap"><div class="empty">Chưa có key nào.</div></div>'}`;
   $('#lq').oninput = (e) => { S.filter.lic = e.target.value; const p = e.target.selectionStart; renderLicenses(); const i = $('#lq'); i.focus(); i.setSelectionRange(p, p); };
@@ -222,6 +224,25 @@ function keyDialog(lic) {
       }
     };
   });
+}
+
+// ---------- khách hàng ----------
+function renderUsers() {
+  const q = (S.filter.users || '').toLowerCase();
+  const list = S.users.filter(u => !q || [u.name, u.phone, u.email, ...u.keys].join(' ').toLowerCase().includes(q));
+  view('users').innerHTML = `
+    <div class="bar"><h1>Khách hàng</h1><input id="uq" placeholder="Tìm tên, SĐT, email, key…" value="${esc(S.filter.users || '')}"></div>
+    <p class="note" style="margin-top:-6px">Khách tự đăng ký trên web. Khách quên mật khẩu thì bấm "Cấp mật khẩu mới" rồi gửi qua Zalo.</p>
+    ${list.length ? `<div class="tbl-wrap"><table>
+      <thead><tr><th>Khách</th><th>Đăng ký</th><th>Đơn</th><th>Đã mua</th><th>Key</th><th></th></tr></thead>
+      <tbody>${list.map(u => `<tr>
+        <td><b>${esc(u.name)}</b><div class="sub">${esc(u.phone)}</div><div class="sub">${esc(u.email || '')}</div></td>
+        <td>${fmt(u.createdAt)}<div class="sub">Đăng nhập: ${fmt(u.lastLogin)}</div></td>
+        <td>${u.orders}</td><td><b>${moneyFull(u.paid)}</b></td>
+        <td>${u.keys.map(k => `<div><code>${esc(k)}</code></div>`).join('') || '—'}</td>
+        <td><div class="acts"><button data-act="resetPw" data-id="${esc(u.id)}" data-name="${esc(u.name)}">Cấp mật khẩu mới</button></div></td>
+      </tr>`).join('')}</tbody></table></div>` : '<div class="tbl-wrap"><div class="empty">Chưa có khách đăng ký.</div></div>'}`;
+  $('#uq').oninput = (e) => { S.filter.users = e.target.value; const p = e.target.selectionStart; renderUsers(); const i = $('#uq'); i.focus(); i.setSelectionRange(p, p); };
 }
 
 // ---------- game ----------
@@ -416,6 +437,16 @@ document.addEventListener('click', async (e) => {
   if (act === 'lock' && confirm('Khoá key này? Game của khách sẽ ngừng chạy.')) { await call(`/api/admin/licenses/${enc(key)}`, { status: 'locked' }, 'PATCH'); refresh(); }
   if (act === 'unlock') { await call(`/api/admin/licenses/${enc(key)}`, { status: 'active' }, 'PATCH'); refresh(); }
   if (act === 'editKey') keyDialog(S.licenses.find(l => l.key === key));
+  if (act === 'owner') {
+    const login = prompt('Nhập SĐT hoặc email tài khoản khách để gắn key này (để trống = bỏ gắn):');
+    if (login === null) return;
+    await call(`/api/admin/licenses/${enc(key)}/owner`, { login: login.trim() }, 'PATCH'); toast('Đã cập nhật'); refresh();
+  }
+  if (act === 'resetPw' && confirm(`Cấp mật khẩu mới cho ${b.dataset.name}? Mật khẩu cũ sẽ không dùng được nữa.`)) {
+    const r = await call(`/api/admin/users/${enc(id)}/reset-password`, {});
+    dialog(`<h3>Mật khẩu mới</h3><p class="msub">Gửi cho khách qua Zalo. Khách nên đổi lại sau khi đăng nhập.</p>
+      <div class="keybox"><code>${esc(r.password)}</code><button class="btn sm" data-copy="${esc(r.password)}">Sao chép</button></div>`);
+  }
   if (act === 'delKey' && confirm(`Xoá hẳn key ${key}? Không hoàn tác được.`)) { await call(`/api/admin/licenses/${enc(key)}`, undefined, 'DELETE'); refresh(); }
   if (act === 'editGame') gameDialog(S.games.find(x => x.id === id));
   if (act === 'toggleGame') { const x = S.games.find(y => y.id === id); const r = await call(`/api/admin/games/${enc(id)}`, { visible: !x.visible }, 'PATCH'); if (r.filledCombo) toast(`${r.filledCombo} key Combo được nhận game này`); refresh(); }

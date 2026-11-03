@@ -1,4 +1,4 @@
-import { $, $$, api, esc, money, moneyFull, applyBrand, zaloLink } from './common.js';
+import { $, $$, api, esc, money, moneyFull, applyBrand, zaloLink, me } from './common.js';
 
 let C; // catalog
 let currentPlan = null;
@@ -99,9 +99,16 @@ function renderSupport() {
 }
 
 // ---------- mua hàng ----------
-function openBuy(planId, gameId) {
+async function openBuy(planId, gameId) {
   currentPlan = C.plans.find(p => p.id === planId);
   if (!currentPlan) return;
+  const { user } = await me();
+  if (!user) {
+    const next = `/#mua-${planId}${gameId ? `~${gameId}` : ''}`;
+    location.href = `/tai-khoan.html?next=${encodeURIComponent(next)}&ly-do=mua`;
+    return;
+  }
+  $('#buyAs').innerHTML = `Mua bằng tài khoản <b>${esc(user.name)}</b> · ${esc(user.phone)} <a href="/tai-khoan.html">Đổi</a><br><small>Key và link tải sẽ nằm trong mục <b>Tài khoản của tôi</b>.</small>`;
   const p = currentPlan;
   const need = p.allGames ? 0 : Math.min(p.slots, C.games.length);
   $('#buyTitle').textContent = `${p.name} · ${money(p.price)}`;
@@ -126,12 +133,6 @@ function openBuy(planId, gameId) {
       else $('#buyErr').textContent = '';
     }));
   }
-  try {
-    const saved = JSON.parse(localStorage.getItem('lg_buyer') || '{}');
-    if (saved.name && !$('#fName').value) $('#fName').value = saved.name;
-    if (saved.phone && !$('#fPhone').value) $('#fPhone').value = saved.phone;
-    if (saved.email && !$('#fEmail').value) $('#fEmail').value = saved.email;
-  } catch {}
   openModal('#buyModal');
 }
 
@@ -146,12 +147,10 @@ $('#buyForm').addEventListener('submit', async e => {
   const body = {
     planId: currentPlan.id,
     games: $$('#pick input:checked').map(i => i.value),
-    name: $('#fName').value, phone: $('#fPhone').value, email: $('#fEmail').value,
   };
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang tạo đơn…';
   $('#buyErr').textContent = '';
   try {
-    try { localStorage.setItem('lg_buyer', JSON.stringify({ name: body.name, phone: body.phone, email: body.email })); } catch {}
     const r = await api('/api/orders', body);
     const orderUrl = `/don-hang.html?code=${r.code}&t=${r.token}`;
     try {
@@ -170,8 +169,8 @@ $('#buyForm').addEventListener('submit', async e => {
   try {
     C = await applyBrand();
     renderHero(); renderGames(); renderPlans(); renderFaq(); renderSupport();
-    const m = location.hash.match(/^#mua-(.+)$/);
-    if (m) openBuy(m[1]);
+    const m = location.hash.match(/^#mua-([^~]+)(?:~(.+))?$/);
+    if (m) { history.replaceState(null, '', '/#bang-gia'); openBuy(m[1], m[2]); }
   } catch (e) {
     document.querySelector('main').innerHTML = `<div class="wrap page"><div class="panel">Không tải được dữ liệu: ${esc(e.message)}</div></div>`;
   }

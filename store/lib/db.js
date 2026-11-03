@@ -64,7 +64,7 @@ const DEFAULT_FAQ = [
   { q: 'Tôi không biết lập trình có dùng được không?', a: 'Được. Bạn chỉ cần tải về, bấm đúp file chạy, nhập key và tên kênh TikTok. Có video hướng dẫn từng bước.' },
   { q: 'Nên chọn gói nào?', a: 'Nếu mới thử, chọn Gói Lẻ. Nếu muốn đổi game theo ngày để LIVE không bị nhàm, Gói Combo là lựa chọn hời nhất. Nếu muốn có mọi game mới, chọn Gói Trọn Bộ.' },
   { q: 'Một key dùng được mấy máy?', a: 'Mỗi key chạy trên 1 máy tính tại một thời điểm. Đổi máy mới thì vào mục "Tra cứu & chuyển máy" để tự chuyển key sang máy mới.' },
-  { q: 'Sau khi thanh toán tôi nhận game thế nào?', a: 'Thanh toán xong, trang web hiện ngay key và link tải game. Bạn lưu lại đường link đơn hàng để xem lại bất cứ lúc nào.' },
+  { q: 'Sau khi thanh toán tôi nhận game thế nào?', a: 'Thanh toán xong, key và link tải game hiện ngay, đồng thời được lưu trong mục Tài khoản của tôi. Đăng nhập bất cứ lúc nào để xem lại, tải lại game hoặc chuyển máy.' },
   { q: 'Máy tính cần cấu hình thế nào?', a: 'Windows 10/11, chip từ Core i3, RAM 8GB, có mạng ổn định. Dùng kèm TikTok LIVE Studio hoặc OBS.' },
   { q: 'Game có làm tài khoản TikTok bị khoá không?', a: 'Game chỉ đọc bình luận, tim, quà từ phiên LIVE của bạn để hiển thị, không đăng nhập hay thao tác thay bạn.' },
 ];
@@ -102,6 +102,7 @@ export class DB {
       faq: data.faq || structuredClone(DEFAULT_FAQ),
       orders: data.orders || [],
       licenses: data.licenses || [],
+      users: data.users || [],
       admin: data.admin || { passwordHash: '', salt: '' },
       secret: data.secret || '',
       seq: data.seq || 0,

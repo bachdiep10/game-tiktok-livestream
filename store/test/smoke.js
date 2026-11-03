@@ -15,11 +15,13 @@ const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lgstore-'));
 const port = 18000 + Math.floor(Math.random() * 1000);
 const base = `http://127.0.0.1:${port}`;
 const srv = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, PORT: port, DATA_DIR: dataDir }, stdio: 'pipe' });
-let cookie = '';
+const jars = { admin: '', user: '', other: '' };
+let jar = 'admin';
+const as = (name) => { jar = name; };
 
 async function j(method, url, body, expectStatus) {
-  const res = await fetch(base + url, { method, headers: { 'Content-Type': 'application/json', cookie }, body: body ? JSON.stringify(body) : undefined });
-  const sc = res.headers.get('set-cookie'); if (sc) cookie = sc.split(';')[0];
+  const res = await fetch(base + url, { method, headers: { 'Content-Type': 'application/json', cookie: jars[jar] }, body: body ? JSON.stringify(body) : undefined });
+  const sc = res.headers.get('set-cookie'); if (sc) jars[jar] = sc.split(';')[0];
   const json = await res.json();
   if (expectStatus) assert.equal(res.status, expectStatus, `${url}: ${JSON.stringify(json)}`);
   else assert.ok(json.ok, `${url}: ${JSON.stringify(json)}`);
@@ -34,22 +36,35 @@ try {
   assert.equal(cat.plans.length, 3); assert.equal(cat.games.length, 2);
   step('catalog: 3 gói, 2 game');
 
-  await j('POST', '/api/orders', { planId: 'combo', games: ['chanh-dien', 'quan-bar'], name: 'A', phone: '0912345678' }, 503);
-  step('chưa cài thanh toán thì không tạo đơn');
+  as('user');
+  await j('POST', '/api/orders', { planId: 'combo', games: ['chanh-dien', 'quan-bar'] }, 401);
+  await j('POST', '/api/account/register', { name: 'Khách A', phone: '0912 345 678', email: 'a@x.vn', password: '123' }, 400);
+  const reg = await j('POST', '/api/account/register', { name: 'Khách A', phone: '0912 345 678', email: 'a@x.vn', password: 'matkhau1' });
+  assert.equal(reg.user.name, 'Khách A');
+  as('other');
+  await j('POST', '/api/account/register', { name: 'Giả mạo', phone: '+84912345678', password: 'abcdef' }, 400);
+  await j('POST', '/api/account/login', { login: '0912345678', password: 'sai' }, 401);
+  await j('POST', '/api/account/register', { name: 'Khách B', phone: '0977000111', password: 'abcdef' });
+  as('user');
+  await j('POST', '/api/orders', { planId: 'combo', games: ['chanh-dien', 'quan-bar'] }, 503);
+  step('chưa đăng nhập không mua được; đăng ký tài khoản; SĐT trùng bị chặn; chưa cài thanh toán thì không tạo đơn');
+  as('admin');
 
   await j('GET', '/api/admin/overview', undefined, 401);
   await j('POST', '/api/admin/setup', { password: 'matkhau123' });
   await j('PUT', '/api/admin/settings', { bankCode: 'MB', bankAccount: '0123456789', bankOwner: 'NGUYEN VAN A' });
   step('tạo mật khẩu quản trị + cài ngân hàng');
 
-  await j('POST', '/api/orders', { planId: 'combo', games: ['chanh-dien'], name: 'A', phone: '0912345678' }, 400);
-  const ord = await j('POST', '/api/orders', { planId: 'combo', games: ['chanh-dien', 'quan-bar'], name: 'Khách A', phone: '0912 345 678', email: 'a@x.vn' });
+  as('user');
+  await j('POST', '/api/orders', { planId: 'combo', games: ['chanh-dien'] }, 400);
+  const ord = await j('POST', '/api/orders', { planId: 'combo', games: ['chanh-dien', 'quan-bar'] });
   await j('GET', `/api/orders/${ord.code}?t=wrongtoken0000000000000`, undefined, 404);
   let o = (await j('GET', `/api/orders/${ord.code}?t=${ord.token}`)).order;
   assert.equal(o.status, 'pending'); assert.ok(o.bank.qr.includes('img.vietqr.io')); assert.equal(o.license, null);
   o = (await j('POST', `/api/orders/${ord.code}/claim?t=${ord.token}`, {})).order;
   assert.ok(o.claimedAt);
   step('tạo đơn combo, sai token bị chặn, khách báo đã chuyển khoản');
+  as('admin');
 
   await j('POST', `/api/admin/orders/${ord.code}/mark-paid`, {});
   o = (await j('GET', `/api/orders/${ord.code}?t=${ord.token}`)).order;
@@ -58,6 +73,15 @@ try {
   await j('POST', `/api/admin/orders/${ord.code}/mark-paid`, {});
   assert.equal((await j('GET', '/api/admin/licenses')).licenses.length, 1);
   step(`xác nhận tiền → key ${key} (bấm 2 lần vẫn 1 key)`);
+  as('user');
+  let meU = await j('GET', '/api/account/me');
+  assert.equal(meU.licenses.length, 1); assert.equal(meU.licenses[0].key, key); assert.equal(meU.orders[0].status, 'paid');
+  as('other');
+  assert.equal((await j('GET', '/api/account/me')).licenses.length, 0);
+  await j('POST', '/api/account/move', { key }, 404);
+  await j('POST', '/api/account/claim', { key, phone: '0977000111' }, 404);
+  step('key hiện trong "Tài khoản của tôi"; tài khoản khác không thấy, không chuyển máy được, không nhận key được');
+  as('admin');
 
   const mA = crypto.randomBytes(32).toString('hex'), mB = crypto.randomBytes(32).toString('hex');
   const a1 = await j('POST', '/api/license/activate', { key, machineId: mA, machineName: 'PC-A', game: 'chanh-dien' });
@@ -76,6 +100,12 @@ try {
   await j('POST', '/api/license/activate', { key, machineId: mB, machineName: 'PC-B' });
   await j('POST', '/api/license/activate', { key, machineId: mA }, 409);
   step('khách tự tra cứu bằng mã đơn + SĐT, chuyển máy sang B, máy A bị chặn');
+  as('user');
+  const mvAcc = await j('POST', '/api/account/move', { key });
+  assert.match(mvAcc.message, /Đã gỡ/);
+  await j('POST', '/api/license/activate', { key, machineId: mB, machineName: 'PC-B' });
+  step('chuyển máy ngay trong tài khoản');
+  as('admin');
 
   const g3 = await j('POST', '/api/admin/games', { name: 'Đua Thuyền Rồng', tagline: 'test' });
   assert.equal(g3.game.id, 'dua-thuyen-rong'); assert.equal(g3.filledCombo, 1);
@@ -84,6 +114,21 @@ try {
   step('thêm game thứ 3 → key combo tự nhận');
 
   const single = await j('POST', '/api/admin/licenses', { planId: 'le', games: ['quan-bar'], name: 'B', phone: '0988000111' });
+  as('user');
+  await j('POST', '/api/account/claim', { key: single.keys[0], phone: '0988000111' });
+  assert.equal((await j('GET', '/api/account/me')).licenses.length, 2);
+  as('other');
+  await j('POST', '/api/account/claim', { key: single.keys[0], phone: '0988000111' }, 403);
+  as('admin');
+  const users = (await j('GET', '/api/admin/users')).users;
+  assert.equal(users.length, 2);
+  const ua = users.find(u => u.phone.includes('345'));
+  const np = (await j('POST', `/api/admin/users/${ua.id}/reset-password`, {})).password;
+  as('user');
+  await j('GET', '/api/account/me').then(r => assert.equal(r.user, null));
+  await j('POST', '/api/account/login', { login: 'A@X.VN', password: np });
+  step('thêm key cũ vào tài khoản (cần SĐT lúc mua); admin cấp lại mật khẩu, phiên cũ bị đăng xuất');
+  as('admin');
   await j('POST', '/api/license/activate', { key: single.keys[0], machineId: mA, game: 'chanh-dien' }, 403);
   await j('POST', '/api/admin/games', { name: 'Game Bốn' });
   assert.deepEqual((await j('POST', '/api/license/activate', { key: single.keys[0], machineId: mA })).games, ['quan-bar']);
