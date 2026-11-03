@@ -114,3 +114,7 @@ public/js/characterArt.js  Vẽ nhân vật Phật tử mặc áo tràng
 public/js/audio.js   Chuông, mõ, khánh, nhạc thiền (WebAudio) + giọng đọc
 public/js/fake.js    Dữ liệu giả cho Test Lab
 ```
+
+## Website bán game + quản lý key
+
+Thư mục [`store/`](store/README.md) là website bán các game này kèm license key (1 key = 1 máy), trang quản trị và API kiểm tra key cho game.

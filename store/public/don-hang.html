@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Đơn hàng</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="/"><span class="logo-mark">🎮</span><span data-brand>LiveGame</span></a>
+      <nav class="nav"><a href="/#game">Game</a><a href="/tra-cuu.html">Tra cứu key</a><a class="btn sm ghost" data-zalo target="_blank" rel="noopener">Zalo hỗ trợ</a></nav>
+    </div>
+  </header>
+  <main class="page"><div class="wrap" id="root"><div class="panel"><span class="spinner"></span> Đang tải đơn hàng…</div></div></main>
+  <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
+
+  <script type="module">
+    import { $, api, esc, moneyFull, copy, applyBrand } from '/js/common.js';
+    const q = new URLSearchParams(location.search);
+    const code = q.get('code'), t = q.get('t');
+    let timer;
+
+    function render(o) {
+      const st = { paid: ['paid', '✓ Đã thanh toán'], pending: ['pending', '⏳ Chờ thanh toán'], cancelled: ['cancelled', '✕ Đã huỷ'] }[o.status];
+      let html = `
+        <div class="panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+            <h1 style="font-size:26px;margin:0">Đơn hàng #${esc(o.code)}</h1>
+            <span class="status ${st[0]}">${st[1]}</span>
+          </div>
+          <div class="rows">
+            <div><span>Gói</span><b>${esc(o.planName)}</b></div>
+            ${o.gameNames.length ? `<div><span>Game đã chọn</span><b>${o.gameNames.map(esc).join(', ')}</b></div>` : ''}
+            <div><span>Người mua</span><b>${esc(o.customer.name)}</b></div>
+            <div><span>Số tiền</span><b>${moneyFull(o.amount)}</b></div>
+          </div>`;
+
+      if (o.status === 'pending') {
+        if (o.checkoutUrl) {
+          html += `<a class="btn block" href="${esc(o.checkoutUrl)}">Thanh toán bằng QR ngân hàng</a>
+                   <p class="note" style="text-align:center">Trả tiền xong, quay lại trang này. Key sẽ hiện tự động.</p>`;
+        }
+        if (o.bank) {
+          html += `
+            ${o.checkoutUrl ? '<p class="note" style="text-align:center;margin-top:20px">Hoặc chuyển khoản thủ công:</p>' : ''}
+            <div class="qr">
+              <img src="${esc(o.bank.qr)}" alt="Mã QR chuyển khoản">
+              <div class="rows" style="margin:0">
+                <div><span>Ngân hàng</span><b>${esc(o.bank.bankCode)}</b></div>
+                <div><span>Số tài khoản</span><b>${esc(o.bank.account)} <a href="#" data-copy="${esc(o.bank.account)}">📋</a></b></div>
+                <div><span>Chủ tài khoản</span><b>${esc(o.bank.owner)}</b></div>
+                <div><span>Số tiền</span><b>${moneyFull(o.amount)}</b></div>
+                <div><span>Nội dung</span><b style="color:var(--brand-2)">${esc(o.bank.content)} <a href="#" data-copy="${esc(o.bank.content)}">📋</a></b></div>
+              </div>
+            </div>
+            <p class="note">Ghi đúng nội dung chuyển khoản để được xác nhận nhanh.</p>
+            ${o.claimedAt
+              ? '<p style="text-align:center;color:var(--warn);font-weight:600">Đã báo chuyển khoản. Key sẽ hiện ở đây ngay khi người bán xác nhận (thường vài phút).</p>'
+              : '<button class="btn ghost block" id="claim">Tôi đã chuyển khoản</button>'}`;
+        }
+        html += `<p class="note" style="text-align:center;margin-top:16px"><span class="spinner"></span> Trang tự cập nhật khi nhận được tiền.</p>`;
+      }
+
+      if (o.status === 'paid' && o.license) {
+        const l = o.license;
+        html += `
+          <h2 style="font-size:20px;margin:24px 0 4px">🔑 License key của bạn</h2>
+          <div class="keybox"><code>${esc(l.key)}</code><button class="btn sm" data-copy="${esc(l.key)}">Sao chép</button></div>
+          <p class="note">Mỗi key chạy trên 1 máy tính. Lưu lại trang này (đánh dấu trang) hoặc chụp màn hình key.</p>
+          <h2 style="font-size:20px;margin:24px 0 4px">⬇ Tải game</h2>
+          <div class="dl">${l.games.map(g => `
+            <${g.download ? `a href="${esc(g.download)}" target="_blank" rel="noopener"` : 'div'}>
+              <img src="${esc(g.image)}" alt=""><span class="grow"><b>${esc(g.name)}</b><br><small class="note">${g.download ? 'Bấm để tải' : 'Link tải sẽ được gửi qua Zalo'}</small></span>
+              ${g.download ? '<span class="btn sm">Tải về</span>' : ''}
+            </${g.download ? 'a' : 'div'}>`).join('')}
+          </div>
+          ${!l.allGames && l.slots > l.games.length ? `<p class="note">Còn ${l.slots - l.games.length} suất: game mới ra mắt sẽ tự thêm vào key này.</p>` : ''}
+          ${l.allGames ? '<p class="note">Gói Trọn Bộ: game mới ra mắt tự có trong key này.</p>' : ''}
+          ${o.guideUrl ? `<a class="btn ghost block" style="margin-top:16px" href="${esc(o.guideUrl)}" target="_blank" rel="noopener">📖 Xem hướng dẫn cài đặt</a>` : ''}`;
+      }
+      if (o.status === 'paid' && !o.license) html += '<p>Đơn đã thanh toán nhưng chưa có key, vui lòng liên hệ hỗ trợ.</p>';
+      html += '</div>';
+      $('#root').innerHTML = html;
+      $('#claim')?.addEventListener('click', async () => {
+        try { render((await api(`/api/orders/${code}/claim?t=${t}`, {})).order); } catch (e) { alert(e.message); }
+      });
+    }
+
+    document.addEventListener('click', e => {
+      const c = e.target.closest('[data-copy]');
+      if (c) { e.preventDefault(); copy(c.dataset.copy); }
+    });
+
+    async function load() {
+      try {
+        const { order } = await api(`/api/orders/${encodeURIComponent(code)}?t=${encodeURIComponent(t)}`);
+        render(order);
+        clearTimeout(timer);
+        if (order.status === 'pending') timer = setTimeout(load, 5000);
+      } catch (e) {
+        $('#root').innerHTML = `<div class="panel"><h2>Không tìm thấy đơn hàng</h2><p class="note">${esc(e.message)} Nếu đã thanh toán, hãy vào <a href="/tra-cuu.html">Tra cứu key</a> hoặc liên hệ hỗ trợ.</p></div>`;
+      }
+    }
+    applyBrand().catch(() => {});
+    load();
+  </script>
+</body>
+</html>

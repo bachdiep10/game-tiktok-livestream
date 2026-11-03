@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Game tương tác TikTok LIVE</title>
+  <meta name="description" content="Game tương tác cho TikTok LIVE: người xem vào LIVE có nhân vật mang tên mình, thả tim, bình luận, tặng quà đều hiện lên màn hình.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="/"><span class="logo-mark">🎮</span><span data-brand>LiveGame</span></a>
+      <nav class="nav">
+        <a href="#game">Game</a>
+        <a href="#bang-gia">Bảng giá</a>
+        <a href="#hoi-dap">Hỏi đáp</a>
+        <a href="/tra-cuu.html">Tra cứu key</a>
+        <a class="btn sm" href="#bang-gia">Mua ngay</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <div>
+          <span class="eyebrow"><span class="dot"></span><span id="heroEyebrow"></span></span>
+          <h1 id="heroTitle"></h1>
+          <p class="sub" id="heroSub"></p>
+          <div class="hero-cta">
+            <a class="btn" href="#bang-gia">Chọn gói</a>
+            <a class="btn ghost" href="#game">▶ Xem game chạy thật</a>
+          </div>
+          <div class="hero-stats">
+            <div><b id="statGames">2</b>game đang bán</div>
+            <div><b>1 key</b>= 1 máy, dùng trọn đời</div>
+            <div><b>5 phút</b>cài xong</div>
+          </div>
+        </div>
+        <div class="phone">
+          <span class="live-badge">LIVE</span>
+          <video id="heroVideo" autoplay muted loop playsinline preload="metadata"></video>
+        </div>
+      </div>
+    </section>
+
+    <section id="cach-dung" style="padding-top:24px">
+      <div class="wrap">
+        <div class="sec-head"><div><div class="kicker">Cách dùng</div><h2>Từ lúc mua đến lúc LIVE</h2></div></div>
+        <div class="steps">
+          <div class="step"><div class="n">1</div><h3>Chọn gói, thanh toán</h3><p>Quét mã QR ngân hàng. Thanh toán xong trang web hiện ngay key và link tải.</p></div>
+          <div class="step"><div class="n">2</div><h3>Tải game, nhập key</h3><p>Bấm đúp để chạy, dán key. Key tự gắn với máy tính của bạn.</p></div>
+          <div class="step"><div class="n">3</div><h3>Nhập tên kênh TikTok</h3><p>Game tự đọc bình luận, tim, quà, người vào phiên LIVE của bạn.</p></div>
+          <div class="step"><div class="n">4</div><h3>Thêm vào LIVE Studio</h3><p>Chọn cửa sổ game trong TikTok LIVE Studio hoặc OBS, rồi lên sóng.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="game">
+      <div class="wrap">
+        <div class="sec-head">
+          <div><div class="kicker">Kho game</div><h2>Game tương tác đang có</h2><p>Bấm vào ảnh để xem video chạy thật. Game mới được thêm vào thường xuyên.</p></div>
+        </div>
+        <div class="games" id="games"></div>
+      </div>
+    </section>
+
+    <section id="bang-gia">
+      <div class="wrap">
+        <div class="sec-head" style="justify-content:center;text-align:center">
+          <div><div class="kicker">Bảng giá</div><h2>Chọn gói phù hợp với kênh của bạn</h2><span class="promo" id="promo"></span></div>
+        </div>
+        <div class="plans" id="plans"></div>
+      </div>
+    </section>
+
+    <section id="hoi-dap">
+      <div class="wrap">
+        <div class="sec-head"><div><div class="kicker">Hỏi đáp</div><h2>Câu hỏi thường gặp</h2></div></div>
+        <div class="faq" id="faq"></div>
+      </div>
+    </section>
+
+    <section id="ho-tro" style="padding-top:24px">
+      <div class="wrap">
+        <div class="sec-head"><div><div class="kicker">Hỗ trợ</div><h2>Cần hỗ trợ?</h2><p>Nhắn cho chúng tôi, phản hồi trong ngày.</p></div></div>
+        <div class="support" id="support"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap">
+      <div><b data-brand></b> · <span data-tagline></span></div>
+      <div>© <span data-year></span> <span data-brand></span>. Mọi quyền được bảo lưu.</div>
+    </div>
+  </footer>
+
+  <!-- video demo -->
+  <div class="modal" id="videoModal">
+    <div class="box video"><button class="x" data-close>×</button><video id="modalVideo" controls playsinline></video></div>
+  </div>
+
+  <!-- mua hàng -->
+  <div class="modal" id="buyModal">
+    <div class="box">
+      <button class="x" data-close>×</button>
+      <h3 id="buyTitle">Mua gói</h3>
+      <p class="msub" id="buySub"></p>
+      <form id="buyForm" autocomplete="on">
+        <div class="field" id="pickWrap">
+          <label id="pickLabel">Chọn game</label>
+          <div class="pick" id="pick"></div>
+        </div>
+        <div class="field"><label for="fName">Họ tên</label><input id="fName" name="name" required maxlength="80" autocomplete="name"></div>
+        <div class="field"><label for="fPhone">Số điện thoại / Zalo</label><input id="fPhone" name="phone" required inputmode="tel" autocomplete="tel"><small>Dùng để tra cứu key và chuyển máy về sau.</small></div>
+        <div class="field"><label for="fEmail">Email (không bắt buộc)</label><input id="fEmail" name="email" type="email" autocomplete="email"></div>
+        <div class="total"><span>Tổng thanh toán</span><b id="buyTotal"></b></div>
+        <div class="err" id="buyErr"></div>
+        <button class="btn block" id="buyBtn" type="submit">Thanh toán</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="/js/site.js"></script>
+</body>
+</html>
