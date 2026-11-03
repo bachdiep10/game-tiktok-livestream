@@ -181,6 +181,27 @@ Chạy: `run-tra-da.bat` (bảng điều khiển `/tra-da-control.html`), cửa 
 
 Toàn bộ hình vẽ (phố, nhà ống, cây bàng, ô dù, nhân vật, xe máy) và âm thanh (guitar, tiếng phố, rót trà, điếu cày) đều tự tạo bằng code.
 
+# 🐉 Rồng rắn lên mây LIVE (game thứ tư, trò chơi dân gian)
+
+Sân đình làng ngày hội (mái đình cong, cây đa, luỹ tre, dây cờ ngũ sắc). Người xem vào LIVE nắm vai nhau nối thành đuôi rồng, người đứng đầu đội mặt nạ đầu rồng. Ông thầy thuốc (khăn đóng, râu bạc, chống gậy) ngồi ở góc "Nhà thầy thuốc".
+
+Mỗi ván tự chạy: rồng dạo sân và hát (`roundSeconds`, 40 giây), tới hỏi "Thầy thuốc có nhà không?". Thầy thuốc có khi "đi chơi" (rồng đi tiếp), có khi "Có nhà!" thì đối đáp xin khúc đầu, khúc giữa, khúc đuôi, rồi "Tha hồ mà đuổi!" và đuổi bắt khúc đuôi (`chaseSeconds`, 20 giây). Người bị bắt ngồi chiếu nhà thầy thuốc, tự về sau `caughtSeconds` giây, hoặc về ngay khi bình luận "chuộc", thả đủ `releaseLikes` tim hay tặng quà.
+
+| Bình luận | Tác dụng |
+| --- | --- |
+| rồng rắn / lên mây | Hát "Rồng rắn lên mây ~" |
+| lúc lắc | Cả rồng uốn éo |
+| chạy mau | Rồng chạy nhanh 3 giây |
+| bảo vệ | Đầu rồng dang tay che, thầy thuốc chậm lại |
+| xin lửa | Thầy thuốc đối đáp "Lửa nhà tôi để nấu cơm!" |
+| khúc đầu / khúc giữa | Thầy thuốc đáp "Những xương cùng xẩu!" / "Những máu cùng me!" |
+| khúc đuôi | Thầy thuốc bắt đầu đuổi ngay |
+| chuộc | Người đang bị bắt được về đội |
+
+Thả tim: tim bay; khi bị đuổi thì tim làm cả rồng chạy nhanh hơn (tối đa +`likeBoost`). Theo dõi: khăn đỏ. Chia sẻ: lên gần đầu rồng 3 bậc. Quà nhỏ: bùa hộ mệnh (đỡ một lần bị bắt) + đứng ngay sau đầu rồng. Quà từ 10 xu: thầy thuốc trượt vỏ chuối, ngã, thả hết người bị bắt. Quà từ 100 xu: làm đầu rồng, cả đàn cưỡi rồng vàng bay lên mây. Thanh "Lên mây" (tim, bình luận, quà) đầy `hypeMax` thì cũng bay lên mây.
+
+Chạy: `run-rong-ran.bat` (bảng điều khiển `/rong-ran-control.html`), cửa sổ game `mo-cua-so-rong-ran.bat` (`/rong-ran.html`). Cấu hình `config-rong-ran.json`. Nhạc riêng: `public/assets/nhac-rong-ran` (để trống thì dùng nhạc sáo trúc + trống hội tự tạo).
+
 ## Website bán game + quản lý key
 
 Thư mục [`store/`](store/README.md) là website bán các game này kèm license key (1 key = 1 máy), trang quản trị và API kiểm tra key cho game.
