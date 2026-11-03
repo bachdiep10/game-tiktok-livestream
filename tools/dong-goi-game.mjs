@@ -5,13 +5,13 @@
 //   Tuỳ chọn: --server https://netxioviet.com   (máy chủ key, mặc định netxioviet.com)
 //             --pem duong-dan/license-public.pem (nếu không có sẽ tải từ máy chủ)
 //
-// Kết quả: dist/ChanhDien-<phiên bản>.zip, dist/QuanBar-..., dist/TraDa-..., dist/CauCa-..., dist/RongRan-....zip
+// Kết quả: dist/ChanhDien-<phiên bản>.zip, dist/QuanBar-..., dist/TraDa-..., dist/CauCa-..., dist/RongRan-..., dist/DaiChien-....zip
 // Sau đó vào Quản trị > Game > Sửa > "Tải file lên" để khách có key tải về.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN } from '../store/lib/db.js';
+import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -51,6 +51,11 @@ const PRODUCTS = {
     name: 'Rồng Rắn Lên Mây', folder: 'RongRan', control: '/rong-ran-control.html', guide: GUIDE_RONG_RAN,
     files: ['run-rong-ran.bat', 'mo-cua-so-rong-ran.bat', 'config-rong-ran.json', 'public/rong-ran.html', 'public/rong-ran-control.html', 'public/js/rong-ran',
       'public/assets/nhac-rong-ran/DAT-NHAC-VAO-DAY.txt'],
+  },
+  'dai-chien': {
+    name: 'Sơn Tinh Thủy Tinh Đại Chiến', folder: 'DaiChien', control: '/dai-chien-control.html', guide: GUIDE_DAI_CHIEN,
+    files: ['run-dai-chien.bat', 'mo-cua-so-dai-chien.bat', 'config-dai-chien.json', 'public/dai-chien.html', 'public/dai-chien-control.html', 'public/js/dai-chien',
+      'public/assets/nhac-dai-chien/DAT-NHAC-VAO-DAY.txt'],
   },
 };
 

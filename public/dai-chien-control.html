@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Sơn Tinh Thủy Tinh đại chiến</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #0b1220; color: #eef4ff; }
+    .panel { background: #131d33; border-color: #2a3c66; }
+    h1 { color: #ffd54a; }
+    h2 { color: #9fe0ff; }
+    .status { background: #1a2745; }
+    input, code, .log { background: #0a1020; border-color: #2a3c66; }
+    button { background: #1d2c50; border-color: #34508a; }
+    button:hover { background: #26396a; }
+    button.primary { background: #2e7d32; border-color: #66bb6a; }
+    button.nui { background: #2e5e2a; border-color: #5f9b4f; }
+    button.nuoc { background: #164a86; border-color: #3d8de0; }
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>⛰️⚔️🌊 Sơn Tinh – Thủy Tinh đại chiến</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập người xem (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button data-sim="join">👋 Người vào (tự chia phe)</button>
+        <button data-cmd="1" class="nui">⛰️ "1" theo Sơn Tinh</button>
+        <button data-cmd="2" class="nuoc">🌊 "2" theo Thủy Tinh</button>
+        <button data-cmd="3">🏹 "3" bắn</button>
+        <button data-cmd="4">⚔️ "4" chém</button>
+        <button data-cmd="5">🛡️ "5" khiên</button>
+        <button data-cmd="6">✚ "6" hồi máu</button>
+        <button data-cmd="7">🥁 "7" đánh trống</button>
+        <button data-cmd="đầu hàng">🏳️ "đầu hàng"</button>
+        <button data-sim="chat">💬 Bình luận thường</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="follow">⭐ Theo dõi (phong tướng)</button>
+        <button data-sim="share">📣 Chia sẻ (3 viện binh)</button>
+        <button data-sim="gift1">🪨 Quà 1 xu (đá lăn / sóng)</button>
+        <button data-sim="gift10">🐘 Quà 30 xu (voi / thuồng luồng)</button>
+        <button data-sim="gift100">🌋 Quà 299 xu (thần hiện thân)</button>
+        <button data-sim="rally0" class="nui">🔥 Tổng tấn công phe Núi</button>
+        <button data-sim="rally1" class="nuoc">🔥 Tổng tấn công phe Nước</button>
+        <button data-sim="endRound">🏁 Kết thúc ván ngay</button>
+        <button data-sim="voiceTest">🔊 Thử giọng</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử...">
+        <button id="btnChat">Gửi</button>
+      </div>
+
+      <p class="hint">Người xem gõ <b>1</b> theo Sơn Tinh (phe Núi), <b>2</b> theo Thủy Tinh (phe Nước). Ai không chọn sẽ vào phe đang ít người. Mỗi người có một chiến binh mang tên mình tự đánh. Gõ 3 bắn, 4 chém, 5 khiên, 6 hồi máu, 7 đánh trống. Thả tim thả lính, đủ khí thế thì cả phe tổng tấn công. Phá được thành địch, hoặc hết giờ thành ai còn nhiều máu hơn thì thắng. Đổi thời gian ván, máu thành, số tim ra lính trong config-dai-chien.json.</p>
+
+      <h2>3. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="15">+15 người vào</button>
+        <button data-bulk="40">+40 người vào</button>
+        <button id="btnGiftStorm">Mưa quà (10 quà)</button>
+        <button id="btnLikeStorm">Bão tim (150 tim)</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hết, chơi lại từ đầu</button>
+      </div>
+
+      <h2>4. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-dai-chien.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+      <p class="hint">Muốn tự vẽ lại nền: <a href="dai-chien.html?export=1" target="_blank" style="color:#ffd54a">tải ảnh nền trống</a>, sửa xong lưu vào public/assets rồi điền tên file vào <b>backgroundImage</b> trong config-dai-chien.json.</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/dai-chien/chienControl.js"></script>
+</body>
+</html>

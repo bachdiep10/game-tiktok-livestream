@@ -14,6 +14,7 @@ const BAR_CONFIG_PATH = path.join(__dirname, 'config-bar.json');
 const TRA_DA_CONFIG_PATH = path.join(__dirname, 'config-tra-da.json');
 const CAU_CA_CONFIG_PATH = path.join(__dirname, 'config-cau-ca.json');
 const RONG_RAN_CONFIG_PATH = path.join(__dirname, 'config-rong-ran.json');
+const DAI_CHIEN_CONFIG_PATH = path.join(__dirname, 'config-dai-chien.json');
 
 function loadConfig(file = CONFIG_PATH) {
   try {
@@ -60,9 +61,9 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(loadConfig()));
     return;
   }
-  const MUSIC_FOLDERS = { '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca' };
+  const MUSIC_FOLDERS = { '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca', '/dai-chien-music.json': 'nhac-dai-chien' };
   if (MUSIC_FOLDERS[pathname]) {
-    // danh sách bài hát trong thư mục nhạc của game (public/assets/nhac-bar, nhac-tra-da, nhac-rong-ran, nhac-cau-ca), xếp theo tên file
+    // danh sách bài hát trong thư mục nhạc của game (public/assets/nhac-bar, nhac-tra-da, nhac-rong-ran, nhac-cau-ca, nhac-dai-chien), xếp theo tên file
     const folder = MUSIC_FOLDERS[pathname];
     const dir = path.join(PUBLIC_DIR, 'assets', folder);
     let list = [];
@@ -123,6 +124,11 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/cau-ca-config.json') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(loadConfig(CAU_CA_CONFIG_PATH)));
+    return;
+  }
+  if (pathname === '/dai-chien-config.json') {
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(loadConfig(DAI_CHIEN_CONFIG_PATH)));
     return;
   }
   if (pathname === '/rong-ran-config.json') {
@@ -247,7 +253,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '2.1.0';
+const VERSION = '2.2.0';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 const gate = createGate({
   rootDir: __dirname,
@@ -505,6 +511,7 @@ server.listen(PORT, '0.0.0.0', () => {
   if (has('tra-da.html')) console.log(`  🧋 Trà đá vỉa hè (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/tra-da.html   ·  điều khiển  http://127.0.0.1:${PORT}/tra-da-control.html`);
   if (has('cau-ca.html')) console.log(`  🎣 Bến câu sinh tồn (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/cau-ca.html   ·  điều khiển  http://127.0.0.1:${PORT}/cau-ca-control.html`);
   if (has('rong-ran.html')) console.log(`  🐉 Rồng rắn lên mây (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/rong-ran.html   ·  điều khiển  http://127.0.0.1:${PORT}/rong-ran-control.html`);
+  if (has('dai-chien.html')) console.log(`  ⚔️  Sơn Tinh Thủy Tinh đại chiến (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/dai-chien.html   ·  điều khiển  http://127.0.0.1:${PORT}/dai-chien-control.html`);
   if (has('bar.html')) console.log(`  🪩 Quán bar (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/bar.html   ·  điều khiển  http://127.0.0.1:${PORT}/bar-control.html`);
   console.log('');
   const startUser = process.env.TIKTOK_USERNAME || config.tiktokUsername;
