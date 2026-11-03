@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Bến câu sinh tồn</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #0b1d24; color: #e6f4f1; }
+    .panel { background: #12303a; border-color: #2b5866; }
+    h1 { color: #ffe082; }
+    h2 { color: #80deea; }
+    .status { background: #1a3f4b; }
+    input, code, .log { background: #08161b; border-color: #2b5866; }
+    button { background: #1d4a57; border-color: #2f6f80; }
+    button:hover { background: #255d6d; }
+    button.primary { background: #00897b; border-color: #26a69a; }
+    .grid { grid-template-columns: repeat(3, 1fr); }
+    .hint { color: #a7c8cf; }
+    .preview iframe { border-color: #2b5866; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>🎣 Bến câu sinh tồn LIVE</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập bình luận (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button data-sim="join">👋 Người vào bến</button>
+        <button data-cmd="1">1️⃣ "1" giun</button>
+        <button data-cmd="2">2️⃣ "2" cơm nắm</button>
+        <button data-cmd="3">3️⃣ "3" ngô</button>
+        <button data-cmd="4">4️⃣ "4" tôm</button>
+        <button data-cmd="5">5️⃣ "5" mồi tanh</button>
+        <button data-cmd="câu chép">🐟 "câu chép"</button>
+        <button data-cmd="6">🍢 "6" nướng cá</button>
+        <button data-cmd="7">🔥 "7" đốt lửa</button>
+        <button data-cmd="trái">⬅️ "trái"</button>
+        <button data-cmd="phải">➡️ "phải"</button>
+        <button data-sim="chat">💬 Bình luận thường</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="follow">⭐ Theo dõi</button>
+        <button data-sim="share">📣 Chia sẻ</button>
+        <button data-sim="gift1">🌹 Quà 1 xu (thả thính)</button>
+        <button data-sim="gift10">🎁 Quà 30 xu (quăng lưới)</button>
+        <button data-sim="gift100">💎 Quà 299 xu (thủy quái)</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử...">
+        <button id="btnChat">Gửi</button>
+      </div>
+
+      <h2>3. Thử sự kiện</h2>
+      <div class="grid">
+        <button data-sim="monster">🐉 Gọi thủy quái</button>
+        <button data-sim="rain">🌧 Bật/tắt mưa</button>
+        <button data-sim="skipTime">🌗 Tua nhanh ngày đêm</button>
+        <button data-sim="goal">🎯 Đạt mục tiêu chung</button>
+        <button data-sim="endRound">🏁 Kết thúc trận</button>
+        <button data-sim="starve">😴 Cả bến đói lả</button>
+        <button data-sim="voiceTest">🔊 Thử giọng đọc</button>
+      </div>
+      <p class="hint">Khi LIVE thật: thủy quái tự lên mỗi <b>10 phút</b>, mỗi trận đấu 2 bến <b>5 phút</b>, trời mưa khoảng <b>9 phút</b> một lần, một vòng ngày đêm <b>15 phút</b>. Đổi trong config-cau-ca.json.</p>
+
+      <h2>4. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="12">+12 người vào</button>
+        <button data-bulk="30">+30 người vào</button>
+        <button id="btnGiftStorm">Mưa quà (10 quà)</button>
+        <button id="btnLikeStorm">Bão tim (150 tim)</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hết người câu</button>
+      </div>
+
+      <h2>5. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-cau-ca.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/cau-ca/fishControl.js"></script>
+</body>
+</html>

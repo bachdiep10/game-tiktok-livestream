@@ -1,17 +1,17 @@
 // Đóng gói từng game thành 1 file ZIP riêng để bán (game nào đi game đấy), có khoá bản quyền.
 //
-//   node tools/dong-goi-game.mjs                 → đóng gói cả 3 game
+//   node tools/dong-goi-game.mjs                 → đóng gói cả 4 game
 //   node tools/dong-goi-game.mjs chanh-dien      → chỉ game Chánh điện
 //   Tuỳ chọn: --server https://netxioviet.com   (máy chủ key, mặc định netxioviet.com)
 //             --pem duong-dan/license-public.pem (nếu không có sẽ tải từ máy chủ)
 //
-// Kết quả: dist/ChanhDien-<phiên bản>.zip, dist/QuanBar-<phiên bản>.zip, dist/TraDa-<phiên bản>.zip
+// Kết quả: dist/ChanhDien-<phiên bản>.zip, dist/QuanBar-<phiên bản>.zip, dist/TraDa-<phiên bản>.zip, dist/CauCa-<phiên bản>.zip
 // Sau đó vào Quản trị > Game > Sửa > "Tải file lên" để khách có key tải về.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA } from '../store/lib/db.js';
+import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -41,6 +41,11 @@ const PRODUCTS = {
     name: 'Trà Đá Vỉa Hè', folder: 'TraDa', control: '/tra-da-control.html', guide: GUIDE_TRA_DA,
     files: ['run-tra-da.bat', 'mo-cua-so-tra-da.bat', 'config-tra-da.json', 'public/tra-da.html', 'public/tra-da-control.html', 'public/js/tra-da',
       'public/assets/nhac-tra-da/DAT-NHAC-VAO-DAY.txt'],
+  },
+  'cau-ca': {
+    name: 'Bến Câu Sinh Tồn', folder: 'CauCa', control: '/cau-ca-control.html', guide: GUIDE_CAU_CA,
+    files: ['run-cau-ca.bat', 'mo-cua-so-cau-ca.bat', 'config-cau-ca.json', 'public/cau-ca.html', 'public/cau-ca-control.html', 'public/js/cau-ca',
+      'public/assets/nhac-cau-ca/DAT-NHAC-VAO-DAY.txt'],
   },
 };
 

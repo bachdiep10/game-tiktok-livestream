@@ -71,6 +71,16 @@ export const GUIDE_TRA_DA = `1. Cài Node.js bản LTS tại nodejs.org (chỉ l
 8. Bấm đúp mo-cua-so-tra-da.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_CAU_CA = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\CauCa. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-cau-ca.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập ("1" giun, "2" cơm nắm, thủy quái...) để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Người xem gõ số để câu: 1 giun (rô, diếc), 2 cơm nắm (chép, mè), 3 ngô (trắm cỏ), 4 tôm (cá lóc), 5 mồi tanh (trê, lươn), 6 nướng cá ăn hồi sức, 7 đốt lửa sưởi đêm. Gõ "trái" hoặc "phải" để chọn bến thi đấu. Thả tim cho cá cắn nhanh, chia sẻ để con cá tới to gấp đôi. Quà nhỏ thả thính cả bến, quà từ 10 xu quăng lưới chia cá, quà từ 100 xu gọi thủy quái. Thủy quái tự lên mỗi 10 phút, cả live thả tim để kéo.
+7. Nhạc riêng (nếu muốn): chép MP3 vào public\\assets\\nhac-cau-ca. Đổi thời gian trận đấu, loại cá, từ khoá lệnh: sửa config-cau-ca.json.
+8. Bấm đúp mo-cua-so-cau-ca.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 const DEFAULT_GAMES = [
   {
     id: 'chanh-dien', name: 'Chánh Điện Lễ Phật',
@@ -99,6 +109,15 @@ const DEFAULT_GAMES = [
     guide: GUIDE_TRA_DA, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 3, isNew: true,
+  },
+  {
+    id: 'cau-ca', name: 'Bến Câu Sinh Tồn',
+    tagline: 'Người xem ngồi câu cá, hai bến thi nhau, cả live kéo thủy quái',
+    description: 'Người xem vào LIVE thành người ngồi câu trên hai bến gỗ. Gõ số 1 đến 5 để chọn mồi, mồi nào ra cá nấy. Thả tim cho cá cắn nhanh, chia sẻ để cá to gấp đôi. Thể lực tụt dần nên phải nướng cá ăn, đốt lửa sưởi ban đêm. Hai bến thi nhau ai câu nặng hơn, mỗi 10 phút thủy quái nổi lên để cả live cùng thả tim kéo.',
+    features: ['Gõ số 1–7 dễ chơi trên điện thoại', 'Đấu 2 bến mỗi 5 phút', 'Thủy quái: cả live thả tim kéo', 'Ngày đêm, mưa, sinh tồn', 'Nhạc sáo trúc tự tạo + giọng AI'],
+    image: '/media/cau-ca.jpg', video: '/media/cau-ca.mp4', download: '', version: '2.1.0',
+    guide: GUIDE_CAU_CA, guideVideo: '',
+    visible: false, order: 4, isNew: true,
   },
 ];
 

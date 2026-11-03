@@ -1,0 +1,2 @@
+Chép file nhạc MP3 của bạn vào thư mục này (nhạc bạn có quyền sử dụng).
+Game phát lần lượt theo tên file rồi lặp lại. Để trống thì game dùng nhạc sáo trúc tự tạo.

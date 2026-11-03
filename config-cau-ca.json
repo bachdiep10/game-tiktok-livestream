@@ -1,0 +1,99 @@
+{
+  "_ghi_chu": "Cấu hình game Bến câu sinh tồn. Sửa xong lưu lại rồi tải lại trang game (F5).",
+  "title": "BẾN CÂU SINH TỒN",
+  "subtitle": "Gõ số để câu • Thả tim cá cắn nhanh • Chia sẻ cá to gấp đôi",
+  "ambientCrowd": 8,
+  "idleMinutes": 15,
+  "_ghi_chu_thoi_gian": "dayMinutes: 1 vòng ngày đêm (phút). staminaMinutes: thể lực đầy tụt hết sau bao nhiêu phút. matchMinutes: 1 trận đấu 2 bến. monsterMinutes: thủy quái lên mỗi bao nhiêu phút, monsterSeconds: thời gian kéo. rainEveryMinutes: bao lâu mưa 1 lần (0 = tắt mưa).",
+  "dayMinutes": 15,
+  "staminaMinutes": 5,
+  "matchMinutes": 5,
+  "monsterMinutes": 10,
+  "monsterSeconds": 60,
+  "rainEveryMinutes": 9,
+  "rainSeconds": 60,
+  "fireSeconds": 90,
+  "autoFishSeconds": 25,
+  "junkChance": 0.05,
+  "legendChance": 0.004,
+  "giftTiers": {
+    "medium": 10,
+    "big": 100
+  },
+  "_ghi_chu_muc_tieu": "Mục tiêu chung của cả live, đạt xong chuyển sang mục tiêu tiếp theo (vòng sau x1.5). type: like hoặc share. reward: fishRain (mưa cá), dragonBoat (thuyền rồng, mẻ tới cá x2), goldRush (giờ cá vàng 40 giây).",
+  "goals": [
+    { "type": "like", "target": 500, "reward": "fishRain", "label": "MƯA CÁ" },
+    { "type": "share", "target": 10, "reward": "dragonBoat", "label": "THUYỀN RỒNG" },
+    { "type": "like", "target": 1500, "reward": "goldRush", "label": "GIỜ CÁ VÀNG" }
+  ],
+  "cameraZoom": 1.25,
+  "sound": true,
+  "music": true,
+  "musicFiles": [],
+  "musicVolume": 0.3,
+  "ambienceVolume": 0.14,
+  "voice": true,
+  "voiceLevel": "vua",
+  "voiceGapSeconds": 10,
+  "voiceJoin": true,
+  "voiceEngine": "auto",
+  "ttsVoice": "vi-VN-NamMinhNeural",
+  "captions": true,
+  "narration": true,
+  "narrationSeconds": 45,
+  "_ghi_chu_moi": "Mỗi mồi: num = số người xem gõ, wait = giây chờ cá cắn (ít nhất, nhiều nhất), pool = loại cá và tỉ lệ ra.",
+  "baits": {
+    "giun": { "num": "1", "label": "Giun", "hint": "rô, diếc", "wait": [6, 14], "pool": { "ro": 5, "diec": 4, "bong": 3, "tre": 1 } },
+    "com": { "num": "2", "label": "Cơm nắm", "hint": "chép, mè", "wait": [8, 16], "pool": { "chep": 5, "me": 3, "diec": 2 } },
+    "ngo": { "num": "3", "label": "Ngô", "hint": "trắm cỏ", "wait": [12, 22], "pool": { "tram": 5, "chep": 2, "me": 2 } },
+    "tom": { "num": "4", "label": "Tôm", "hint": "cá lóc", "wait": [8, 18], "pool": { "loc": 6, "tre": 2, "chep": 1 } },
+    "tanh": { "num": "5", "label": "Mồi tanh", "hint": "trê, lươn", "wait": [8, 18], "pool": { "tre": 5, "luon": 4, "loc": 1 }, "night": true }
+  },
+  "_ghi_chu_ca": "Tên và cân nặng (kg) từng loại cá. Không đổi mã (ro, diec...) vì hình vẽ dựa theo mã.",
+  "fish": {
+    "ro": { "name": "Cá rô", "min": 0.1, "max": 0.4 },
+    "diec": { "name": "Cá diếc", "min": 0.2, "max": 0.6 },
+    "bong": { "name": "Cá bống", "min": 0.05, "max": 0.2 },
+    "chep": { "name": "Cá chép", "min": 1, "max": 5 },
+    "me": { "name": "Cá mè", "min": 1.5, "max": 6 },
+    "tram": { "name": "Cá trắm cỏ", "min": 3, "max": 12 },
+    "loc": { "name": "Cá lóc", "min": 1, "max": 4 },
+    "tre": { "name": "Cá trê", "min": 0.5, "max": 3 },
+    "luon": { "name": "Con lươn", "min": 0.3, "max": 1.2 },
+    "chepvang": { "name": "Cá chép vàng", "min": 20, "max": 35, "legend": true },
+    "trekhong": { "name": "Cá trê khổng lồ", "min": 25, "max": 50, "legend": true }
+  },
+  "_ghi_chu_lenh": "Từ khoá bình luận (có dấu hay không dấu đều nhận). Ngoài ra người xem gõ số 1-7. Tránh từ quá ngắn dễ trùng câu thường.",
+  "commands": {
+    "giun": ["giun", "mồi giun", "câu giun", "câu rô", "cá rô", "câu diếc", "cá diếc"],
+    "com": ["cơm nắm", "mồi cơm", "câu chép", "cá chép", "câu mè", "cá mè"],
+    "ngo": ["ngô", "bắp", "mồi ngô", "câu trắm", "cá trắm"],
+    "tom": ["tôm", "mồi tôm", "câu lóc", "cá lóc", "cá quả"],
+    "tanh": ["mồi tanh", "lòng gà", "câu trê", "cá trê", "câu lươn", "con lươn"],
+    "eat": ["nướng cá", "ăn cá", "đói quá", "ăn thôi"],
+    "fire": ["đốt lửa", "nhóm lửa", "lạnh quá", "sưởi ấm"]
+  },
+  "teamWords": {
+    "left": ["trái", "bến trái", "đội trái", "ben trai"],
+    "right": ["phải", "bến phải", "đội phải", "ben phai"]
+  },
+  "messages": {
+    "join": [
+      "Mời {name} xuống bến ngồi câu",
+      "{name} đến rồi, chọn mồi đi nào",
+      "Chào {name}, gõ số một để câu bằng giun nhé",
+      "{name} vác cần ra bến rồi"
+    ],
+    "reminder": [
+      "Gõ số một để câu bằng giun, số hai câu cá chép",
+      "Gõ số ba câu trắm cỏ, cá to nhất sông",
+      "Gõ số bốn câu cá lóc, số năm câu trê và lươn",
+      "Thả tim để cá cắn câu nhanh hơn",
+      "Chia sẻ live thì con cá tiếp theo to gấp đôi",
+      "Đói thì gõ sáu để nướng cá ăn, kẻo ngủ gục",
+      "Gõ trái hoặc phải để chọn bến thi đấu",
+      "Theo dõi kênh để được nón lá có nơ và mẻ cá đẹp",
+      "Tặng quà để thả thính, quăng lưới, hoặc gọi thủy quái"
+    ]
+  }
+}
