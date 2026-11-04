@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Thủ thành Cổ Loa</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #0b1220; color: #eef4ff; }
+    .panel { background: #131d33; border-color: #2a3c66; }
+    h1 { color: #ffd54a; }
+    h2 { color: #9fe0ff; }
+    .status { background: #1a2745; }
+    input, code, .log { background: #0a1020; border-color: #2a3c66; }
+    button { background: #1d2c50; border-color: #34508a; }
+    button:hover { background: #26396a; }
+    button.primary { background: #2e7d32; border-color: #66bb6a; }
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>🏯🏹 Thủ thành Cổ Loa</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập người xem (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button data-sim="join">👋 Người vào (lên tường thành)</button>
+        <button data-cmd="1">🏹 "1" bắn</button>
+        <button data-cmd="2">🔨 "2" sửa thành</button>
+        <button data-cmd="3">🪨 "3" lăn đá</button>
+        <button data-cmd="4">🛡️ "4" dựng khiên</button>
+        <button data-cmd="5">🥁 "5" đánh trống</button>
+        <button data-cmd="cứu">🙌 "cứu" (khi boss bắt người)</button>
+        <button data-cmd="mở cổng">🧺 "mở cổng" (đón dân)</button>
+        <button data-sim="chat">💬 Bình luận thường</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="follow">⭐ Theo dõi (phong tướng)</button>
+        <button data-sim="share">📣 Chia sẻ (máy bắn đá)</button>
+        <button data-sim="gift1">🔥 Quà 1 xu (mưa tên lửa)</button>
+        <button data-sim="gift10">🐎 Quà 30 xu (Thánh Gióng)</button>
+        <button data-sim="gift100">🐢 Quà 299 xu (Rùa Vàng)</button>
+        <button data-sim="levelUp">⬆️ Lên 1 cấp (xem trang bị)</button>
+        <button data-sim="bossNow">👹 Gọi boss ngay</button>
+        <button data-sim="skipHiep">⏭️ Qua hiệp ngay</button>
+        <button data-sim="loseNow">💥 Thử thất thủ</button>
+        <button data-weather="suong">🌫️ Sương mù</button>
+        <button data-weather="mua">🌧️ Mưa</button>
+        <button data-weather="gio">🌬️ Gió lớn</button>
+        <button data-weather="trang">🌕 Đêm trăng</button>
+        <button data-weather="set">⛈️ Sấm sét</button>
+        <button data-weather="dan">🧺 Dân chạy nạn</button>
+        <button data-weather="">☀️ Tắt hiện tượng</button>
+        <button data-sim="voiceTest">🔊 Thử giọng</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử...">
+        <button id="btnChat">Gửi</button>
+      </div>
+
+      <p class="hint">Ai bình luận cũng thành lính nỏ mang tên mình trên tường thành và tự bắn. Hạ quái để lên cấp (tối đa cấp 10), mỗi cấp đổi trang bị: nỏ tre, nón lá, giáp da, nỏ đồng, mũ đồng, tên lửa, nỏ liên châu, giáp đồng, nỏ vàng, Nỏ thần. Có người chơi mới vào thì thêm yêu quái kéo tới. Mỗi đợt 10 hiệp, cuối mỗi hiệp có boss, hiệp 10 là đại boss Hồ ly chín đuôi. Cổng vỡ là thất thủ. Hết đợt thì cấp lính về 1. Gõ 1 bắn, 2 sửa thành, 3 lăn đá, 4 khiên, 5 đánh trống. 20 tim một trận mưa tên, góp đủ 1000 tim thì Rùa Vàng hiện lên. Chia sẻ dựng máy bắn đá, theo dõi được phong tướng. Quà nhỏ mưa tên lửa, quà từ 10 xu gọi Thánh Gióng, quà từ 100 xu gọi Rùa Vàng. Chỉnh số trong config-thu-thanh.json.</p>
+
+      <h2>3. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="15">+15 người vào</button>
+        <button data-bulk="40">+40 người vào</button>
+        <button id="btnGiftStorm">Mưa quà (10 quà)</button>
+        <button id="btnLikeStorm">Bão tim (150 tim)</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hết, chơi lại từ đầu</button>
+      </div>
+
+      <h2>4. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-thu-thanh.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+      <p class="hint">Muốn tự vẽ lại nền: <a href="thu-thanh.html?export=1" target="_blank" style="color:#ffd54a">tải ảnh nền trống</a>, sửa xong lưu vào public/assets rồi điền tên file vào <b>backgroundImage</b> trong config-thu-thanh.json.</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/thu-thanh/thanhControl.js"></script>
+</body>
+</html>

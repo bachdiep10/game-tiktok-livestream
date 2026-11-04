@@ -101,6 +101,16 @@ export const GUIDE_DAI_CHIEN = `1. Cài Node.js bản LTS tại nodejs.org (ch�
 8. Bấm đúp mo-cua-so-dai-chien.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_THU_THANH = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\ThuThanh. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-thu-thanh.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập ("1" bắn, quà 30 xu gọi Thánh Gióng, Gọi boss ngay...) để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Ai bình luận cũng thành lính nỏ mang tên mình trên tường thành Cổ Loa, tự bắn yêu quái. Hạ quái để lên cấp, tối đa cấp 10, mỗi cấp có trang bị mạnh hơn (nỏ tre đến Nỏ thần). Có người chơi mới vào thì thêm yêu quái kéo tới. Mỗi đợt 10 hiệp, cuối mỗi hiệp có boss, hiệp 10 là Hồ ly chín đuôi. Mỗi hiệp có thể có sương mù, mưa, gió, đêm trăng, sấm sét hoặc dân chạy nạn. Gõ 1 bắn, 2 sửa thành, 3 lăn đá, 4 dựng khiên, 5 đánh trống, "cứu" khi boss bắt người. 20 tim một trận mưa tên, góp đủ 1000 tim thì Rùa Vàng hiện lên. Chia sẻ dựng máy bắn đá, theo dõi được phong tướng. Quà nhỏ mưa tên lửa, quà từ 10 xu gọi Thánh Gióng, quà từ 100 xu gọi Rùa Vàng và Nỏ thần. Cổng vỡ là thất thủ, hết đợt cấp lính về 1.
+7. Nhạc riêng (nếu muốn): chép MP3 vào public\\assets\\nhac-thu-thanh. Đổi số hiệp, máu thành, số quái, số quái cần để lên cấp: sửa config-thu-thanh.json.
+8. Bấm đúp mo-cua-so-thu-thanh.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 const DEFAULT_GAMES = [
   {
     id: 'chanh-dien', name: 'Chánh Điện Lễ Phật',
@@ -158,6 +168,16 @@ const DEFAULT_GAMES = [
     guide: GUIDE_DAI_CHIEN, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 6, isNew: true,
+  },
+  {
+    id: 'thu-thanh', name: 'Thủ Thành Cổ Loa',
+    tagline: 'Người xem làm lính nỏ giữ thành, hạ yêu quái để lên cấp',
+    description: 'Game thủ thành trên LIVE: ai bình luận cũng thành lính nỏ mang tên mình đứng trên tường thành Cổ Loa, tự bắn yêu quái kéo tới. Hạ quái để lên cấp, tối đa cấp 10, mỗi cấp đổi trang bị đến Nỏ thần. Người xem càng đông yêu quái càng nhiều. Mỗi đợt 10 hiệp, cuối hiệp có boss bắt người, có sương mù, mưa, sấm sét ngẫu nhiên. Thả tim là mưa tên, quà gọi Thánh Gióng và Rùa Vàng.',
+    features: ['Lính nỏ mang tên người xem, 10 cấp trang bị', '10 hiệp mỗi đợt, boss cuối mỗi hiệp', 'Đông người xem thì quái kéo tới đông hơn', 'Hiện tượng ngẫu nhiên: sương mù, mưa, sấm sét, dân chạy nạn', 'Quà = Thánh Gióng, Rùa Vàng và Nỏ thần'],
+    image: '/media/thu-thanh.jpg', video: '/media/thu-thanh.mp4', download: '', version: '2.3.0',
+    guide: GUIDE_THU_THANH, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 7, isNew: true,
   },
 ];
 
