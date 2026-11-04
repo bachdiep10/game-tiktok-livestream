@@ -1,7 +1,7 @@
 // Sơn Tinh – Thủy Tinh đại chiến: game tương tác TikTok LIVE, hai phe đánh nhau phá thành.
 // Người xem chọn phe (gõ 1 / 2), mỗi người có một chiến binh mang tên mình tự đánh.
 // Bình luận ra lệnh, thả tim thả lính từ trời xuống, chia sẻ gọi viện binh, chia sẻ gọi voi chiến / rắn biển, quà gọi đại bàng / rùa thần và thần hiện thân.
-import { W, H, HORIZON_Y, FIELD, BASE_FRONT, TEAM, scaleAtY, drawStatic, drawBaseNui, drawBaseNuoc, drawFlood, drawGiant, drawElephant, drawSerpent, drawEagle, drawTurtle, roundRectPath as rr } from './battlefield.js';
+import { W, H, HORIZON_Y, FIELD, BASE_FRONT, TEAM, scaleAtY, drawStatic, drawBaseNui, drawBaseNuoc, drawFlood, drawGiant, drawElephant, drawSerpent, drawEagle, drawTurtle, isWater, roundRectPath as rr } from './battlefield.js';
 import { drawSoldier, GENERAL_SCALE } from './units.js';
 import * as sfx from './chienAudio.js';
 import * as voice from '../audio.js';
@@ -570,7 +570,7 @@ function unitAct(u, dt) {
     } else {
       const ang = Math.atan2(target.y - u.y, target.x - u.x);
       u.x += Math.cos(ang) * u.speed * speedMul * dt;
-      u.y += Math.sin(ang) * u.speed * speedMul * dt * 0.7;
+      u.y += Math.sin(ang) * u.speed * speedMul * dt * 0.45 + (u.ty - u.y) * dt * 0.6;
       u.dir = Math.cos(ang) >= 0 ? 1 : -1;
       moving = true;
     }
@@ -1046,7 +1046,7 @@ function update(dt) {
       const dx = b.x - a.x;
       const dy = (b.y - a.y) * 1.6;
       if (a.kind === 'eagle' || b.kind === 'eagle') continue;
-      const r = a.kind === 'beast' || b.kind === 'beast' ? 46 : a.kind === 'turtle' || b.kind === 'turtle' ? 34 : 20;
+      const r = a.kind === 'beast' || b.kind === 'beast' ? 46 : a.kind === 'turtle' || b.kind === 'turtle' ? 38 : 27;
       const d2 = dx * dx + dy * dy;
       if (d2 > 0.01 && d2 < r * r) {
         const d = Math.sqrt(d2);
@@ -1105,7 +1105,7 @@ function update(dt) {
   const s1 = live.filter((u) => u.team === 1).map((u) => u.x).sort((x, y) => x - y);
   if (s0.length) a0 = s0[Math.min(2, s0.length - 1)];
   if (s1.length) b1 = s1[Math.min(2, s1.length - 1)];
-  const target = clamp((a0 + b1) / 2, 240, 840);
+  const target = clamp((a0 + b1) / 2, 330, 750);
   front += (target - front) * Math.min(1, dt * 0.8);
 
   base[0].hitT = Math.max(0, base[0].hitT - dt * 3);
@@ -1265,6 +1265,7 @@ function unitDrawOpts(u) {
     general: u.general,
     mini: u.kind === 'mini',
     weapon: u.weapon,
+    onWater: isWater(front, u.x, u.y, now / 1000),
     shield: now < u.shieldUntil,
     dead: u.deadT ? clamp((now - u.deadT) / 800, 0, 1) : 0,
     cheer: now < u.cheerUntil,
@@ -1383,13 +1384,38 @@ function drawTag(u) {
   }
 }
 
+// thần vẽ ra khung riêng rồi viền đậm xung quanh cho cùng phong cách với lính
+const giantCv = document.createElement('canvas');
+giantCv.width = W;
+giantCv.height = 1000;
+const giantInk = document.createElement('canvas');
+giantInk.width = W;
+giantInk.height = 1000;
 function drawEffectsBack() {
   for (const e of effects) {
     if (e.kind !== 'god') continue;
     const life = e.until - e.t0;
     const t = now - e.t0;
     const k = Math.min(clamp(t / 700, 0, 1), clamp((life - t) / 900, 0, 1));
-    drawGiant(ctx, e.team, k, now / 1000);
+    const g = giantCv.getContext('2d');
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    g.clearRect(0, 0, W, 1000);
+    g.translate(0, -100);
+    drawGiant(g, e.team, 1, now / 1000, false, true);
+    const ink = giantInk.getContext('2d');
+    ink.globalCompositeOperation = 'source-over';
+    ink.clearRect(0, 0, W, 1000);
+    ink.drawImage(giantCv, 0, 0);
+    ink.globalCompositeOperation = 'source-in';
+    ink.fillStyle = '#2a1d14';
+    ink.fillRect(0, 0, W, 1000);
+    const rise = (1 - clamp(k * 1.5, 0, 1)) * 200;
+    drawGiant(ctx, e.team, k, now / 1000, true);
+    ctx.save();
+    ctx.globalAlpha = k;
+    for (const [dx, dy] of [[-4, 0], [4, 0], [0, -4], [0, 4], [-3, -3], [3, 3], [-3, 3], [3, -3]]) ctx.drawImage(giantInk, dx, 100 + dy + rise);
+    ctx.drawImage(giantCv, 0, 100 + rise);
+    ctx.restore();
   }
 }
 function drawEffectsFront() {
