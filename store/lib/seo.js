@@ -120,9 +120,10 @@ export function createSeo({ publicDir, getData, baseUrl }) {
         <h3><a href="/game/${esc(g.id)}">${esc(g.name)}</a></h3>
         <p>${esc(g.tagline)}</p>
         <ul>${(g.features || []).slice(0, 4).map(f => `<li>${esc(f)}</li>`).join('')}</ul>
+        <a class="more" href="/game/${esc(g.id)}">Xem chi tiết & cách chơi →</a>
         <div class="foot">
           <span class="price">${single ? money(single.price) : ''} <small>trọn đời</small></span>
-          ${single ? `<a class="btn sm" href="/game/${esc(g.id)}">Xem chi tiết</a>` : ''}
+          ${single ? `<button class="btn sm" data-buy="${esc(single.id)}" data-game="${esc(g.id)}">Mua</button>` : ''}
         </div>
       </div>
     </article>`).join('');
