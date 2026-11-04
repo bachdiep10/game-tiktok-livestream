@@ -506,7 +506,7 @@ export function drawTable(ctx, table, glasses = 2) {
     ctx.ellipse(Math.cos(a) * 38, -46 + Math.sin(a) * 11, 6, 2.4, 0, 0, TAU);
     ctx.fill();
   }
-  // ly bia
+  // ly sâm panh
   for (let i = 0; i < glasses; i++) {
     drawTeaGlass(ctx, -30 + i * 60, -48, 0.8, 0.8);
   }
@@ -515,65 +515,44 @@ export function drawTable(ctx, table, glasses = 2) {
 
 
 // cốc thuỷ tinh trà đá (y là đáy cốc)
-export function drawTeaGlass(ctx, x, y, sc = 1, fill = 0.85, lemon = false) {
+export function drawTeaGlass(ctx, x, y, sc = 1, fill = 0.85) {
+  // ly sâm panh chân cao (đám cưới)
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(sc, sc);
-  const w0 = 7;
-  const w1 = 9;
-  const h = 22;
-  ctx.fillStyle = lemon ? 'rgba(255,167,38,0.92)' : 'rgba(236,176,32,0.94)';
-  const fh = h * fill;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.fillRect(-6, -1, 12, 2.5);
+  ctx.fillRect(-1, -11, 2, 10);
   ctx.beginPath();
-  ctx.moveTo(-w0, 0);
-  ctx.lineTo(w0, 0);
-  ctx.lineTo(w0 + (w1 - w0) * (fh / h), -fh);
-  ctx.lineTo(-w0 - (w1 - w0) * (fh / h), -fh);
+  ctx.moveTo(-6, -32);
+  ctx.lineTo(6, -32);
+  ctx.lineTo(3.5, -12);
+  ctx.lineTo(-3.5, -12);
   ctx.closePath();
+  ctx.fillStyle = 'rgba(255,255,255,0.45)';
   ctx.fill();
-  // bọt bia (hoặc đá viên với nước ngọt)
-  if (fill > 0.2) {
-    if (lemon) {
-      ctx.fillStyle = 'rgba(255,255,255,0.65)';
-      ctx.fillRect(-5, -fh + 1, 5, 5);
-      ctx.fillRect(1, -fh + 3, 5, 4);
-    } else {
-      ctx.fillStyle = 'rgba(255,255,255,0.96)';
-      ctx.beginPath();
-      ctx.ellipse(0, -fh - 1, w0 + (w1 - w0) * (fh / h) + 1, 4.5, 0, 0, TAU);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(-4, -fh - 5, 3.4, 0, TAU);
-      ctx.arc(3, -fh - 6, 3.8, 0, TAU);
-      ctx.fill();
-    }
-  }
-  ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-  ctx.lineWidth = 1.6;
+  const fh = 18 * Math.max(0.2, fill);
   ctx.beginPath();
-  ctx.moveTo(-w1, -h);
-  ctx.lineTo(-w0, 0);
-  ctx.lineTo(w0, 0);
-  ctx.lineTo(w1, -h);
+  ctx.moveTo(-3.5 - 2.5 * (fh / 20), -12 - fh);
+  ctx.lineTo(3.5 + 2.5 * (fh / 20), -12 - fh);
+  ctx.lineTo(3.5, -12);
+  ctx.lineTo(-3.5, -12);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(255,214,120,0.95)';
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.fillRect(-1.5, -12 - fh * 0.5, 1.5, 1.5);
+  ctx.fillRect(1, -12 - fh * 0.8, 1.5, 1.5);
+  ctx.strokeStyle = 'rgba(160,140,120,0.6)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(-6, -32);
+  ctx.lineTo(-3.5, -12);
+  ctx.moveTo(6, -32);
+  ctx.lineTo(3.5, -12);
   ctx.stroke();
-  if (lemon) {
-    ctx.fillStyle = '#ffb300';
-    ctx.beginPath();
-    ctx.arc(w1 - 1, -h + 2, 5, 0, TAU);
-    ctx.fill();
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-    ctx.strokeStyle = '#ff5c8a';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(-2, -h + 4);
-    ctx.lineTo(-6, -h - 10);
-    ctx.stroke();
-  }
   ctx.restore();
 }
-
 export function drawUmbrella(ctx, t = 0) {
   // phông sân khấu: cổng hoa, chữ song hỷ, tên cô dâu chú rể, đèn nhấp nháy
   const cx = 540;

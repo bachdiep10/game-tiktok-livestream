@@ -24,7 +24,7 @@ const DEFAULTS = {
   shopName: 'ĂN CỖ ĐÁM CƯỚI',
   groomName: 'Minh',
   brideName: 'Lan',
-  subtitle: 'Bình luận theo từng màn của MC • Thả tim chúc phúc • Tặng quà là mừng cưới',
+  subtitle: 'Làm khách mời: gõ theo lời MC • Thả tim chúc phúc • Quà là phong bì mừng cưới',
   backgroundImage: '',
   showUmbrella: true,
   showMotorbikes: false,
@@ -76,29 +76,16 @@ const DEFAULTS = {
   confettiShares: 5,
   heartRainLikes: 300,
   cakeLikes: 120,
+  // Chỉ 5 lệnh, mỗi màn một lệnh do MC nhắc. Các lệnh cũ để trống để không bắt nhầm bình luận.
   commands: {
-    lemon: ['nước ngọt', 'nuoc ngot', 'nước cam', 'coca', 'pepsi'],
-    drink: ['bia', 'uống bia', 'cốc bia', 'bia hơi', 'rót bia'],
-    candy: ['kẹo cưới', 'keo cuoi', 'xin kẹo', 'cho kẹo'],
-    food: ['gà luộc', 'ga luoc', 'xôi gấc', 'xoi gac', 'nem rán', 'ăn cỗ', 'an co', 'gắp gà', 'canh măng'],
+    lemon: [], drink: [], candy: [], food: [], seeds: [], pipe: [], talk: [], chess: [], paper: [], fan: [],
+    toast: ['Cả rạp nâng ly chúc mừng'], groom: [], bride: [], wish: [], apply: [], allow: [],
     bless: ['chúc mừng', 'chuc mung', 'hạnh phúc', 'trăm năm', 'mãi hạnh phúc'],
     kiss: ['hôn đi', 'hon di', 'hôn nhau', 'thơm má'],
+    drive: ['giữ lại', 'giu lai', 'buông ra', 'không cho', 'đừng đi'],
     catch: ['bắt hoa', 'bat hoa', 'xin hoa', 'hoa cưới'],
     photo: ['chụp ảnh', 'chup anh', 'chụp hình', 'cho chụp'],
-    seeds: ['hạt dưa', 'hat dua', 'hướng dương', 'cắn hạt'],
-    pipe: ['lên hát', 'karaoke', 'cầm mic', 'hát một bài', 'hát đi'],
-    talk: ['buôn chuyện', 'tám chuyện', 'chém gió', 'hỏi thăm'],
-    chess: [],
-    paper: ['ảnh cưới', 'xem ảnh', 'xem thiệp', 'thiệp cưới'],
-    fan: ['nóng quá', 'quạt'],
-    toast: ['dzô', 'dô dô', 'cụng ly', 'cạn ly', 'một hai ba', '123 dzo', 'nâng ly'],
-    leave: ['xin phép về', 'về thôi', 'đi về', 'tạm biệt'],
-    groom: ['nhà trai', 'nha trai', 'phe chú rể'],
-    bride: ['nhà gái', 'nha gai', 'phe cô dâu'],
-    wish: ['lên bục', 'xin lên bục', 'nhảy múa', 'xin nhảy', 'xin hát'],
-    apply: ['ứng tuyển', 'ung tuyen', 'đăng ký', 'em xin làm'],
-    drive: ['giữ lại', 'giu lai', 'đuổi ra', 'đuổi đi', 'buông ra', 'bảo vệ đâu', 'không cho'],
-    allow: ['cướp đi', 'cướp luôn', 'cuop di', 'cho cướp', 'tha thứ', 'cho đi'],
+    leave: ['xin phép về', 'về thôi', 'tạm biệt'],
   },
   messages: {
     join: [
@@ -122,28 +109,21 @@ const DEFAULTS = {
     bride: ['{name} về phe nhà gái', 'Nhà gái có thêm {name}'],
     follow: ['Cảm ơn {name} đã theo dõi, từ nay là người nhà', '{name} thành người nhà rồi, cài hoa lên đầu'],
     share: ['Cảm ơn {name} đã rủ thêm khách đến dự', '{name} vừa chia sẻ, rạp càng đông càng vui'],
-    gift: ['Cảm ơn {name} đã mừng phong bì {gift}, cô dâu chú rể gửi kẹo cưới', '{name} bỏ phong bì {gift} vào thùng mừng cưới, quý hoá quá'],
-    mediumGift: ['{name} mừng {gift}, bao cả rạp một két bia', 'Cả rạp ơi, {name} bao một két bia. Dzô'],
-    bigGift: ['Đại gia {name} mừng {gift}, mời {name} lên mâm chủ hôn và chụp ảnh cùng cô dâu chú rể', 'Ối giời ơi, {name} mừng {gift}. Cô dâu chú rể xuống tận nơi cảm ơn'],
+    gift: ['Cảm ơn {name} đã mừng phong bì {gift}', '{name} bỏ phong bì {gift} vào hòm mừng cưới, cô dâu chú rể cảm ơn ạ'],
+    mediumGift: ['{name} mừng {gift}, ghi tên vào sổ vàng mừng cưới', 'Cảm ơn {name} đã mừng {gift}, cô dâu chú rể cúi chào cảm ơn'],
+    bigGift: ['{name} mừng {gift}. Cô dâu chú rể xin cảm ơn và mời {name} chụp chung một kiểu ảnh', 'Ôi quý hoá quá, {name} mừng {gift}. Pháo hoa chúc mừng hai bạn'],
     raid: ['Tổ trật tự phường đến nhắc rạp lấn đường kìa. Dọn mâm nhanh lên', 'Chết rồi, xe trật tự đến. Bê mâm vào nhà thôi'],
     raidEnd: ['Xe đi rồi. Kê lại mâm ghế, tiệc tiếp tục thôi cả nhà', 'Trật tự đi rồi, ra ngồi lại đi, cỗ vẫn còn nóng'],
     dog: ['Ối con chó nhà ai xông vào rạp. Chạy đi cả nhà', 'Chó đâu chạy vào mâm cỗ thế này. Chạy mau'],
     dogEnd: ['Chó đi rồi, mọi người ngồi lại ăn tiếp nào', 'Hú hồn, chó chạy mất rồi. Vào mâm ngồi đi'],
-    hype: ['Đám cưới đông như hội. Cả rạp một hai ba dzô', 'Vui quá cả nhà ơi. Một hai ba dzô'],
+    hype: ['Đám cưới đông vui quá cả nhà ơi'],
     food: ['Mâm của {name} có thêm đĩa gà luộc', 'Xôi gấc nóng hổi cho {name}', '{name} gắp miếng nem rán giòn tan'],
     bless: ['{name} chúc cô dâu chú rể trăm năm hạnh phúc', 'Cảm ơn lời chúc của {name}'],
     reminder: [
-      'Xem thanh chương trình phía trên để biết màn tiếp theo',
-      'Gõ chúc mừng để tung hoa cho cô dâu chú rể',
-      'Bình luận bia để được rót bia',
-      'Ai muốn lên sân khấu thì bình luận lên hát',
-      'Bình luận nhà trai hoặc nhà gái để chọn phe',
-      'Thả tim để nhân vật của bạn nâng ly',
-      'Tặng quà để bao cả rạp một két bia',
-      'Bình luận kẹo cưới hoặc hạt dưa để có đồ nhâm nhi',
-      'Theo dõi kênh để thành người nhà, được cài hoa',
-      'Bình luận dzô để cả mâm cụng ly chúc mừng',
-      'Bình luận xin phép về để mừng phong bì ra về',
+      'Làm theo lời MC từng màn để đám cưới trọn vẹn',
+      'Thả tim để chúc phúc cô dâu chú rể',
+      'Tặng quà là bỏ phong bì vào hòm mừng cưới, tên bạn lên sổ vàng',
+      'Chia sẻ buổi live để bắn pháo giấy chúc mừng',
     ],
   },
   chemGio: [
@@ -581,6 +561,7 @@ function fireworks(n = 8) {
   }
 }
 function addGoal(v) {
+  if (config.goalsEnabled !== true) return;
   goal.count += v;
   const need = goalNeed();
   if (goal.count < need) return;
@@ -635,7 +616,7 @@ function challengeHit(act) {
 }
 function tickMechanics(dt = 0.016) {
   tickStage(dt);
-  if (!challenge && config.challengeEnabled !== false && phase()?.id === 'feast' && !raid && !stageAct && !cast && !ex && now > nextChallenge && guests.size >= 1) startChallenge();
+  if (!challenge && config.challengeEnabled === true && phase()?.id === 'feast' && !raid && !stageAct && !cast && !ex && now > nextChallenge && guests.size >= 1) startChallenge();
   tickProgram(dt);
   if (challenge) {
     if (challenge.doneAt && now - challenge.doneAt > 3500) {
@@ -848,10 +829,9 @@ function partyToast(withGlasses = true) {
     if (withGlasses) setTimeout(() => setAct(o, 'toast', 3000), delay);
     else setAct(o, 'toast', 3000);
     o.happyUntil = now + 3500;
-    if (Math.random() < 0.3) setTimeout(() => say(o, pick(['Dzô!', 'Dzô dzô!', '1 2 3 dzô!', 'Cạn!']), 1600), delay + 300);
+    if (Math.random() < 0.3) setTimeout(() => say(o, pick(['Chúc mừng!', 'Hạnh phúc nhé!', 'Trăm năm hạnh phúc!']), 1600), delay + 300);
   }
   sfx.cheer();
-  sfx.dzo(3);
   partyUntil = now + 3500;
 }
 
@@ -876,7 +856,7 @@ function sayOwner(text, ms = 2600) {
 function addHype(v) {
   hype += v;
   const max = Math.max(20, Number(config.hypeMax) || 200);
-  if (hype >= max) {
+  if (config.hypeEnabled === true && hype >= max) {
     hype = 0;
     announce(line('hype'), 1);
     addToast('🎉 ĐÁM CƯỚI ĐÔNG VUI! 1 2 3 DZÔ!', '#ffd54a');
@@ -1019,29 +999,34 @@ function handleEvent(ev) {
         coinRain(80);
         confetti(W / 2, 700, 160);
         flash = 0.8;
-        exTug(30);
-        const canSnatch = config.giftSnatch !== false && !ex && !raid && !stageAct && !cast && ['feast', 'toast', 'show', 'ex'].includes(phase()?.id) && g.state !== 'leave';
-        if (canSnatch) setTimeout(() => { challenge = null; if (stageAct || cast || !startEx(g)) makeVip(g); }, later + 2600);
-        else setTimeout(() => makeVip(g), later);
-        setTimeout(() => rollAll('drink'), later + 1800);
+        if (ex && ex.phase === 'vote') {
+          exTug(45);
+          addToast(`🦸 ${truncate(user.name, 14)} GIẢI CỨU ${ex.female ? 'CHÚ RỂ' : 'CÔ DÂU'}!`, '#a5d6a7');
+        }
         // cô dâu chú rể cảm ơn và chụp ảnh chung với người mừng lớn
         setTimeout(() => {
           sayCouple('groom', `Cảm ơn ${truncate(user.name, 12)} nhiều lắm!`, 3000);
           sayCouple('bride', 'Mình chụp chung kiểu ảnh nhé!', 3000);
         }, later + 1200);
         setTimeout(() => { flash = 1; sfx.sparkle(); addToast(`📸 Ảnh chung với ${truncate(user.name, 14)}`, '#fff'); }, later + 3500);
+        fireworks(10);
       } else if (coinsN >= tiers.medium) {
-        addToast(`🎁 ${truncate(user.name, 16)} bao cả rạp`, '#ff9de2');
+        addToast(`📖 ${truncate(user.name, 16)} ghi tên sổ vàng`, '#ffe082');
         announce(line('mediumGift', { name: user.name, gift: giftLabel }), 1);
         sfx.sparkle();
         confetti(h.x, h.y, 50);
-        say(g, 'Cả rạp uống đi, em bao két bia!', 3000);
-        setTimeout(() => rollAll('drink'), later);
+        exTug(20);
+        setTimeout(() => {
+          const hh = headPos(g);
+          flights.push({ item: 'money', to: null, from: { x: hh.x, y: hh.y + 30 }, toXY: { x: GIFT_BOX.x, y: GIFT_BOX.y - 110 }, t0: now, dur: 900, onArrive: () => { sfx.coins(); sparks(GIFT_BOX.x, GIFT_BOX.y - 110, 24); } });
+          sayCouple('bride', `Cảm ơn ${truncate(user.name, 12)} ạ!`, 2600);
+        }, later);
       } else {
         addToast(`🎁 ${truncate(user.name, 16)} tặng ${truncate(giftLabel, 18)}`, '#ffe9a8');
         announce(line('gift', { name: user.name, gift: giftLabel }), 1);
         sfx.sparkle();
         sparks(h.x, h.y, 22);
+        exTug(10);
         setTimeout(() => {
           const hh = headPos(g);
           flights.push({ item: 'money', to: null, from: { x: hh.x, y: hh.y + 30 }, toXY: { x: GIFT_BOX.x, y: GIFT_BOX.y - 110 }, t0: now, dur: 900, onArrive: () => { sfx.coins(); sparks(GIFT_BOX.x, GIFT_BOX.y - 110, 14); } });
@@ -1832,17 +1817,13 @@ let kissUntil = 0;
 let bouquetHolder = null;
 
 const PHASES = [
-  { id: 'welcome', emoji: '🤝', name: 'Đón khách', secs: 45, hint: 'Vào rạp là cô dâu chú rể ra chào' },
-  { id: 'aisle', emoji: '💒', name: 'Tiến vào lễ đường', secs: 32, hint: 'gõ "chúc mừng" để tung hoa', act: 'bless', need: 6 },
+  { id: 'welcome', emoji: '🤝', name: 'Đón khách', secs: 25, hint: 'Vào live là được mời vào rạp' },
+  { id: 'aisle', emoji: '💒', name: 'Tiến vào lễ đường', secs: 30, hint: 'gõ "chúc mừng" để tung hoa', act: 'bless', need: 6 },
   { id: 'kiss', emoji: '💍', name: 'Trao nhẫn cưới', secs: 30, hint: 'gõ "hôn đi" + thả tim', act: 'kiss', need: 8 },
-  { id: 'cake', emoji: '🎂', name: 'Cắt bánh, rót tháp ly', secs: 30, hint: 'thả tim để cắt bánh', likes: true, need: 120 },
-  { id: 'toast', emoji: '🥂', name: 'Nâng ly chúc mừng', secs: 25, hint: 'gõ "dzô" thật to', act: 'toast', need: 6 },
-  { id: 'feast', emoji: '🍗', name: 'Khai tiệc', secs: 75, hint: 'gõ "gà luộc", "xôi gấc", "bia"' },
-  { id: 'rounds', emoji: '🍶', name: 'Đi chúc rượu từng bàn', secs: 40, hint: 'Ai tương tác nhiều được chúc rượu' },
-  { id: 'show', emoji: '🎤', name: 'Văn nghệ', secs: 50, hint: 'gõ "lên bục" để xin lên hát' },
-  { id: 'ex', emoji: '😱', name: 'Giành cô dâu chú rể!', secs: 40, hint: 'gõ "giữ lại" + thả tim để giữ', optional: true },
+  { id: 'cake', emoji: '🎂', name: 'Cắt bánh, nâng ly', secs: 30, hint: 'thả tim để cắt bánh, rót tháp ly', likes: true, need: 120 },
+  { id: 'ex', emoji: '😱', name: 'Người yêu cũ đến!', secs: 40, hint: 'gõ "giữ lại" + thả tim' },
   { id: 'bouquet', emoji: '💐', name: 'Ném hoa cưới', secs: 25, hint: 'gõ "bắt hoa" để giành hoa', act: 'catch' },
-  { id: 'photo', emoji: '📸', name: 'Chụp ảnh kỷ niệm', secs: 22, hint: 'gõ "chụp ảnh" để vào ảnh', act: 'photo' },
+  { id: 'photo', emoji: '📸', name: 'Chụp ảnh, tiễn khách', secs: 25, hint: 'gõ "chụp ảnh" để vào ảnh', act: 'photo' },
 ];
 const prog = { i: -1, round: 0, start: 0, until: 0, count: 0, need: 0, voters: new Set(), done: false, timers: [] };
 
@@ -1873,7 +1854,7 @@ function nextPhase() {
     prog.round++;
   }
   // người yêu cũ chỉ xuất hiện khoảng một nửa số vòng, và cần có khách
-  if (PHASES[i].optional && (config.exEnabled === false || Math.random() > (Number(config.exChance) || 0.85) || guests.size < 1)) i++;
+  if (PHASES[i].id === 'ex' && config.exEnabled === false) i++;
   prog.i = i;
   const ph = PHASES[i];
   prog.start = now;
@@ -1965,7 +1946,7 @@ function startPhase(ph) {
       break;
     case 'photo':
       coupleTo(homeStage, 1500);
-      announce('Mời quý khách chụp ảnh kỷ niệm cùng cô dâu chú rể. Gõ chụp ảnh để vào khung hình', 2, true);
+      announce('Tiệc sắp tàn, mời quý khách chụp ảnh kỷ niệm cùng cô dâu chú rể. Gõ chụp ảnh để vào khung hình', 2, true);
       break;
     default:
       break;
@@ -1998,7 +1979,13 @@ function finishPhase(ph, success) {
       sfx.cheer();
       confetti(STALL.jarX, 820, 60);
       announce(success ? 'Bánh đã cắt, tháp ly đã rót đầy. Cảm ơn cả rạp' : 'Cô dâu chú rể cắt bánh, rót tháp ly. Chúc hai bạn ngọt ngào mãi mãi', 2, true);
-      progLater(2500, () => rollAll('drink'));
+      progLater(3500, () => {
+        partyToast(true);
+        sayOwner('Mời cả rạp nâng ly chúc mừng!', 2600);
+        announce('Mời cả rạp nâng ly chúc cô dâu chú rể trăm năm hạnh phúc', 1, true);
+        sfx.cheer();
+        fireworks(5);
+      });
       break;
     case 'toast':
       partyToast(false);
@@ -2016,6 +2003,11 @@ function finishPhase(ph, success) {
       addToast(names.length ? `📸 Ảnh kỷ niệm có: ${names.join(', ')}` : '📸 Tách! Ảnh kỷ niệm cả rạp', '#fff');
       announce(names.length ? `Cảm ơn ${names.join(', ')} đã chụp ảnh cùng cô dâu chú rể` : 'Tách. Ảnh kỷ niệm cả rạp đã xong', 1, true);
       confetti(AISLE_X, 820, 80);
+      progLater(2500, () => {
+        sayOwner('Cảm ơn quý khách đã đến chung vui!', 3000);
+        sayCouple('groom', 'Cảm ơn cả nhà!', 2600);
+        sayCouple('bride', 'Hẹn gặp lại mọi người!', 2600);
+      });
       break;
     }
     default:
@@ -2047,6 +2039,7 @@ function progLikes(n) {
     if (prog.count >= prog.need) {
       prog.done = true;
       finishPhase(ph, true);
+      if (ph.id === 'cake') prog.until = Math.max(prog.until, now + 8000);
     }
   }
 }
@@ -2130,10 +2123,10 @@ function tickProgram(dt) {
   if (ph.id === 'ex' && !ex && now - prog.start > 3000) prog.until = Math.min(prog.until, now + 2000);
   if (ph.id === 'show' && stageAct && now > prog.until - 2000) prog.until = now + 2000;
   if (now > prog.until) {
-    if (!prog.done && ['aisle', 'kiss', 'cake', 'toast', 'bouquet', 'photo'].includes(ph.id)) {
+    if (!prog.done && ['aisle', 'kiss', 'cake', 'bouquet', 'photo'].includes(ph.id)) {
       prog.done = true;
       finishPhase(ph, false);
-      prog.until = now + (ph.id === 'bouquet' ? 6000 : 3500);
+      prog.until = now + (ph.id === 'bouquet' ? 6000 : ph.id === 'cake' ? 8000 : ph.id === 'photo' ? 6000 : 3500);
       return;
     }
     nextPhase();
@@ -2372,8 +2365,8 @@ function update(dt) {
     if (p.act === 'idle' && now > p.nextIdle && p.state === 'sit') {
       p.nextIdle = now + rand(p.real ? 9000 : 6000, p.real ? 22000 : 16000);
       const r = Math.random();
-      const act = r < 0.5 ? 'drink' : r < 0.65 ? 'fan' : r < 0.78 ? 'seeds' : r < 0.9 ? 'paper' : 'candy';
-      setAct(p, act, rand(2500, 4500));
+      const act = r < 0.55 ? 'cheer' : 'wave';
+      setAct(p, act, rand(1500, 2600));
       p.fill = rand(0.3, 0.8);
     }
     if (p.real && p !== vip && now - p.lastActive > idleMs) startLeave(p);
@@ -2954,12 +2947,10 @@ function drawHeader() {
     ctx.textAlign = 'left';
     ctx.fillText(text, bx + 12, y + 20);
   };
-  chip(`🍺 ${teaCount} ly bia`, 16, 272, 'left');
-  chip(`💬 ${chemCount} lần buôn chuyện`, 16, 318, 'left');
-  chip(`👥 ${guests.size} khách`, W - 16, 272, 'right');
+  chip(`👥 ${guests.size} khách mời`, 16, 272, 'left');
   if (config.raidEnabled === false) {
     const need = Math.max(1, Number(config.confettiShares) || 5);
-    chip(`📣 ${Math.min(sharesSinceRaid, need)}/${need} share: bắn pháo giấy!`, 16, 364, 'left');
+    chip(`📣 ${Math.min(sharesSinceRaid, need)}/${need} share: pháo giấy`, 16, 318, 'left');
   } else {
     const need = Math.max(1, Number(config.raidShares) || 5);
     chip(raid ? (raid.kind === 'dog' ? '🐕 Chó xông vào rạp!' : '🚨 Đang dọn rạp!') : `📣 ${Math.min(sharesSinceRaid, need)}/${need} share: trật tự phường đến!`, 16, 364, 'left');
@@ -2969,31 +2960,32 @@ function drawHeader() {
   {
     const cx = W / 2;
     const bw2 = 440;
-    const need = goalNeed();
-    const gl = GOALS[goal.stage % GOALS.length];
-    const kg = clamp(goal.count / need, 0, 1);
     const gy = 270;
     ctx.save();
+    // dải chương trình: 7 màn, màn hiện tại sáng lên
     ctx.fillStyle = 'rgba(30,20,10,0.65)';
     rr(ctx, cx - bw2 / 2, gy, bw2, 36, 18);
     ctx.fill();
-    const gg = ctx.createLinearGradient(cx - bw2 / 2, 0, cx + bw2 / 2, 0);
-    gg.addColorStop(0, '#ff80ab');
-    gg.addColorStop(1, '#ffd54f');
-    ctx.fillStyle = gg;
-    rr(ctx, cx - bw2 / 2 + 4, gy + 4, Math.max(28, (bw2 - 8) * kg), 28, 14);
-    ctx.fill();
-    if (now < goal.flashUntil) {
-      ctx.strokeStyle = `rgba(255,255,255,${0.5 + 0.5 * Math.sin(now * 0.02)})`;
-      ctx.lineWidth = 4;
-      rr(ctx, cx - bw2 / 2, gy, bw2, 36, 18);
-      ctx.stroke();
-    }
-    ctx.fillStyle = '#fff';
-    ctx.font = `800 18px ${FONT}`;
+    const step = bw2 / PHASES.length;
+    ctx.font = `700 20px ${FONT}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${gl.emoji} Mục tiêu: ${gl.name}  ${Math.min(goal.count, need)}/${need} ❤`, cx, gy + 19);
+    PHASES.forEach((ph2, k) => {
+      const x2 = cx - bw2 / 2 + step * (k + 0.5);
+      if (k === prog.i) {
+        ctx.fillStyle = '#ffd54f';
+        rr(ctx, x2 - step / 2 + 3, gy + 3, step - 6, 30, 15);
+        ctx.fill();
+      }
+      ctx.globalAlpha = k < prog.i ? 0.55 : 1;
+      ctx.fillStyle = '#fff';
+      ctx.fillText(ph2.emoji, x2, gy + 19);
+      ctx.globalAlpha = 1;
+      if (k < PHASES.length - 1) {
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fillRect(x2 + step / 2 - 1, gy + 12, 2, 12);
+      }
+    });
     if (cast || (ex && ex.phase === 'vote')) {
       const cy = gy + 44;
       const isCast = Boolean(cast);
@@ -3065,8 +3057,8 @@ function drawHeader() {
     }
     ctx.restore();
   }
-  // kéo co nhà trai và nhà gái
-  {
+  // kéo co nhà trai và nhà gái (tắt mặc định)
+  if (config.sidesEnabled === true) {
     const sx = 16;
     const sy = 410;
     const sw = 300;
@@ -3093,6 +3085,7 @@ function drawHeader() {
     ctx.fillText(`${sides.bride} Nhà gái 💗`, sx + sw - 12, sy + 18);
     ctx.restore();
   }
+  if (config.hypeEnabled === true) {
   // độ náo nhiệt
   const max = Math.max(20, Number(config.hypeMax) || 200);
   const k = clamp(hype / max, 0, 1);
@@ -3115,12 +3108,13 @@ function drawHeader() {
   ctx.textBaseline = 'middle';
   ctx.fillText(`🔥 Độ náo nhiệt ${Math.round(k * 100)}%`, bx + bw / 2, by + 18);
   ctx.restore();
+  }
   // khách sộp
   const top = [...guests.values()].filter((x) => x.coins > 0).sort((a, b) => b.coins - a.coins).slice(0, 3);
   if (top.length) {
     ctx.save();
     const lx = W - 16 - 300;
-    let ly = 364;
+    let ly = 272;
     ctx.fillStyle = 'rgba(30,20,10,0.6)';
     rr(ctx, lx, ly, 300, 36 + top.length * 34, 14);
     ctx.fill();
@@ -3213,8 +3207,7 @@ function drawCaption() {
 }
 
 const FOOT_CMDS = [
-  ['💐', 'chúc mừng'], ['😘', 'hôn đi'], ['🍻', 'dzô'], ['🍗', 'gà luộc'], ['🍺', 'bia'], ['🍬', 'kẹo cưới'],
-  ['💙', 'nhà trai'], ['💗', 'nhà gái'], ['🎤', 'lên bục'], ['💐', 'bắt hoa'], ['📸', 'chụp ảnh'],
+  ['💐', 'chúc mừng'], ['😘', 'hôn đi'], ['💪', 'giữ lại'], ['💐', 'bắt hoa'], ['📸', 'chụp ảnh'],
 ];
 // Bảng lệnh đặt ở phía trên: phía dưới màn hình điện thoại bị khung bình luận TikTok che
 function drawGuide() {
@@ -3222,22 +3215,25 @@ function drawGuide() {
   const top = 168;
   ctx.fillStyle = 'rgba(25,15,8,0.78)';
   rr(ctx, 10, top, W - 20, 92, 18);
+  const curAct = phase()?.act || (phase()?.id === 'ex' ? 'drive' : '');
+  const ACT_OF = { 'chúc mừng': 'bless', 'hôn đi': 'kiss', 'giữ lại': 'drive', 'bắt hoa': 'catch', 'chụp ảnh': 'photo' };
   ctx.fill();
-  ctx.font = `700 22px ${FONT}`;
+  ctx.font = `800 28px ${FONT}`;
   ctx.textBaseline = 'middle';
-  const rows = [FOOT_CMDS.slice(0, 6), FOOT_CMDS.slice(6)];
+  const rows = [FOOT_CMDS];
   rows.forEach((row, r) => {
-    const widths = row.map(([e, t]) => ctx.measureText(`${e} ${t}`).width + 22);
+    const widths = row.map(([e, t]) => ctx.measureText(`${e} ${t}`).width + 26);
     const total = widths.reduce((a2, b2) => a2 + b2, 0) + (row.length - 1) * 8;
     let x = (W - total) / 2;
-    const y = top + 8 + r * 42;
+    const y = top + 22 + r * 42;
     row.forEach(([e, t], i) => {
-      ctx.fillStyle = 'rgba(255,255,255,0.14)';
-      rr(ctx, x, y, widths[i], 34, 17);
+      const on = ACT_OF[t] === curAct;
+      ctx.fillStyle = on ? '#ffd54f' : 'rgba(255,255,255,0.14)';
+      rr(ctx, x, y, widths[i], 48, 24);
       ctx.fill();
-      ctx.fillStyle = '#fff';
+      ctx.fillStyle = on ? '#5a0a0a' : '#fff';
       ctx.textAlign = 'left';
-      ctx.fillText(`${e} ${t}`, x + 11, y + 18);
+      ctx.fillText(`${e} ${t}`, x + 13, y + 25);
       x += widths[i] + 8;
     });
   });

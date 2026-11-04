@@ -117,10 +117,10 @@ export const GUIDE_DAM_CUOI = `1. Cài Node.js bản LTS tại nodejs.org (chỉ
 2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DamCuoi. Không chạy trực tiếp bên trong file ZIP.
 3. Bấm đúp run-dam-cuoi.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
 4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
-5. Ở Bảng điều khiển: bấm các nút Giả lập ("chúc mừng", "hôn đi", "dzô"...) để thử, nút "Sang màn tiếp theo" để xem nhanh từng màn. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
-6. Người xem vào LIVE thành khách mời: đi qua cổng hoa, theo thảm đỏ vào ngồi bàn tiệc trong hội trường. Chọn họ bằng "nhà trai" hoặc "nhà gái".
-7. Chương trình tiệc tự chạy theo từng màn, MC dẫn và hiện yêu cầu trên màn hình: đón khách → cô dâu chú rể tiến vào lễ đường (gõ "chúc mừng") → trao nhẫn (gõ "hôn đi", thả tim) → cắt bánh, rót tháp ly (thả tim cho đủ) → nâng ly (gõ "dzô") → khai tiệc (gõ "gà luộc", "xôi gấc", "bia", "kẹo cưới") → cô dâu chú rể đi chúc rượu từng bàn → văn nghệ (gõ "lên bục") → người yêu cũ lên giành cô dâu hoặc chú rể (gõ "giữ lại" và thả tim để giữ, "cướp đi" để cổ vũ) → ném hoa cưới (gõ "bắt hoa", ai tương tác nhiều dễ bắt được hơn) → chụp ảnh kỷ niệm (gõ "chụp ảnh"). Hết vòng lại đón khách mới.
-8. Thả tim dồn dập thì mưa tim, đủ 5 lượt chia sẻ thì bắn pháo giấy. Quà nhỏ là phong bì mừng cưới bay vào hòm. Người tặng quà lớn chạy lên sân khấu giành cô dâu (nhân vật nam) hoặc chú rể (nhân vật nữ): "Sao em lại bỏ anh? Em phải lấy anh chứ!", cả rạp giằng co, xong người đó cười "đùa thôi" và được mời lên ghế chủ hôn.
+5. Ở Bảng điều khiển: bấm các nút Giả lập ("chúc mừng", "hôn đi", "giữ lại"...) để thử, nút "Sang màn tiếp theo" để xem nhanh từng màn. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Người xem vào LIVE thành khách mời: đi qua cổng hoa, theo thảm đỏ vào ngồi bàn tiệc trong hội trường cưới.
+7. Mỗi vòng khoảng 3 phút rưỡi, 7 màn, MC dẫn và lệnh của màn đang chạy sáng lên trên màn hình: 1. Đón khách → 2. Cô dâu chú rể tiến vào lễ đường (gõ "chúc mừng") → 3. Trao nhẫn (gõ "hôn đi", thả tim) → 4. Cắt bánh, rót tháp ly, cả rạp nâng ly (thả tim) → 5. Người yêu cũ đến giành cô dâu hoặc chú rể: "Sao em lại bỏ anh? Em phải lấy anh chứ!" (gõ "giữ lại" và thả tim để giữ) → 6. Ném hoa cưới (gõ "bắt hoa") → 7. Chụp ảnh kỷ niệm, tiễn khách (gõ "chụp ảnh"). Hết vòng lại đón khách mới.
+8. Quà là phong bì mừng cưới bay vào hòm, tên người tặng lên Sổ vàng. Quà lớn thì pháo hoa, cô dâu chú rể cảm ơn và chụp ảnh chung. Tặng quà lúc người yêu cũ đang giành là giải cứu cô dâu chú rể ngay. Đủ 5 lượt chia sẻ thì bắn pháo giấy, thả tim dồn dập thì mưa tim.
 9. Đổi tên cô dâu chú rể (groomName, brideName), số giây từng màn (phaseSeconds), từ khoá lệnh: sửa config-dam-cuoi.json rồi bấm F5. Nhạc riêng (nếu muốn): chép MP3 vào public\\assets\\nhac-dam-cuoi.
 10. Bấm đúp mo-cua-so-dam-cuoi.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
@@ -195,9 +195,9 @@ const DEFAULT_GAMES = [
   },
   {
     id: 'dam-cuoi', name: 'Ăn Cỗ Đám Cưới',
-    tagline: 'Người xem làm khách mời tiệc cưới: chúc mừng, xem trao nhẫn, cắt bánh, nâng ly, bắt hoa cưới',
-    description: 'Người xem vào LIVE thành khách mời, đi qua cổng hoa theo thảm đỏ vào bàn tiệc trong hội trường cưới. MC dẫn chương trình theo từng màn như một đám cưới thật: cô dâu chú rể tiến vào lễ đường, trao nhẫn, cắt bánh, rót tháp ly, nâng ly, khai tiệc, đi chúc rượu từng bàn, văn nghệ, người yêu cũ lên giành cô dâu chú rể và ném hoa cưới. Mỗi màn có yêu cầu riêng để cả LIVE cùng gõ hoặc thả tim cho đạt. Quà là phong bì mừng cưới. Người tặng quà lớn được chạy lên sân khấu giành cô dâu hoặc chú rể, cả rạp gõ "giữ lại" và thả tim để giằng co.',
-    features: ['Hội trường tiệc cưới: sân khấu, cổng hoa, thảm đỏ, đèn chùm', 'Chương trình 10 màn có MC dẫn, tự chạy vòng lặp', 'Cả LIVE cùng chúc mừng, hô "hôn đi", "dzô"', 'Quà lớn = lên sân khấu giành cô dâu / chú rể, cả rạp giằng co', 'Ném hoa cưới, chụp ảnh kỷ niệm với cô dâu chú rể', 'Quà = phong bì mừng cưới, mưa tim, pháo giấy'],
+    tagline: 'Người xem làm khách mời một đám cưới trọn vẹn: chúc mừng, trao nhẫn, cắt bánh, giữ cô dâu, bắt hoa cưới',
+    description: 'Người xem vào LIVE thành khách mời, đi qua cổng hoa theo thảm đỏ vào bàn tiệc trong hội trường cưới. MC dẫn 7 màn như một đám cưới thật: cô dâu chú rể tiến vào lễ đường, trao nhẫn, cắt bánh và nâng ly, người yêu cũ đến giành cô dâu hoặc chú rể, ném hoa cưới, chụp ảnh tiễn khách. Mỗi màn chỉ một lệnh rõ ràng để cả LIVE cùng gõ và thả tim. Quà là phong bì mừng cưới, tên người tặng lên Sổ vàng.',
+    features: ['Hội trường tiệc cưới: sân khấu, cổng hoa, thảm đỏ, đèn chùm', 'Kịch bản 7 màn có MC dẫn, tự chạy vòng lặp', 'Chỉ 5 lệnh, lệnh của màn đang chạy sáng lên', 'Người yêu cũ giành cô dâu / chú rể: cả rạp giằng co', 'Quà = phong bì mừng cưới, Sổ vàng, pháo hoa'],
     image: '/media/dam-cuoi.jpg', video: '/media/dam-cuoi.mp4', download: '', version: '2.3.1',
     guide: GUIDE_DAM_CUOI, guideVideo: '', rev: 2,
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
