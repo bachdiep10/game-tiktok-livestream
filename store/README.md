@@ -67,3 +67,10 @@ if (!r.ok) { /* hiện r.error, yêu cầu nhập key */ }
 ```
 
 Bước tiếp theo là đóng gói từng game thành file .exe có ô nhập key và gọi hàm này lúc khởi động.
+
+## SEO (bản 1.7)
+
+- Máy chủ điền sẵn nội dung trang chủ (game, bảng giá, hỏi đáp), thẻ meta, Open Graph và JSON-LD (Organization, Product, FAQPage, HowTo, Breadcrumb) vào HTML: xem `lib/seo.js`.
+- Mỗi game đang bán có trang riêng `/game/<id>`. Game đang ẩn trả về 404.
+- `/robots.txt` và `/sitemap.xml` tự tạo. Trang tài khoản, đơn hàng, quản trị gửi `X-Robots-Tag: noindex`.
+- Quản trị › Cài đặt › SEO: tiêu đề, mô tả, ảnh chia sẻ, mã xác minh Google Search Console. Nhớ điền "Địa chỉ website" (https://netxioviet.com) để link canonical và sitemap đúng.

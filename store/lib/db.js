@@ -191,6 +191,8 @@ const DEFAULT_SETTINGS = {
   moveLimit: 3, moveWindowDays: 30,
   offlineDays: 3,
   guideUrl: '',
+  // SEO (để trống = tự tạo từ tên game và bảng giá)
+  seoTitle: '', seoDescription: '', ogImage: '', googleVerification: '',
 };
 
 // Lấy khối JSON hoàn chỉnh đầu tiên trong chuỗi (bỏ phần rác dính phía sau)

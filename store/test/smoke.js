@@ -235,6 +235,19 @@ try {
   assert.equal((await j('GET', '/api/admin/config')).imapPassSet, true);
   step('email biến động số dư ACB: đủ tiền tự trả key, thiếu tiền/sai nội dung chờ admin, không cộng trùng; mật khẩu Gmail không lộ ra');
 
+  // SEO: nội dung có sẵn trong HTML, game ẩn không có trang, sitemap/robots
+  const page = async (u) => { const r = await fetch(base + u); return { status: r.status, html: await r.text(), headers: r.headers }; };
+  const home = await page('/');
+  assert.match(home.html, /<link rel="canonical"/); assert.match(home.html, /og:image/); assert.match(home.html, /"@type":"FAQPage"/);
+  assert.match(home.html, /<a href="\/game\/chanh-dien">Chánh Điện Lễ Phật<\/a>/);
+  assert.equal((await page('/game/quan-bar')).status, 200);
+  assert.equal((await page('/game/tra-da')).status, 404);
+  const sm = (await page('/sitemap.xml')).html;
+  assert.match(sm, /\/game\/quan-bar</); assert.doesNotMatch(sm, /tra-da/); assert.match(sm, /\/chinh-sach\/bao-mat</);
+  assert.match((await page('/robots.txt')).html, /Disallow: \/admin/);
+  assert.equal((await page('/tai-khoan.html')).headers.get('x-robots-tag'), 'noindex, nofollow');
+  step('SEO: trang chủ có sẵn game + FAQ + thẻ meta; trang /game/<id> chỉ cho game đang bán; sitemap, robots, noindex trang riêng');
+
   console.log('\nTẤT CẢ ĐỀU QUA ✅');
 } catch (e) {
   console.error('\nLỖI ❌', e.message);

@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DB } from './lib/db.js';
+import { createSeo } from './lib/seo.js';
 import * as payos from './lib/payos.js';
 import { parseBankEmail, findOrderCode, fetchNewMails } from './lib/bankmail.js';
 import { newKey, normalizeKey, loadKeyPair, signTicket, entitledGames, fillEmptySlots, movesInWindow } from './lib/license.js';
@@ -930,11 +931,26 @@ app.get('/tai-ve/:id', (req, res) => {
   res.status(404).send('Game chưa có file tải. Vui lòng liên hệ người bán qua Zalo.');
 });
 
+// ---------- SEO: trang có sẵn nội dung + thẻ meta cho Google, Facebook, Zalo ----------
+const seo = createSeo({ publicDir: path.join(__dirname, 'public'), getData: () => { db.refresh(); return D; }, baseUrl });
+const sendHtml = (res, html) => res.type('html').set('Cache-Control', 'public, max-age=60').send(html);
+app.get(['/', '/index.html', '/index'], (req, res) => sendHtml(res, seo.home(req)));
+app.get('/game/:id', (req, res, next) => { const html = seo.gamePage(req, req.params.id); if (!html) return next(); sendHtml(res, html); });
+app.get(['/huong-dan', '/huong-dan.html'], (req, res) => sendHtml(res, seo.guidePage(req)));
+app.get(['/tra-cuu', '/tra-cuu.html'], (req, res) => sendHtml(res, seo.lookupPage(req)));
+app.get('/robots.txt', (req, res) => res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(seo.robots(req)));
+app.get('/sitemap.xml', (req, res) => res.type('application/xml').set('Cache-Control', 'public, max-age=3600').send(seo.sitemap(req)));
+// Trang riêng tư: không cho Google lập chỉ mục
+app.use((req, res, next) => { if (/^\/(tai-khoan|don-hang|admin)(\.html|\/|$)/.test(req.path)) res.set('X-Robots-Tag', 'noindex, nofollow'); next(); });
+
 // Trang chính sách: /chinh-sach/<tên trang>
-app.get(['/chinh-sach', '/chinh-sach/:slug'], (req, res) => res.sendFile(path.join(__dirname, 'public', 'chinh-sach.html')));
+app.get(['/chinh-sach', '/chinh-sach/:slug'], (req, res) => sendHtml(res, seo.policyPage(req, req.params.slug)));
+app.get('/chinh-sach.html', (req, res) => res.redirect(301, '/chinh-sach/chinh-sach-ban-hang'));
 
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
+app.use('/media', express.static(path.join(__dirname, 'public', 'media'), { maxAge: '7d' }));
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
+app.use((req, res) => res.status(404).type('html').send('<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="robots" content="noindex"><title>Không tìm thấy trang</title><body style="font-family:sans-serif;text-align:center;padding:60px"><h1>Không tìm thấy trang</h1><p><a href="/">Về trang chủ</a></p></body></html>'));
 
 app.use((err, req, res, next) => {
   console.error(err);

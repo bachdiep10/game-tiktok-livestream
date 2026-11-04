@@ -439,6 +439,12 @@ function renderSettings() {
         ${f('promo', 'Dòng khuyến mãi ở bảng giá', '', 'text', true)}
         ${f('guideUrl', 'Link hướng dẫn cài đặt', 'Video YouTube hoặc file PDF, hiện sau khi khách thanh toán.', 'text', true)}
       </div></div>
+      <div class="box-s"><h2>SEO (Google, Facebook, Zalo)</h2><p class="note">Để trống thì web tự tạo tiêu đề và mô tả từ tên game và bảng giá. Nhớ điền <b>Địa chỉ website</b> ở mục PayOS (VD: https://netxioviet.com) để link trong sitemap đúng. Sơ đồ trang: <a href="/sitemap.xml" target="_blank">/sitemap.xml</a>.</p><div class="form-grid">
+        ${f('seoTitle', 'Tiêu đề trang chủ trên Google', 'Khoảng 50–60 ký tự, có cụm "game TikTok LIVE".', 'text', true)}
+        <div class="field full"><label>Mô tả trên Google</label><textarea name="seoDescription" rows="2">${esc(s.seoDescription)}</textarea><small>Khoảng 140–160 ký tự.</small></div>
+        ${f('ogImage', 'Ảnh khi chia sẻ link (Facebook, Zalo)', 'Link ảnh 1200×630. Để trống = ảnh game đầu tiên.', 'text', true)}
+        ${f('googleVerification', 'Mã xác minh Google Search Console', 'Chỉ dán phần content của thẻ google-site-verification.', 'text', true)}
+      </div></div>
       <div class="box-s"><h2>Liên hệ hỗ trợ</h2><p class="note">Để trống mục nào thì mục đó không hiện.</p><div class="form-grid">
         ${f('contactZalo', 'Zalo', 'Số điện thoại hoặc link zalo.me')}${f('contactPhone', 'Số điện thoại')}
         ${f('contactFacebook', 'Facebook', 'Link fanpage')}${f('contactTiktok', 'TikTok', 'Link kênh TikTok')}

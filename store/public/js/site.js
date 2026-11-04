@@ -38,12 +38,12 @@ function renderGames() {
   const html = C.games.map(g => `
     <article class="game">
       <div class="thumb" data-video="${esc(g.video)}">
-        <img src="${esc(g.image)}" alt="${esc(g.name)}" loading="lazy">
+        <img src="${esc(g.image)}" alt="Game ${esc(g.name)} trên TikTok LIVE" loading="lazy" width="300" height="400">
         ${g.video ? '<div class="play"><span>▶</span></div>' : ''}
         ${g.isNew ? '<span class="tag">MỚI</span>' : ''}
       </div>
       <div class="body">
-        <h3>${esc(g.name)}</h3>
+        <h3><a href="/game/${esc(g.id)}">${esc(g.name)}</a></h3>
         <p>${esc(g.tagline)}</p>
         <ul>${(g.features || []).slice(0, 4).map(f => `<li>${esc(f)}</li>`).join('')}</ul>
         <div class="foot">
