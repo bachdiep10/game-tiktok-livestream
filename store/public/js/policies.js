@@ -138,5 +138,5 @@ export function policyHtml(slug, { settings: s, plans = [] }) {
 // Link chính sách + thông tin người bán ở chân trang (mọi trang)
 export function footerHtml(s) {
   const info = [s.sellerName, s.sellerTaxId && `MST/CCCD: ${s.sellerTaxId}`, s.sellerAddress, s.sellerEmail, s.contactPhone].filter(Boolean).map(esc).join(' · ');
-  return `<nav class="foot-links">${POLICIES.map(p => `<a href="/chinh-sach/${p.slug}">${p.title}</a>`).join('')}</nav>${info ? `<div class="foot-info">${info}</div>` : ''}`;
+  return `<nav class="foot-links"><a href="/huong-dan.html">Hướng dẫn cài đặt</a>${POLICIES.map(p => `<a href="/chinh-sach/${p.slug}">${p.title}</a>`).join('')}</nav>${info ? `<div class="foot-info">${info}</div>` : ''}`;
 }

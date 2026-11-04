@@ -88,8 +88,8 @@ function publicSettings() {
 }
 
 function publicGame(g) {
-  const { id, name, tagline, description, features, image, video, isNew } = g;
-  return { id, name, tagline, description, features, image, video, isNew };
+  const { id, name, tagline, description, features, image, video, isNew, guide, guideVideo } = g;
+  return { id, name, tagline, description, features, image, video, isNew, guide, guideVideo };
 }
 
 function licenseView(l, { withDownloads = false } = {}) {

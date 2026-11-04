@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hướng dẫn cài đặt & sử dụng</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="/"><span class="logo-mark">🎮</span><span data-brand>LiveGame</span></a>
+      <nav class="nav"><a href="/#game">Game</a><a href="/#bang-gia">Bảng giá</a><a href="/huong-dan.html">Hướng dẫn</a><a class="acc" href="/tai-khoan.html" data-account>Đăng nhập</a><a class="btn sm ghost" data-zalo target="_blank" rel="noopener">Zalo hỗ trợ</a></nav>
+    </div>
+  </header>
+  <main class="page">
+    <div class="wrap">
+      <nav class="policy-tabs">
+        <a href="#mua">1. Mua & nhận key</a><a href="#chuan-bi">2. Chuẩn bị máy</a><a href="#cai-dat">3. Cài & kích hoạt</a>
+        <a href="#live">4. Dùng khi LIVE</a><a href="#doi-may">5. Đổi máy</a><a href="#loi">6. Xử lý lỗi</a><a href="#tung-game">7. Từng game</a>
+      </nav>
+      <article class="panel policy">
+        <h1>Hướng dẫn cài đặt & sử dụng</h1>
+        <p>Các game chạy trên <b>máy tính Windows</b>, cùng lúc với <b>TikTok LIVE Studio</b>. Làm theo 5 bước dưới đây, lần đầu mất khoảng 10 phút.</p>
+        <div id="video"></div>
+
+        <h2 id="mua">1. Mua & nhận key</h2>
+        <ol>
+          <li><a href="/tai-khoan.html">Đăng ký tài khoản</a> bằng số điện thoại và email.</li>
+          <li>Ở <a href="/#bang-gia">Bảng giá</a>, chọn gói và game, bấm Mua.</li>
+          <li>Quét mã QR bằng app ngân hàng. Mã đã có sẵn số tiền và nội dung <code>LG…</code>, <b>giữ nguyên nội dung</b> để hệ thống tự nhận ra đơn.</li>
+          <li>Thanh toán xong, sau 1–3 phút <b>license key</b> và <b>nút tải game</b> hiện trong trang đơn hàng và trong <a href="/tai-khoan.html">Tài khoản của tôi</a>.</li>
+        </ol>
+
+        <h2 id="chuan-bi">2. Chuẩn bị máy tính (làm 1 lần)</h2>
+        <ul>
+          <li>Windows 10 hoặc 11, có kết nối Internet.</li>
+          <li>Cài <b>Node.js bản LTS</b>: vào <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>, tải bản LTS, bấm Next đến hết. Không cần chỉnh gì.</li>
+          <li>Trình duyệt <b>Microsoft Edge</b> (có sẵn trên Windows): cửa sổ game mở bằng Edge để có giọng đọc tiếng Việt tự nhiên.</li>
+          <li><b>TikTok LIVE Studio</b> trên máy tính, tài khoản TikTok đã được phép LIVE.</li>
+        </ul>
+
+        <h2 id="cai-dat">3. Cài game & kích hoạt key</h2>
+        <ol>
+          <li>Vào <a href="/tai-khoan.html">Tài khoản của tôi</a>, bấm <b>⬇ Tải về</b> ở game muốn cài.</li>
+          <li><b>Giải nén</b> file ZIP ra một thư mục, ví dụ <code>D:\LiveGame\TenGame</code>. Không chạy trực tiếp bên trong file ZIP.</li>
+          <li>Mở thư mục, bấm đúp file <code>run….bat</code> của game (tên file ghi trong hướng dẫn từng game bên dưới). Lần đầu máy tự cài thư viện, mất 1–2 phút. Nếu Windows hiện cảnh báo "Windows protected your PC", bấm <b>More info › Run anyway</b>.</li>
+          <li>Trình duyệt tự mở trang <b>Kích hoạt</b>: dán license key (dạng <code>LG-XXXX-XXXX-XXXX-XXXX</code>) rồi bấm Kích hoạt.</li>
+          <li>Kích hoạt xong sẽ vào <b>Bảng điều khiển</b>. Giữ cửa sổ đen (máy chủ game) mở trong suốt buổi LIVE.</li>
+        </ol>
+
+        <h2 id="live">4. Dùng khi LIVE</h2>
+        <ol>
+          <li>Bấm đúp file <code>mo-cua-so-….bat</code> để mở <b>cửa sổ game</b> (khung dọc).</li>
+          <li>Trong Bảng điều khiển, bấm các nút <b>Giả lập</b> (tim, quà, bình luận…) để thử trước khi LIVE.</li>
+          <li>Mở TikTok LIVE Studio: <b>Thêm nguồn › Chụp cửa sổ</b> › chọn cửa sổ game, kéo cho vừa khung.</li>
+          <li>Bắt đầu LIVE. Trong Bảng điều khiển, nhập <b>username TikTok</b> của bạn (không có @) rồi bấm <b>Kết nối</b>. Thấy báo đã kết nối là người xem tương tác được.</li>
+          <li>Không nghe tiếng thì bấm chuột vào cửa sổ game một lần (trình duyệt cần một cú bấm để phát âm thanh).</li>
+        </ol>
+        <p>Mỗi game có cách chơi, lệnh bình luận và quà riêng: xem <a href="#tung-game">mục 7</a>.</p>
+
+        <h2 id="doi-may">5. Đổi máy tính</h2>
+        <p>Mỗi key chạy trên <b>1 máy tại một thời điểm</b>. Khi đổi máy hoặc cài lại Windows: vào <a href="/tai-khoan.html">Tài khoản của tôi</a>, bấm <b>"Chuyển key sang máy khác"</b>, rồi kích hoạt lại trên máy mới. Bạn tự chuyển được <span data-move></span>.</p>
+        <p>Game cần Internet để kiểm tra key. Mất mạng vẫn chạy được <span data-offline></span> ngày.</p>
+
+        <h2 id="loi">6. Xử lý lỗi thường gặp</h2>
+        <ul>
+          <li><b>Bấm run….bat thấy báo "npm không phải lệnh"</b>: chưa cài Node.js, hoặc vừa cài xong chưa khởi động lại máy.</li>
+          <li><b>"Key đang dùng trên máy khác"</b>: chuyển key sang máy này trong Tài khoản của tôi.</li>
+          <li><b>Kết nối TikTok không được</b>: phải đang LIVE thật, gõ đúng username. Đợi 10–20 giây sau khi bắt đầu LIVE rồi bấm Kết nối lại.</li>
+          <li><b>Cửa sổ game trắng hoặc không mở</b>: kiểm tra cửa sổ đen (máy chủ game) còn chạy không, rồi chạy lại run….bat.</li>
+          <li><b>LIVE Studio không thấy cửa sổ game</b>: đừng thu nhỏ cửa sổ game; có thể để nó phía sau cửa sổ khác.</li>
+        </ul>
+        <p>Vẫn chưa được? Nhắn <span data-help>Zalo hỗ trợ</span> kèm ảnh chụp màn hình.</p>
+
+        <h2 id="tung-game">7. Hướng dẫn từng game</h2>
+        <div id="games"></div>
+      </article>
+    </div>
+  </main>
+  <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
+
+  <script type="module">
+    import { $, $$, esc, applyBrand, gameList, zaloLink } from '/js/common.js';
+    const c = await applyBrand();
+    const s = c.settings;
+    $$('[data-move]').forEach(el => { el.textContent = `${s.moveLimit} lần trong ${s.moveWindowDays} ngày`; });
+    $$('[data-offline]').forEach(el => { el.textContent = s.offlineDays || 3; });
+    if (s.contactZalo) $$('[data-help]').forEach(el => { el.innerHTML = `<a href="${esc(zaloLink(s.contactZalo))}" target="_blank" rel="noopener">Zalo hỗ trợ</a>`; });
+    if (s.guideUrl) $('#video').innerHTML = `<p><a class="btn sm" href="${esc(s.guideUrl)}" target="_blank" rel="noopener">▶ Xem video hướng dẫn</a></p>`;
+    $('#games').innerHTML = gameList(c.games, { canDownload: false }).replaceAll('<details class="guide">', '<details class="guide" open>');
+    $$('#games .dl-row small').forEach(el => { el.textContent = 'Tải trong Tài khoản của tôi sau khi mua'; });
+    if (location.hash) document.querySelector(location.hash)?.scrollIntoView();
+  </script>
+</body>
+</html>
