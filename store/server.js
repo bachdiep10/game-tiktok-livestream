@@ -966,5 +966,7 @@ app.listen(PORT, () => {
   if (!payos.isConfigured(D.settings) && !D.settings.bankCode) console.log('  Chưa cài thanh toán: vào Quản trị > Cài đặt để nhập PayOS hoặc tài khoản ngân hàng.\n');
 });
 
-process.on('SIGINT', () => { db.saveNow(); process.exit(0); });
-process.on('SIGTERM', () => { db.saveNow(); process.exit(0); });
+// Mọi thay đổi đã được ghi ngay khi xử lý yêu cầu. Khi tắt KHÔNG ghi lại: tiến trình cũ bị Hostinger tắt
+// có thể đang giữ dữ liệu cũ trong bộ nhớ, ghi lại sẽ đè mất thay đổi của tiến trình khác.
+process.on('SIGINT', () => process.exit(0));
+process.on('SIGTERM', () => process.exit(0));

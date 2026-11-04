@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { verifyWebhook } from '../lib/payos.js';
 import { parseBankEmail, findOrderCode, parseVnd } from '../lib/bankmail.js';
 import { checkLicense } from '../client/license-client.js';
+import { DB } from '../lib/db.js';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'lgstore-'));
@@ -247,6 +248,20 @@ try {
   assert.match((await page('/robots.txt')).html, /Disallow: \/admin/);
   assert.equal((await page('/tai-khoan.html')).headers.get('x-robots-tag'), 'noindex, nofollow');
   step('SEO: trang chủ có sẵn game + FAQ + thẻ meta; trang /game/<id> chỉ cho game đang bán; sitemap, robots, noindex trang riêng');
+
+  {
+    // Tiến trình cũ (dữ liệu cũ trong bộ nhớ) không được ghi đè thay đổi của tiến trình mới
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lgdb-'));
+    const oldP = new DB(dir), newP = new DB(dir);
+    const rel = await newP.acquire(); newP.data.games.find(g => g.id === 'dam-cuoi').visible = true; newP.save(); rel();
+    oldP.saveNow();
+    assert.equal(new DB(dir).data.games.find(g => g.id === 'dam-cuoi').visible, true);
+    const rel2 = await newP.acquire(); newP.data.games.find(g => g.id === 'bia-hoi').visible = true; newP.save(); rel2();
+    const err = console.error; console.error = () => {}; oldP.write(); console.error = err;
+    assert.equal(new DB(dir).data.games.find(g => g.id === 'bia-hoi').visible, true);
+    fs.rmSync(dir, { recursive: true, force: true });
+    step('nhiều tiến trình: tiến trình cũ không ghi đè dữ liệu mới (kể cả khi bị tắt)');
+  }
 
   console.log('\nTẤT CẢ ĐỀU QUA ✅');
 } catch (e) {

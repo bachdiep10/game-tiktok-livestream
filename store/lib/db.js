@@ -296,6 +296,7 @@ function normalize(data) {
     admin: data.admin || { passwordHash: '', salt: '' },
     secret: data.secret || '',
     seq: data.seq || 0,
+    writeCount: data.writeCount || 0,
     seededGames: data.seededGames || (data.games ? data.games.map(g => g.id) : DEFAULT_GAMES.map(g => g.id)),
   };
   // Game mặc định mới ra (vd. Trà Đá Vỉa Hè) được thêm sẵn ở trạng thái ẩn vào dữ liệu cũ.
@@ -379,7 +380,7 @@ export class DB {
   withLockSync(fn) {
     const sleep = (ms) => Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
     for (let i = 0; !this._tryLock() && i < 500; i++) sleep(20);
-    try { return fn(); } finally { clearInterval(this._beat); try { fs.rmdirSync(this.lockDir); } catch { /* bỏ qua */ } }
+    try { if (this.data) this.refresh(); return fn(); } finally { clearInterval(this._beat); try { fs.rmdirSync(this.lockDir); } catch { /* bỏ qua */ } }
   }
   fileMtime() { try { const st = fs.statSync(this.file); return `${st.mtimeMs}:${st.size}:${st.ino}`; } catch { return ''; } }
   // Tiến trình khác đã ghi thì nạp lại (giữ nguyên đối tượng this.data)
@@ -399,7 +400,20 @@ export class DB {
     if (this.held) return this.write();
     this.withLockSync(() => this.write());
   }
+  diskWriteCount() {
+    try { return JSON.parse(fs.readFileSync(this.file, 'utf8')).writeCount || 0; } catch { return -1; }
+  }
   write() {
+    // Chốt an toàn: file trên đĩa mới hơn bản trong bộ nhớ (tiến trình khác đã ghi mà mình chưa nạp lại)
+    // thì không ghi đè, chỉ nạp lại bản mới.
+    const disk = this.diskWriteCount();
+    if (disk > (this.data.writeCount || 0)) {
+      console.error(`[dữ liệu] pid ${process.pid}: bỏ lần ghi vì db.json trên đĩa mới hơn (đĩa ${disk}, bộ nhớ ${this.data.writeCount || 0}).`);
+      this.mtime = '';
+      this.refresh();
+      return false;
+    }
+    this.data.writeCount = Math.max(disk, this.data.writeCount || 0) + 1;
     // Tên file tạm riêng cho từng tiến trình, giữ db.json.bak trước mỗi lần ghi
     const tmp = `${this.file}.${process.pid}.tmp`;
     fs.writeFileSync(tmp, JSON.stringify(this.data, null, 1));
