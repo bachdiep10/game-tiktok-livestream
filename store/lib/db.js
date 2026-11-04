@@ -199,7 +199,7 @@ const DEFAULT_GAMES = [
     description: 'Người xem vào LIVE thành khách mời, đi qua cổng hoa theo thảm đỏ vào bàn tiệc trong hội trường cưới. MC dẫn chương trình theo từng màn như một đám cưới thật: cô dâu chú rể tiến vào lễ đường, trao nhẫn, cắt bánh, rót tháp ly, nâng ly, khai tiệc, đi chúc rượu từng bàn, văn nghệ và ném hoa cưới. Mỗi màn có yêu cầu riêng để cả LIVE cùng gõ hoặc thả tim cho đạt. Quà là phong bì mừng cưới, quà lớn được cô dâu chú rể cảm ơn và mời lên ghế chủ hôn.',
     features: ['Hội trường tiệc cưới: sân khấu, cổng hoa, thảm đỏ, đèn chùm', 'Chương trình 10 màn có MC dẫn, tự chạy vòng lặp', 'Cả LIVE cùng chúc mừng, hô "hôn đi", "dzô"', 'Ném hoa cưới, chụp ảnh kỷ niệm với cô dâu chú rể', 'Quà = phong bì mừng cưới, mưa tim, pháo giấy'],
     image: '/media/dam-cuoi.jpg', video: '/media/dam-cuoi.mp4', download: '', version: '2.3.1',
-    guide: GUIDE_DAM_CUOI, guideVideo: '',
+    guide: GUIDE_DAM_CUOI, guideVideo: '', rev: 2,
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 8, isNew: true,
   },
@@ -311,6 +311,11 @@ function normalize(data) {
   for (const g of d.games) {
     const def = DEFAULT_GAMES.find(x => x.id === g.id);
     if (def && g.guide === undefined) { g.guide = def.guide; g.version = g.version || def.version; g.guideVideo = g.guideVideo || ''; }
+    // Game được viết lại (rev tăng): cập nhật nội dung giới thiệu trên web, giữ nguyên Hiện/ẩn, thứ tự và file đã tải lên
+    if (def?.rev && (g.rev || 0) < def.rev) {
+      for (const k of ['tagline', 'description', 'features', 'guide', 'version', 'image', 'video']) g[k] = structuredClone(def[k]);
+      g.rev = def.rev;
+    }
   }
   return d;
 }
