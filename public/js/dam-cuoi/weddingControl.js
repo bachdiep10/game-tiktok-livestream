@@ -57,7 +57,7 @@ function send(obj) {
 const sim = (event) => send({ cmd: 'sim', event });
 
 const CHATS = ['chúc mừng hai bạn', 'đẹp đôi quá', 'cô dâu xinh ghê', 'trăm năm hạnh phúc', 'ai ngồi cùng mâm không', 'xin chào cả nhà', 'đám cưới vui quá', 'mừng phong bì rồi nhé'];
-const CMDS = ['bia', 'bia', 'bia', 'nước ngọt', 'lên hát', 'kẹo cưới', 'hạt dưa', 'buôn chuyện', 'nhà trai', 'nhà gái', 'ảnh cưới', 'nóng quá', 'dzô', 'dzô'];
+const CMDS = ['chúc mừng', 'hôn đi', 'hôn đi', 'dzô', 'dzô', 'gà luộc', 'xôi gấc', 'bia', 'kẹo cưới', 'nhà trai', 'nhà gái', 'bắt hoa', 'chụp ảnh', 'lên bục'];
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 const simUsers = [];
@@ -95,6 +95,7 @@ const actions = {
   cast: () => sim({ type: 'cast' }),
   ex: () => sim({ type: 'ex' }),
   dog: () => sim({ type: 'dog' }),
+  nextPhase: () => sim({ type: 'nextPhase' }),
   share5: () => {
     for (let i = 0; i < 5; i++) setTimeout(() => sim({ type: 'share', user: namedUser() }), i * 300);
   },

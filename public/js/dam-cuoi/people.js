@@ -1,4 +1,4 @@
-// Nhân vật ngồi ghế nhựa uống trà đá (vẽ bằng code, kiểu chibi).
+// Khách dự tiệc cưới, cô dâu, chú rể, MC (vẽ bằng code, kiểu chibi).
 // Toạ độ: (0, 0) là điểm chân chạm đất. Ngồi: mặt ghế ở y = -42.
 import { drawTeaGlass, drawMic, roundRectPath as rr } from './wedding.js';
 
@@ -56,9 +56,20 @@ export const OFFICER_LOOK = {
   shorts: '#3a4420', pants: '#3a4420', sandal: '#1a1a1a', glasses: false, beard: false,
 };
 
+// MC dẫn chương trình: vest xám, nơ đỏ
 export const OWNER_LOOK = {
-  skin: '#f1c6a4', hair: '#1d1410', style: 'bun', shirt: '#e53935', shirt2: '#ffd54f', pattern: 'flower',
-  shorts: '#3e2723', sandal: '#e53935', glasses: false, beard: false, owner: true,
+  skin: '#f1c6a4', hair: '#1d1410', style: 'side', shirt: '#455a64', shirt2: '#fff', pattern: 'vest', tie: '#c62828',
+  shorts: '#263238', pants: '#263238', sandal: '#111', glasses: true, beard: false, owner: true,
+};
+// chú rể: vest đen, nơ đỏ, hoa cài ngực
+export const GROOM_LOOK = {
+  skin: '#f3c9a5', hair: '#1a1a1a', style: 'side', shirt: '#1f1f24', shirt2: '#fff', pattern: 'vest', tie: '#d32f2f', flower: true,
+  shorts: '#16161a', pants: '#16161a', sandal: '#111', glasses: false, beard: false,
+};
+// cô dâu: váy cưới trắng xoè, khăn voan, vương miện
+export const BRIDE_LOOK = {
+  skin: '#f6d3b3', hair: '#2b1d16', style: 'bun', shirt: '#ffffff', shirt2: '#f8e1ea', pattern: 'gown', gown: true, veil: true,
+  shorts: '#fff', sandal: '#fff', glasses: false, beard: false,
 };
 
 function limb(ctx, x0, y0, x1, y1, bend, width, color) {
@@ -132,6 +143,20 @@ function hands(p, up) {
 function drawHair(ctx, L, hy, r, back) {
   ctx.fillStyle = L.hair;
   const s = L.style;
+  if (back && L.veil) {
+    // khăn voan trong suốt sau đầu
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.8, hy - r * 0.9);
+    ctx.quadraticCurveTo(-r * 2.1, hy + r * 1.5, -r * 1.7, hy + r * 3.4);
+    ctx.lineTo(r * 1.7, hy + r * 3.4);
+    ctx.quadraticCurveTo(r * 2.1, hy + r * 1.5, r * 0.8, hy - r * 0.9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = L.hair;
+  }
   if (back) {
     // phần tóc phía sau đầu
     if (s === 'long') {
@@ -188,6 +213,20 @@ function drawHair(ctx, L, hy, r, back) {
     ctx.beginPath();
     ctx.arc(0, hy - r * 1.1, r * 0.38, 0, TAU);
     ctx.fill();
+    if (L.veil) {
+      // vương miện nhỏ + hoa cài
+      ctx.fillStyle = '#ffd54f';
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.5, hy - r * 0.72);
+      for (let i = 0; i <= 4; i++) ctx.lineTo(-r * 0.5 + i * r * 0.25, hy - r * (i % 2 ? 0.98 : 1.12));
+      ctx.lineTo(r * 0.5, hy - r * 0.72);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = '#f48fb1';
+      ctx.beginPath();
+      ctx.arc(r * 0.8, hy - r * 0.45, 5, 0, TAU);
+      ctx.fill();
+    }
   } else if (s === 'side') {
     ctx.beginPath();
     ctx.ellipse(-r * 0.35, hy - r * 0.62, r * 0.75, r * 0.32, -0.25, 0, TAU);
@@ -360,6 +399,58 @@ function drawShirt(ctx, L, up) {
       }
     }
     ctx.restore();
+    if (L.pattern === 'vest') {
+      // áo sơ mi trắng hình chữ V, ve áo, nơ
+      ctx.fillStyle = L.shirt2 || '#fff';
+      ctx.beginPath();
+      ctx.moveTo(-11, top);
+      ctx.lineTo(11, top);
+      ctx.lineTo(0, top + 34);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-11, top);
+      ctx.lineTo(-3, top + 36);
+      ctx.moveTo(11, top);
+      ctx.lineTo(3, top + 36);
+      ctx.stroke();
+      ctx.fillStyle = L.tie || '#c62828';
+      ctx.beginPath();
+      ctx.moveTo(0, top + 6);
+      ctx.lineTo(-9, top + 1);
+      ctx.lineTo(-9, top + 11);
+      ctx.closePath();
+      ctx.moveTo(0, top + 6);
+      ctx.lineTo(9, top + 1);
+      ctx.lineTo(9, top + 11);
+      ctx.closePath();
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      for (let i = 0; i < 2; i++) {
+        ctx.beginPath();
+        ctx.arc(0, top + 40 + i * 10, 1.8, 0, TAU);
+        ctx.fill();
+      }
+      if (L.flower) {
+        ctx.fillStyle = '#e91e63';
+        ctx.beginPath();
+        ctx.arc(-15, top + 16, 4.5, 0, TAU);
+        ctx.fill();
+        ctx.fillStyle = '#66bb6a';
+        ctx.fillRect(-16, top + 20, 2, 6);
+      }
+    } else if (L.pattern === 'gown') {
+      ctx.fillStyle = 'rgba(236,180,200,0.55)';
+      for (let i = 0; i < 8; i++) {
+        ctx.beginPath();
+        ctx.arc(-15 + (i % 4) * 10, top + 18 + Math.floor(i / 4) * 16, 2.2, 0, TAU);
+        ctx.fill();
+      }
+      ctx.fillStyle = '#f8bbd0';
+      ctx.fillRect(-25, top + h - 14, 50, 5);
+    }
     if (L.pattern === 'collar') {
       ctx.fillStyle = '#fff';
       ctx.beginPath();
@@ -405,7 +496,16 @@ export function drawPerson(ctx, L, p = {}) {
   const bodyBob = sit ? Math.sin(t * 0.003 + (p.seed || 0)) * 0.8 : -Math.abs(Math.sin(p.walk || 0)) * 3;
   // chân
   ctx.lineCap = 'round';
-  if (sit) {
+  if (sit && L.gown) {
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.moveTo(-26, -64);
+    ctx.lineTo(26, -64);
+    ctx.quadraticCurveTo(40, -30, 38, 0);
+    ctx.lineTo(-38, 0);
+    ctx.quadraticCurveTo(-40, -30, -26, -64);
+    ctx.fill();
+  } else if (sit) {
     ctx.fillStyle = L.shorts;
     rr(ctx, -25, -62, 50, 22, 9);
     ctx.fill();
@@ -419,6 +519,30 @@ export function drawPerson(ctx, L, p = {}) {
       ctx.fillStyle = L.sandal;
       ctx.beginPath();
       ctx.ellipse(sx * 23, -2, 12, 5, 0, 0, TAU);
+      ctx.fill();
+    }
+  } else if (L.gown) {
+    // váy cưới xoè dài chấm đất
+    const sway = Math.sin(p.walk || 0) * 3;
+    const g = ctx.createLinearGradient(0, -86, 0, 0);
+    g.addColorStop(0, '#ffffff');
+    g.addColorStop(1, '#f3e6ee');
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.moveTo(-20, -86);
+    ctx.lineTo(20, -86);
+    ctx.quadraticCurveTo(44 + sway, -30, 50 + sway, 0);
+    ctx.quadraticCurveTo(0, 8, -50 + sway, 0);
+    ctx.quadraticCurveTo(-44 + sway, -30, -20, -86);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(200,160,180,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(236,180,200,0.55)';
+    for (let i = -3; i <= 3; i++) {
+      ctx.beginPath();
+      ctx.arc(i * 13 + sway, -8 + Math.abs(i) * -1, 3, 0, TAU);
       ctx.fill();
     }
   } else {
