@@ -97,8 +97,8 @@ const DEFAULTS = {
     bride: ['nhà gái', 'nha gai', 'phe cô dâu'],
     wish: ['lên bục', 'xin lên bục', 'nhảy múa', 'xin nhảy', 'xin hát'],
     apply: ['ứng tuyển', 'ung tuyen', 'đăng ký', 'em xin làm'],
-    drive: ['đuổi ra', 'đuổi đi', 'mời ra', 'cho bảo vệ'],
-    allow: ['tha thứ', 'cho vào', 'mời ngồi', 'tha cho'],
+    drive: ['giữ lại', 'giu lai', 'đuổi ra', 'đuổi đi', 'buông ra', 'bảo vệ đâu', 'không cho'],
+    allow: ['cướp đi', 'cướp luôn', 'cuop di', 'cho cướp', 'tha thứ', 'cho đi'],
   },
   messages: {
     join: [
@@ -925,6 +925,7 @@ function handleEvent(ev) {
       likeLog.push({ t: now, n });
       while (likeLog.length && now - likeLog[0].t > 60000) likeLog.shift();
       progLikes(n);
+      exTug(n * 0.35);
       if (likeLog.reduce((a, b) => a + b.n, 0) >= Math.max(20, Number(config.heartRainLikes) || 300)) {
         // thả tim dồn dập: mưa tim cả rạp
         likeLog.length = 0;
@@ -1018,7 +1019,10 @@ function handleEvent(ev) {
         coinRain(80);
         confetti(W / 2, 700, 160);
         flash = 0.8;
-        setTimeout(() => makeVip(g), later);
+        exTug(30);
+        const canSnatch = config.giftSnatch !== false && !ex && !raid && !stageAct && !cast && ['feast', 'toast', 'show', 'ex'].includes(phase()?.id) && g.state !== 'leave';
+        if (canSnatch) setTimeout(() => { challenge = null; if (stageAct || cast || !startEx(g)) makeVip(g); }, later + 2600);
+        else setTimeout(() => makeVip(g), later);
         setTimeout(() => rollAll('drink'), later + 1800);
         // cô dâu chú rể cảm ơn và chụp ảnh chung với người mừng lớn
         setTimeout(() => {
@@ -1495,87 +1499,196 @@ function finishCast() {
   walkTo(best, CAST_SLOT.x, CAST_SLOT.y, 'stage', 0.5);
 }
 
-// ---- người yêu cũ phá đám: cả rạp bình chọn đuổi hay tha thứ
-function startEx() {
-  const female = Math.random() < 0.5;
-  const look = { ...lookFor(`ex-${Math.floor(now)}`), style: female ? 'long' : 'short', shirt: female ? '#212121' : '#1565c0', shirt2: female ? '#212121' : '#1565c0', pattern: 'plain' };
-  exNpc = { x: W + 140, y: 1260, look, state: 'walk', seed: 7, bubble: null, real: false, label: 'NGƯỜI YÊU CŨ' };
-  ex = { phase: 'enter', until: 0, drive: 0, allow: 0, voters: new Set() };
+// ---- giành cô dâu / chú rể: một người lên sân khấu kéo cô dâu (nếu là nam) hoặc chú rể (nếu là nữ)
+// "Sao em lại bỏ anh? Em phải lấy anh chứ!". Cả rạp gõ "giữ lại" + thả tim để giữ, "cướp đi" để cổ vũ kẻ giành.
+// Người giành là người xem tặng quà lớn (đùa vui, xong được lên mâm chủ hôn) hoặc người yêu cũ (NPC).
+const FEMALE_STYLES = new Set(['long', 'bun', 'bob', 'ponytail']);
+function isFemaleLook(look) {
+  return Boolean(look && (look.gown || FEMALE_STYLES.has(look.style)));
+}
+function startEx(byGuest = null) {
+  if (ex) return false;
+  let actor;
+  let female;
+  if (byGuest) {
+    actor = byGuest;
+    female = isFemaleLook(byGuest.look);
+    if (byGuest.seat >= 0 && seatOwner[byGuest.seat] === byGuest) seatOwner[byGuest.seat] = null;
+    byGuest.seat = -1;
+    byGuest.act = 'idle';
+  } else {
+    female = Math.random() < 0.5;
+    const look = { ...lookFor(`ex-${Math.floor(now)}`), style: female ? 'long' : 'short', shirt: female ? '#212121' : '#1565c0', shirt2: female ? '#212121' : '#1565c0', pattern: 'plain' };
+    exNpc = { x: GATE.x + 40, y: GATE.y + 120, look, state: 'walk', seed: 7, bubble: null, real: false, label: female ? 'NGƯỜI YÊU CŨ (CHÚ RỂ)' : 'NGƯỜI YÊU CŨ (CÔ DÂU)' };
+    actor = exNpc;
+  }
+  const targetKey = female ? 'groom' : 'bride';
+  const partnerKey = female ? 'bride' : 'groom';
+  const dir = female ? -1 : 1; // phía kẻ giành đứng so với cô dâu chú rể
+  ex = { phase: 'enter', until: 0, drive: 0, allow: 0, voters: new Map(), meter: 50, actor, real: Boolean(byGuest), female, targetKey, partnerKey, dir };
   const e = ex;
-  addToast('😤 NGƯỜI YÊU CŨ XUẤT HIỆN!', '#ff8a80');
-  announce('Người yêu cũ đến phá đám. Cả rạp bình chọn đi', 2, true);
+  const who = byGuest ? truncate(byGuest.user.name, 14) : 'Người yêu cũ';
+  const targetName = female ? G() : B();
+  addToast(female ? `😱 ${who.toUpperCase()} LÊN GIÀNH CHÚ RỂ!` : `😱 ${who.toUpperCase()} LÊN GIÀNH CÔ DÂU!`, '#ff8a80');
+  announce(byGuest
+    ? `Ơ kìa, ${byGuest.user.name} chạy lên sân khấu đòi giành ${female ? 'chú rể' : 'cô dâu'}`
+    : `Người yêu cũ của ${female ? 'chú rể' : 'cô dâu'} đến phá đám`, 2, true);
   sfx.whistle();
   for (const p of allPeople()) if (p.state === 'sit') p.scaredUntil = now + 2200;
-  moveObj(exNpc, 560, 1120, 2200, () => {
-    if (ex !== e || !exNpc) return;
-    exNpc.state = 'stand';
+  coupleTo(COUPLE_HOME, 900);
+  const spot = { x: COUPLE_HOME[targetKey].x + dir * 78, y: STAGE_Y };
+  const arrive = () => {
+    if (ex !== e) return;
     e.phase = 'vote';
     e.until = now + Math.max(8, Number(config.exVoteSeconds) || 20) * 1000;
-    say(exNpc, 'Tôi không đồng ý đám cưới này!', 3000);
-    setTimeout(() => ex === e && exNpc && say(exNpc, 'Người ta từng hứa lấy tôi mà!', 3000), 3200);
-    setTimeout(() => ex === e && sayOwner('Ơ kìa, ai thế này?', 2600), 1200);
-    setTimeout(() => ex === e && exNpc && say(exNpc, 'Cả rạp phân xử đi!', 3000), 6500);
-  });
+    camFocusUntil = now + 4000;
+    const line1 = female ? `Sao anh ${targetName} lại bỏ em? Anh phải lấy em chứ!` : `Sao em ${targetName} lại bỏ anh? Em phải lấy anh chứ!`;
+    say(actor, line1, 3400);
+    setTimeout(() => ex === e && sayCouple(targetKey, female ? 'Ơ... anh có hứa gì đâu!' : 'Ơ... em có hứa gì đâu!', 2600), 1400);
+    setTimeout(() => ex === e && sayCouple(partnerKey, female ? 'Buông chồng tôi ra!' : 'Buông vợ tôi ra!', 2800), 3000);
+    setTimeout(() => ex === e && sayOwner(`Cả rạp gõ "giữ lại" và thả tim để giữ ${female ? 'chú rể' : 'cô dâu'}!`, 3200), 4200);
+    setTimeout(() => ex === e && e.phase === 'vote' && say(actor, female ? 'Đi với em đi anh!' : 'Theo anh về đi em!', 2600), 8500);
+    sfx.cheer();
+  };
+  if (byGuest) {
+    byGuest.snatchArrive = arrive;
+    walkTo(byGuest, spot.x, spot.y, 'snatch', 0.6);
+  } else {
+    // đi dọc thảm đỏ lên sân khấu
+    moveObj(exNpc, AISLE_X + dir * 20, 1250, 1800, () => {
+      if (ex !== e || !exNpc) return;
+      say(exNpc, 'Tôi không đồng ý đám cưới này!', 2400);
+      moveObj(exNpc, spot.x, spot.y, 1400, () => {
+        if (ex !== e || !exNpc) return;
+        exNpc.state = 'stand';
+        arrive();
+      });
+    });
+  }
+  return true;
 }
 function exVote(g, act) {
   if (!ex || ex.phase !== 'vote') {
-    say(g, 'Chưa có chuyện gì để bình chọn', 1800);
+    say(g, 'Chưa có ai giành cô dâu chú rể cả', 1800);
     return;
   }
-  if (ex.voters.has(g.id)) return;
-  ex.voters.add(g.id);
+  if (ex.actor === g) return;
+  const last = ex.voters.get(g.id) || 0;
+  if (now - last < 1500) return;
+  ex.voters.set(g.id, now);
   ex[act]++;
-  say(g, act === 'drive' ? 'Mời ra ngoài!' : 'Tha thứ đi!', 1800);
+  ex.meter = clamp(ex.meter + (act === 'drive' ? -7 : 5), 0, 100);
+  say(g, act === 'drive' ? pick(['Giữ lại!', 'Buông ra!', 'Không cho cướp!']) : pick(['Cướp luôn đi!', 'Hahaha cướp đi!']), 1600);
   sfx.pop();
+}
+function exTug(amount) {
+  // thả tim / tặng quà trong lúc giành: kéo về phía cô dâu chú rể
+  if (ex && ex.phase === 'vote') ex.meter = clamp(ex.meter - amount, 0, 100);
+}
+function tickEx(dt) {
+  const e = ex;
+  if (!e || e.phase !== 'vote') return;
+  e.meter = clamp(e.meter + dt * (Number(config.exPullPerSecond) || 3), 0, 100);
+  // cô dâu/chú rể bị kéo lệch theo thanh giằng co
+  const home = COUPLE_HOME[e.targetKey];
+  const off = (e.meter - 50) * 1.5 * e.dir;
+  const tgt = couple[e.targetKey];
+  if (!tgt.move) tgt.x = home.x + off;
+  if (e.actor && e.actor.state !== 'walk' && !e.actor.move) e.actor.x = tgt.x + e.dir * 78;
+  if (Math.random() < dt * 1.5) sparks(tgt.x - e.dir * 30, tgt.y - 110 * coupleScale(tgt), 2, ['#fff', '#ff8a80']);
+  if (e.meter <= 2 || e.meter >= 98 || now > e.until) finishEx();
+  // trong lúc giành thì giữ màn hiện tại
+  if (prog.until < now + 3000) prog.until = now + 3000;
 }
 function finishEx() {
   const e = ex;
   if (!e || e.phase === 'result') return;
   e.phase = 'result';
-  const kick = e.drive > e.allow;
-  if (kick) {
-    announce('Cả rạp bảo mời ra. Bảo vệ tiễn khách giúp', 1, true);
-    say(exNpc, 'Các người sẽ hối hận!', 2400);
-    for (const dx of [-90, 90]) {
-      const gd = { x: exNpc.x + dx * 3, y: ROAD_Y + 60, look: { ...OFFICER_LOOK, shirt: '#263238', shirt2: '#263238', pants: '#1c262b' }, state: 'walk', seed: 3, bubble: null, real: false };
-      guards.push(gd);
-      moveObj(gd, exNpc.x + dx, exNpc.y + 20, 1100, () => {
-        gd.state = 'stand';
-      });
+  const actor = e.actor;
+  const tgt = couple[e.targetKey];
+  const partner = couple[e.partnerKey];
+  const tName = e.female ? 'chú rể' : 'cô dâu';
+  const kept = e.meter < 60;
+  const wrapUp = (ms) => setTimeout(() => {
+    if (ex !== e) return;
+    coupleTo(COUPLE_HOME, 1200);
+    if (e.real) {
+      say(actor, 'Đùa thôi mà! Chúc hai bạn trăm năm hạnh phúc!', 3000);
+      hearts(actor.x, actor.y - 160, 14);
+      setTimeout(() => { if (ex === e) { endEx(); makeVip(actor); } }, 2200);
+    } else {
+      setTimeout(() => ex === e && endEx(), 3200);
     }
-    setTimeout(() => {
-      if (ex !== e) return;
-      for (const o of [exNpc, ...guards]) if (o) {
-        o.state = 'walk';
-        moveObj(o, W + 220, o.y, 2600);
-      }
-      sayOwner('Cảm ơn bảo vệ!', 2200);
-    }, 1800);
+  }, ms);
+  if (kept) {
+    addToast(`💪 CẢ RẠP GIỮ ĐƯỢC ${tName.toUpperCase()}!`, '#a5d6a7');
+    announce(`Cả rạp giữ được ${tName} rồi. Trăm năm hạnh phúc`, 1, true);
+    sfx.fanfare();
+    moveObj(tgt, COUPLE_HOME[e.targetKey].x, COUPLE_HOME[e.targetKey].y, 600);
+    sayCouple(e.partnerKey, e.female ? 'Chồng của em mà!' : 'Vợ của anh mà!', 2600);
+    hearts(W / 2, STAGE_Y - 200, 26);
+    confetti(W / 2, 700, 60);
     addGoal(40);
+    addHype(30);
+    if (e.real) {
+      wrapUp(1600);
+    } else {
+      say(actor, 'Các người sẽ hối hận!', 2400);
+      for (const dx of [-90, 90]) {
+        const gd = { x: AISLE_X + dx, y: GATE.y + 80, look: { ...OFFICER_LOOK, shirt: '#263238', shirt2: '#263238', pants: '#1c262b' }, state: 'walk', seed: 3, bubble: null, real: false, label: 'BẢO VỆ' };
+        guards.push(gd);
+        moveObj(gd, actor.x + dx * 0.7, actor.y + 30, 1500, () => { gd.state = 'stand'; });
+      }
+      setTimeout(() => {
+        if (ex !== e) return;
+        for (const o of [exNpc, ...guards]) if (o) {
+          o.state = 'walk';
+          moveObj(o, GATE.x + rand(-40, 40), GATE.y + 260, 3000);
+        }
+        sayOwner('Cảm ơn bảo vệ! Tiệc tiếp tục nào!', 2400);
+      }, 2000);
+      wrapUp(2200);
+    }
   } else {
-    announce('Cả rạp tha thứ. Dzô một cái cho hết giận', 1, true);
-    say(exNpc, 'Thôi, tôi chỉ muốn chúc mừng...', 2600);
-    hearts(exNpc.x, exNpc.y - 150, 12);
+    // bị kéo đi: chạy xuống thảm đỏ, nửa kia đuổi theo giành lại
+    addToast(`🏃 ${tName.toUpperCase()} BỊ KÉO ĐI MẤT!`, '#ff8a80');
+    announce(`Ối, ${tName} bị kéo đi rồi. ${e.female ? 'Cô dâu' : 'Chú rể'} đuổi theo kìa`, 1, true);
+    sfx.whistle();
+    const runY = 1330;
+    const moveActor = (x, y, ms, then) => {
+      if (e.real) {
+        actor.state = 'perform';
+        moveObj(actor, x, y, ms, then);
+      } else moveObj(actor, x, y, ms, then);
+    };
+    moveObj(tgt, AISLE_X - e.dir * 10, runY, 1800);
+    moveActor(AISLE_X + e.dir * 60, runY + 10, 1800);
     setTimeout(() => {
       if (ex !== e) return;
-      sayOwner('Mời bạn ngồi dự tiệc nhé!', 2400);
-      partyToast(true);
-      hearts(W / 2, 900, 24);
+      sayCouple(e.partnerKey, e.female ? 'Trả chồng đây!' : 'Trả vợ đây!', 2400);
+      moveObj(partner, AISLE_X - e.dir * 70, runY, 1500, () => {
+        if (ex !== e) return;
+        say(actor, 'Thôi thôi, trả lại đấy!', 2400);
+        hearts(AISLE_X, runY - 200, 18);
+        addHype(40);
+        sayOwner('Hú hồn! Mời cô dâu chú rể quay lại sân khấu', 2600);
+        if (!e.real && exNpc) setTimeout(() => { if (exNpc) moveObj(exNpc, GATE.x + 60, GATE.y + 260, 3000); }, 1800);
+        wrapUp(1800);
+      });
     }, 1600);
-    setTimeout(() => {
-      if (ex !== e || !exNpc) return;
-      exNpc.state = 'walk';
-      moveObj(exNpc, W + 220, exNpc.y, 3200);
-    }, 4200);
-    addHype(30);
   }
-  setTimeout(() => ex === e && endEx(), 6200);
 }
 function endEx(silent = false) {
   if (!ex && !exNpc) return;
+  const e = ex;
   ex = null;
   exNpc = null;
   guards.length = 0;
+  if (e && e.real && e.actor) {
+    e.actor.move = null;
+    if (e.actor.state === 'perform') e.actor.state = 'stand';
+  }
+  coupleTo(COUPLE_HOME, 1000);
   if (!silent) lastSpecialEnd = now;
 }
 function drawNpc(o, pose = 'point') {
@@ -1641,7 +1754,8 @@ function tickStage(dt) {
     }
   }
   if (cast && !cast.done && now > cast.until) finishCast();
-  if (ex && ex.phase === 'vote' && now > ex.until) finishEx();
+  tickEx(dt);
+  for (const g of guests.values()) if (g.move) stepObj(g);
   if (config.randomEvents === true && !busyEvent() && guests.size >= 1) {
     const gap = (k, d) => Math.max(20, Number(config[k]) || d) * 1000 * rand(0.85, 1.2);
     if (config.stageEnabled !== false && now > nextStage) {
@@ -1686,7 +1800,7 @@ function makeVip(g) {
   setTimeout(() => {
     if (vip === g) {
       setAct(g, 'toast', 3000);
-      say(g, 'Hôm nay tôi bao cả phố!', 3200);
+      say(g, 'Hôm nay tôi bao cả rạp!', 3200);
       sparks(VIP.x, VIP.y - 180, 40);
     }
   }, g.dur || 1200);
@@ -1726,7 +1840,7 @@ const PHASES = [
   { id: 'feast', emoji: '🍗', name: 'Khai tiệc', secs: 75, hint: 'gõ "gà luộc", "xôi gấc", "bia"' },
   { id: 'rounds', emoji: '🍶', name: 'Đi chúc rượu từng bàn', secs: 40, hint: 'Ai tương tác nhiều được chúc rượu' },
   { id: 'show', emoji: '🎤', name: 'Văn nghệ', secs: 50, hint: 'gõ "lên bục" để xin lên hát' },
-  { id: 'ex', emoji: '😤', name: 'Người yêu cũ đến!', secs: 40, hint: '"đuổi ra" hay "tha thứ"?', optional: true },
+  { id: 'ex', emoji: '😱', name: 'Giành cô dâu chú rể!', secs: 40, hint: 'gõ "giữ lại" + thả tim để giữ', optional: true },
   { id: 'bouquet', emoji: '💐', name: 'Ném hoa cưới', secs: 25, hint: 'gõ "bắt hoa" để giành hoa', act: 'catch' },
   { id: 'photo', emoji: '📸', name: 'Chụp ảnh kỷ niệm', secs: 22, hint: 'gõ "chụp ảnh" để vào ảnh', act: 'photo' },
 ];
@@ -1759,7 +1873,7 @@ function nextPhase() {
     prog.round++;
   }
   // người yêu cũ chỉ xuất hiện khoảng một nửa số vòng, và cần có khách
-  if (PHASES[i].optional && (config.exEnabled === false || Math.random() > 0.55 || guests.size < 2)) i++;
+  if (PHASES[i].optional && (config.exEnabled === false || Math.random() > (Number(config.exChance) || 0.85) || guests.size < 1)) i++;
   prog.i = i;
   const ph = PHASES[i];
   prog.start = now;
@@ -2181,6 +2295,16 @@ function update(dt) {
             p.state = 'away';
             p.to = null;
             p.running = false;
+          } else if (p.then === 'snatch') {
+            p.running = false;
+            p.state = 'perform';
+            p.to = null;
+            p.performStart = now;
+            p.act = 'point';
+            p.actUntil = now + 60000;
+            const fn = p.snatchArrive;
+            p.snatchArrive = null;
+            if (fn) fn();
           } else if (p.then === 'stage') {
             p.running = false;
             p.state = 'perform';
@@ -2879,9 +3003,32 @@ function drawHeader() {
       ctx.fillStyle = '#fff';
       ctx.font = `800 19px ${FONT}`;
       const left2 = Math.max(0, Math.ceil(((isCast ? cast.until : ex.until) - now) / 1000));
-      ctx.fillText(isCast ? `💐 Tuyển ${cast.role}: gõ "ứng tuyển"` : '😤 Người yêu cũ phá đám: "đuổi ra" hay "tha thứ"?', cx, cy + 19);
-      ctx.font = `700 15px ${FONT}`;
-      ctx.fillText(isCast ? `${cast.cands.size} ứng viên · còn ${left2}s` : `Đuổi ra ${ex.drive}  ·  Tha thứ ${ex.allow}  ·  còn ${left2}s`, cx, cy + 42);
+      if (isCast) {
+        ctx.fillText(`💐 Tuyển ${cast.role}: gõ "ứng tuyển"`, cx, cy + 19);
+        ctx.font = `700 15px ${FONT}`;
+        ctx.fillText(`${cast.cands.size} ứng viên · còn ${left2}s`, cx, cy + 42);
+      } else {
+        ctx.fillText(`😱 Giành ${ex.female ? 'chú rể' : 'cô dâu'}! "giữ lại" + thả tim · còn ${left2}s`, cx, cy + 17);
+        // thanh giằng co: trái = giữ lại, phải = bị cướp
+        const bx = cx - bw2 / 2 + 70;
+        const bwid = bw2 - 140;
+        const k = ex.meter / 100;
+        ctx.fillStyle = 'rgba(0,0,0,0.35)';
+        rr(ctx, bx, cy + 32, bwid, 16, 8);
+        ctx.fill();
+        ctx.fillStyle = '#81c784';
+        rr(ctx, bx, cy + 32, Math.max(16, bwid * (1 - k)), 16, 8);
+        ctx.fill();
+        ctx.fillStyle = '#ff8a80';
+        rr(ctx, bx + bwid * (1 - k), cy + 32, Math.max(16, bwid * k), 16, 8);
+        ctx.fill();
+        ctx.font = `800 14px ${FONT}`;
+        ctx.textAlign = 'right';
+        ctx.fillText('💪 Giữ', bx - 6, cy + 41);
+        ctx.textAlign = 'left';
+        ctx.fillText('Cướp 🏃', bx + bwid + 6, cy + 41);
+        ctx.textAlign = 'center';
+      }
     } else if (challenge && !phase()) {
       const cy = gy + 44;
       const left = Math.max(0, Math.ceil((challenge.until - now) / 1000));
@@ -3265,5 +3412,5 @@ function exportBackground() {
   ctx.drawImage(c, 0, 0);
 }
 
-window.__damCuoi = { handleEvent, guests, config: () => config, phaseId: () => phase()?.id, endPhase: () => { prog.until = now; } };
+window.__damCuoi = { handleEvent, guests, config: () => config, exState: () => ex && { phase: ex.phase, meter: ex.meter, until: ex.until - now }, progLeft: () => prog.until - now, phaseId: () => phase()?.id, endPhase: () => { prog.until = now; } };
 boot();
