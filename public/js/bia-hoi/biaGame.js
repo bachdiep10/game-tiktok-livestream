@@ -1,6 +1,6 @@
-// Game TikTok LIVE "Trà đá vỉa hè": người xem vào LIVE thành khách ngồi ghế nhựa ở quán trà đá.
-// Bình luận để gọi đồ (trà đá, điếu cày, kẹo lạc...), chém gió với người bên cạnh,
-// thả tim để uống trà, tặng quà để bao cả quán.
+// Game TikTok LIVE "Bia hơi vỉa hè": người xem vào LIVE thành khách ngồi ghế nhựa ở quán bia hơi.
+// Bình luận để gọi bia, mồi, lên hát, xem bóng, "thêm két", "say rồi"; chọn phe bia hơi / bia chai,
+// thả tim để rót bia, tặng quà để bao cả quán.
 import {
   W, H, CURB_Y, ROAD_Y, FOOT_Y, SEATS, TABLES, VIP, STALL, JUG_TAP, OWNER_MOUTH,
   scaleAtY, drawStatic, drawCanopy, drawStool, drawBench, drawTable, drawUmbrella, drawStallFront,
@@ -25,7 +25,7 @@ const DEFAULTS = {
   backgroundImage: '',
   showUmbrella: true,
   showMotorbikes: true,
-  showLeaves: true,
+  showLeaves: false,
   ambientCrowd: 10,
   idleMinutes: 15,
   hypeMax: 200,
@@ -53,7 +53,7 @@ const DEFAULTS = {
   raidEnabled: true,
   raidShares: 5,
   raidSeconds: 20,
-  raidLabel: 'CÔNG AN GIAO THÔNG',
+  raidLabel: 'TỔ TUẦN TRA',
   dogEnabled: true,
   dogLikes: 300,
   dogSeconds: 11,
@@ -61,15 +61,17 @@ const DEFAULTS = {
   commands: {
     lemon: ['nước ngọt', 'nuoc ngot', 'nước cam', 'trà đá', 'tra da'],
     drink: ['bia', 'uống bia', 'cốc bia', 'bia hơi', 'rót bia'],
-    candy: ['nem chua', 'khô mực', 'mồi nhậu', 'mồi'],
+    candy: ['nem chua', 'khô mực', 'mồi nhậu', 'gọi mồi', 'đĩa mồi'],
     seeds: ['lạc rang', 'đậu phộng', 'hạt dưa', 'cắn hạt'],
-    pipe: ['lên hát', 'karaoke', 'cầm mic', 'hát'],
+    pipe: ['lên hát', 'karaoke', 'cầm mic', 'hát một bài', 'hát đi'],
     talk: ['chém gió', 'tám chuyện', 'buôn chuyện'],
     chess: [],
     paper: ['xem bóng', 'bóng đá', 'xem điểm', 'xem tỉ số'],
     fan: ['nóng quá', 'quạt'],
     toast: ['dzô', 'cụng ly', 'cạn ly', 'một hai ba', '123 dzo', 'chúc mừng'],
     leave: ['tính tiền', 'về thôi', 'đi về', 'xin phép về'],
+    tipsy: ['say rồi', 'say quá', 'hơi say', 'chóng mặt'],
+    crate: ['thêm két', 'gọi két', 'một két', 'két bia'],
     groom: ['phe bia hơi', 'team bia hơi', 'phe hơi'],
     bride: ['phe bia chai', 'team bia chai', 'phe chai'],
   },
@@ -98,8 +100,8 @@ const DEFAULTS = {
     gift: ['Cảm ơn {name} đã tặng {gift}, quán mời cả bàn đĩa mồi', '{name} tặng {gift}, quý hoá quá'],
     mediumGift: ['{name} tặng {gift}, bao cả quán một vòng bia', 'Cả quán ơi, {name} bao một vòng bia. Dzô'],
     bigGift: ['Đại gia {name} tặng {gift}, bao cả phố. Mời {name} lên ghế VIP', 'Ối giời ơi, {name} tặng {gift}. Mời đại gia ngồi ghế VIP'],
-    raid: ['Công an giao thông đến kìa. Cầm cốc vác ghế chạy thôi cả nhà', 'Chết rồi, xe tuần tra đến. Cầm cốc chạy mau'],
-    raidEnd: ['Xe đi rồi. Vác ghế vào, ngồi lại cụng ly tiếp nào cả nhà', 'Công an đi rồi, quay lại nhậu tiếp thôi. Nhớ đã uống thì không lái xe nhé'],
+    raid: ['Tổ tuần tra đến kìa. Cầm cốc vác ghế chạy thôi cả nhà', 'Chết rồi, xe tuần tra đến. Cầm cốc chạy mau'],
+    raidEnd: ['Xe đi rồi. Vác ghế vào, ngồi lại cụng ly tiếp nào cả nhà', 'Tuần tra đi rồi, quay lại nhậu tiếp thôi. Nhớ đã uống thì không lái xe nhé'],
     dog: ['Ối con chó nhà ai xông vào quán. Chạy đi cả nhà', 'Chó đâu chạy vào quán thế này. Chạy mau'],
     dogEnd: ['Chó đi rồi, mọi người ngồi lại nhậu tiếp nào', 'Hú hồn, chó chạy mất rồi. Vào ngồi đi'],
     hype: ['Quán đông như hội. Cả quán một hai ba dzô', 'Vui quá cả nhà ơi. Một hai ba dzô'],
@@ -622,7 +624,7 @@ function runCommand(g, act) {
   if (raid || g.state !== 'sit') {
     if (raid && now - lastRaidToast > 4000) {
       lastRaidToast = now;
-      addToast(raid.kind === 'dog' ? '🐕 Chó đang xông vào quán, chờ chút nhé!' : '🚨 Công an đang đuổi, chờ quay lại nhé!', '#ffab91');
+      addToast(raid.kind === 'dog' ? '🐕 Chó đang xông vào quán, chờ chút nhé!' : '🚨 Tuần tra đang đến, chờ quay lại nhé!', '#ffab91');
     }
     return;
   }
@@ -676,6 +678,32 @@ function runCommand(g, act) {
       sayOwner('Cảm ơn nhé, mai lại ra!');
       announce(line('leave', { name }), -1);
       setTimeout(() => startLeave(g), 1200);
+      break;
+    }
+    case 'tipsy':
+      // say thì mặt đỏ, mắt xoay, chủ quán nhắc gọi xe về, không lái xe
+      g.dizzyUntil = now + 5000;
+      g.blushUntil = now + 20000;
+      say(g, pick(['Ê… hơi say rồi 😵', 'Trời đất quay cuồng', 'Say rồi, cho cốc trà đá giải rượu']), 2600);
+      setTimeout(() => sayOwner(pick(['Say rồi thì gọi xe về nhé, đã uống thì không lái xe!', 'Uống cốc trà đá cho tỉnh, về bằng xe ôm nhé!'])), 1400);
+      setTimeout(() => { if (g.state === 'sit' && !raid) deliver(g, 'lemon', { quiet: true }); }, 2400);
+      announce(`${name} hơi say rồi, nhớ gọi xe về nhé`, -1);
+      break;
+    case 'crate': {
+      // két bia bay từ quầy ra bàn, cả bàn được rót
+      const h = headPos(g);
+      owner.act = 'pour';
+      owner.until = now + 1200;
+      flights.push({ item: 'crate', to: null, from: { x: STALL.jarX, y: STALL.y - 120 }, toXY: { x: h.x, y: h.y + 60 }, t0: now, dur: 800, onArrive: () => sfx.clink() });
+      sfx.whoosh();
+      say(g, 'Mang thêm két nữa ra đây!', 2400);
+      const group = [g];
+      const n = neighborOf(g);
+      if (n) group.push(n);
+      group.forEach((o, i) => deliver(o, 'drink', { delay: 900 + i * 250, quiet: i > 0 }));
+      setTimeout(() => tableToast(g), 2200);
+      addHype(6);
+      announce(`${name} gọi thêm két bia cho cả bàn`, -1);
       break;
     }
     case 'groom':
@@ -1496,6 +1524,7 @@ function personParams(p) {
     lean: p.partner ? Math.sign(p.partner.x - p.x) * 0.8 : 0,
     mouth: talking || p.act === 'toast' ? Math.abs(Math.sin(t * 0.025)) : p.act === 'candy' || p.act === 'seeds' ? Math.abs(Math.sin(t * 0.03)) * 0.5 : 0,
     blink: (t % 4200) < 130,
+    blush: now < (p.blushUntil || 0),
     walk: (p.walkPhase || 0) * (p.running ? 1.8 : 1),
     dizzy: now < p.dizzyUntil,
     happy: now < p.happyUntil,
@@ -1708,8 +1737,21 @@ function drawFlights() {
       }
     } else if (f.item === 'mic') drawMic(ctx, 0, 30, 1.1, 0.3);
     else if (f.item === 'stool') drawStool(ctx, 0, 20, 0.75, f.color);
+    else if (f.item === 'crate') {
+      ctx.fillStyle = '#c62828';
+      rr(ctx, -30, -18, 60, 34, 4);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.fillRect(-22, -10, 44, 9);
+      ctx.fillStyle = '#5a3a14';
+      for (let b = 0; b < 5; b++) {
+        ctx.beginPath();
+        ctx.arc(-20 + b * 10, -20, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
     else if (f.item === 'table' || f.item === 'bench') {
-      ctx.fillStyle = f.item === 'table' ? '#1e88e5' : '#6d4c37';
+      ctx.fillStyle = f.item === 'table' ? '#d32f2f' : '#90a4ae';
       rr(ctx, f.item === 'table' ? -30 : -60, -8, f.item === 'table' ? 60 : 120, 14, 4);
       ctx.fill();
       ctx.fillRect(-24, 4, 6, 18);
@@ -1950,7 +1992,7 @@ function drawHeader() {
   chip(`👥 ${guests.size} khách`, W - 16, 272, 'right');
   if (config.raidEnabled !== false) {
     const need = Math.max(1, Number(config.raidShares) || 5);
-    chip(raid ? (raid.kind === 'dog' ? '🐕 Chó xông vào quán!' : '🚨 Công an đang đuổi!') : `📣 ${Math.min(sharesSinceRaid, need)}/${need} share: công an tới!`, 16, 364, 'left');
+    chip(raid ? (raid.kind === 'dog' ? '🐕 Chó xông vào quán!' : '🚨 Tuần tra đang đuổi!') : `📣 ${Math.min(sharesSinceRaid, need)}/${need} share: tuần tra tới!`, 16, 364, 'left');
   }
   ctx.restore();
   // mục tiêu cộng đồng + thử thách khách đặc biệt (giữa màn hình)
@@ -2153,7 +2195,7 @@ function drawCaption() {
 
 const FOOT_CMDS = [
   ['🍺', 'bia'], ['🧃', 'nước ngọt'], ['🎤', 'lên hát'], ['🍢', 'nem chua'], ['🥜', 'lạc rang'], ['💬', 'chém gió'],
-  ['🍺', 'phe bia hơi'], ['🍾', 'phe bia chai'], ['⚽', 'bóng đá'], ['🍻', 'dzô'], ['👋', 'tính tiền'],
+  ['🍺', 'phe bia hơi'], ['🍾', 'phe bia chai'], ['⚽', 'bóng đá'], ['🍻', 'dzô'], ['📦', 'thêm két'], ['🥴', 'say rồi'], ['👋', 'tính tiền'],
 ];
 // Bảng lệnh đặt ở phía trên: phía dưới màn hình điện thoại bị khung bình luận TikTok che
 function drawGuide() {

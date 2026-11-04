@@ -202,6 +202,15 @@ function drawHair(ctx, L, hy, r, back) {
 
 function drawFace(ctx, L, p, hy, r) {
   const blink = p.blink;
+  if (p.blush) {
+    // má đỏ khi say
+    ctx.fillStyle = 'rgba(239,83,80,0.55)';
+    for (const sx of [-1, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(sx * r * 0.5, hy + r * 0.32, r * 0.17, r * 0.1, 0, 0, TAU);
+      ctx.fill();
+    }
+  }
   const lean = (p.lean || 0) * 3;
   ctx.fillStyle = '#2a1a12';
   ctx.strokeStyle = '#2a1a12';

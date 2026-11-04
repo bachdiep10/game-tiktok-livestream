@@ -74,21 +74,21 @@ const DEFAULTS = {
   commands: {
     lemon: ['nước ngọt', 'nuoc ngot', 'nước cam', 'coca', 'pepsi'],
     drink: ['bia', 'uống bia', 'cốc bia', 'bia hơi', 'rót bia'],
-    candy: ['kẹo cưới', 'keo cuoi', 'xin kẹo', 'kẹo'],
+    candy: ['kẹo cưới', 'keo cuoi', 'xin kẹo', 'cho kẹo'],
     seeds: ['hạt dưa', 'hat dua', 'hướng dương', 'cắn hạt'],
-    pipe: ['lên hát', 'karaoke', 'cầm mic', 'hát'],
+    pipe: ['lên hát', 'karaoke', 'cầm mic', 'hát một bài', 'hát đi'],
     talk: ['buôn chuyện', 'tám chuyện', 'chém gió', 'hỏi thăm'],
     chess: [],
-    paper: ['ảnh cưới', 'xem ảnh', 'xem thiệp', 'thiệp'],
+    paper: ['ảnh cưới', 'xem ảnh', 'xem thiệp', 'thiệp cưới'],
     fan: ['nóng quá', 'quạt'],
     toast: ['dzô', 'cụng ly', 'cạn ly', 'một hai ba', '123 dzo', 'chúc mừng'],
     leave: ['xin phép về', 'về thôi', 'đi về', 'tạm biệt'],
     groom: ['nhà trai', 'nha trai', 'phe chú rể'],
     bride: ['nhà gái', 'nha gai', 'phe cô dâu'],
-    wish: ['lên bục', 'xin lên bục', 'nhảy', 'xin hát'],
+    wish: ['lên bục', 'xin lên bục', 'nhảy múa', 'xin nhảy', 'xin hát'],
     apply: ['ứng tuyển', 'ung tuyen', 'đăng ký', 'em xin làm'],
-    drive: ['đuổi', 'mời ra', 'cho bảo vệ'],
-    allow: ['tha thứ', 'cho vào', 'mời ngồi', 'tha'],
+    drive: ['đuổi ra', 'đuổi đi', 'mời ra', 'cho bảo vệ'],
+    allow: ['tha thứ', 'cho vào', 'mời ngồi', 'tha cho'],
   },
   messages: {
     join: [
@@ -2338,7 +2338,7 @@ function drawHeader() {
       ctx.fillStyle = '#fff';
       ctx.font = `800 19px ${FONT}`;
       const left2 = Math.max(0, Math.ceil(((isCast ? cast.until : ex.until) - now) / 1000));
-      ctx.fillText(isCast ? `💐 Tuyển ${cast.role}: gõ "ứng tuyển"` : '😤 Người yêu cũ phá đám: "đuổi" hay "tha thứ"?', cx, cy + 19);
+      ctx.fillText(isCast ? `💐 Tuyển ${cast.role}: gõ "ứng tuyển"` : '😤 Người yêu cũ phá đám: "đuổi ra" hay "tha thứ"?', cx, cy + 19);
       ctx.font = `700 15px ${FONT}`;
       ctx.fillText(isCast ? `${cast.cands.size} ứng viên · còn ${left2}s` : `Đuổi ra ${ex.drive}  ·  Tha thứ ${ex.allow}  ·  còn ${left2}s`, cx, cy + 42);
     } else if (challenge) {
