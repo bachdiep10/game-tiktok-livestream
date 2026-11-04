@@ -101,6 +101,29 @@ export const GUIDE_DAI_CHIEN = `1. Cài Node.js bản LTS tại nodejs.org (ch�
 8. Bấm đúp mo-cua-so-dai-chien.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_BIA_HOI = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\BiaHoi. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-bia-hoi.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập ("bia", "nem chua", "dzô"...) để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Người xem bình luận: bia, nước ngọt (rót đồ uống); nem chua, lạc rang (gọi mồi); lên hát (cầm mic); chém gió (tán chuyện với người bên cạnh); bóng đá (xem bóng); nóng quá (quạt); dzô (cả bàn cụng ly); thêm két (két bia ra bàn); say rồi (mặt đỏ, chủ quán nhắc gọi xe về); phe bia hơi / phe bia chai (chọn phe kéo co); tính tiền (trả tiền ra về). Thả tim để rót bia. Quà nhỏ mời đĩa mồi, quà từ 10 xu bao cả quán, quà từ 100 xu lên ghế VIP.
+7. Sự kiện tự động: đủ 5 lượt chia sẻ thì tổ tuần tra đến, khách vác ghế cầm cốc chạy rồi quay lại cụng ly; thả tim dồn dập thì chó xông vào quán; cứ khoảng 90 giây có thử thách cho cả quán.
+8. Đổi tên quán, câu chào, từ khoá lệnh: sửa config-bia-hoi.json rồi bấm F5. Nhạc riêng (nếu muốn): chép MP3 vào public\\assets\\nhac-bia-hoi.
+9. Bấm đúp mo-cua-so-bia-hoi.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Lưu ý: game chỉ minh hoạ vui, không có nhãn hiệu bia thật. Đã uống rượu bia thì không lái xe.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
+export const GUIDE_DAM_CUOI = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DamCuoi. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-dam-cuoi.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập ("bia", "kẹo cưới", "dzô"...) để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Người xem vào LIVE thành khách ngồi mâm cỗ. Bình luận: bia, nước ngọt; kẹo cưới, hạt dưa; lên hát; buôn chuyện; ảnh cưới (xem ảnh); nóng quá; dzô (cả mâm nâng ly); nhà trai / nhà gái (chọn họ); xin nhảy hoặc lên bục (xin lên bục biểu diễn); ứng tuyển (khi MC tuyển phù dâu, phù rể); xin phép về. Thả tim để rót bia, tặng quà để bao cả rạp, quà lớn lên ghế VIP.
+7. Sự kiện tự động: MC mời người tương tác nhiều nhất lên bục hát hoặc nhảy; người yêu cũ đến phá đám, cả rạp bình chọn "đuổi ra" hay "tha thứ"; đủ 5 lượt chia sẻ thì tổ trật tự phường đến nhắc dọn rạp; thả tim dồn dập thì chó xông vào rạp.
+8. Đổi tên cô dâu chú rể (groomName, brideName), câu chào, từ khoá lệnh: sửa config-dam-cuoi.json rồi bấm F5. Nhạc riêng (nếu muốn): chép MP3 vào public\\assets\\nhac-dam-cuoi.
+9. Bấm đúp mo-cua-so-dam-cuoi.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 const DEFAULT_GAMES = [
   {
     id: 'chanh-dien', name: 'Chánh Điện Lễ Phật',
@@ -158,6 +181,26 @@ const DEFAULT_GAMES = [
     guide: GUIDE_DAI_CHIEN, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 6, isNew: true,
+  },
+  {
+    id: 'bia-hoi', name: 'Bia Hơi Vỉa Hè',
+    tagline: 'Người xem ra quán bia hơi: rót bia, gọi mồi, cụng ly, xem bóng',
+    description: 'Người xem vào LIVE thành khách ngồi ghế nhựa ở quán bia hơi phố đêm. Bình luận "bia", "nem chua", "lạc rang" thì chủ quán rót bia, mang mồi ra tận bàn. "dzô" để cả bàn cụng ly, "thêm két" để két bia bay ra bàn, "bóng đá" để xem trận. Chọn phe bia hơi hay bia chai rồi thả tim kéo co. Đủ chia sẻ thì tổ tuần tra đến, cả quán vác ghế chạy rồi quay lại cụng ly.',
+    features: ['13 lệnh bình luận vui nhộn', 'Hai phe kéo co bằng tim và quà', 'Tổ tuần tra đến: vác ghế chạy rồi quay lại', 'Quà = bao cả quán, ghế VIP', 'Giọng chủ quán AI tiếng Việt'],
+    image: '/media/bia-hoi.jpg', video: '/media/bia-hoi.mp4', download: '', version: '2.3.0',
+    guide: GUIDE_BIA_HOI, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 7, isNew: true,
+  },
+  {
+    id: 'dam-cuoi', name: 'Ăn Cỗ Đám Cưới',
+    tagline: 'Người xem đi ăn cỗ cưới: nâng ly, xin kẹo, lên bục hát, xử người yêu cũ',
+    description: 'Người xem vào LIVE thành khách ngồi mâm cỗ đám cưới dưới rạp. Bình luận "bia", "kẹo cưới", "dzô" để ăn uống nâng ly, chọn "nhà trai" hay "nhà gái". MC mời người tương tác nhiều nhất lên bục hát, tuyển phù dâu phù rể, và khi người yêu cũ đến phá đám thì cả rạp bình chọn đuổi ra hay tha thứ. Quà bao cả rạp, quà lớn lên ghế VIP.',
+    features: ['Ngồi mâm cỗ mang tên người xem', 'Nhà trai đấu nhà gái', 'Người yêu cũ phá đám: cả rạp bình chọn', 'MC mời lên bục, tuyển phù dâu phù rể', 'Giọng MC AI tiếng Việt'],
+    image: '/media/dam-cuoi.jpg', video: '/media/dam-cuoi.mp4', download: '', version: '2.3.0',
+    guide: GUIDE_DAM_CUOI, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 8, isNew: true,
   },
 ];
 

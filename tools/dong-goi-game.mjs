@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN } from '../store/lib/db.js';
+import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -56,6 +56,16 @@ const PRODUCTS = {
     name: 'Sơn Tinh Thủy Tinh Đại Chiến', folder: 'DaiChien', control: '/dai-chien-control.html', guide: GUIDE_DAI_CHIEN,
     files: ['run-dai-chien.bat', 'mo-cua-so-dai-chien.bat', 'config-dai-chien.json', 'public/dai-chien.html', 'public/dai-chien-control.html', 'public/js/dai-chien',
       'public/assets/nhac-dai-chien/DAT-NHAC-VAO-DAY.txt'],
+  },
+  'bia-hoi': {
+    name: 'Bia Hơi Vỉa Hè', folder: 'BiaHoi', control: '/bia-hoi-control.html', guide: GUIDE_BIA_HOI,
+    files: ['run-bia-hoi.bat', 'mo-cua-so-bia-hoi.bat', 'config-bia-hoi.json', 'public/bia-hoi.html', 'public/bia-hoi-control.html', 'public/js/bia-hoi',
+      'public/assets/nhac-bia-hoi/DAT-NHAC-VAO-DAY.txt'],
+  },
+  'dam-cuoi': {
+    name: 'Ăn Cỗ Đám Cưới', folder: 'DamCuoi', control: '/dam-cuoi-control.html', guide: GUIDE_DAM_CUOI,
+    files: ['run-dam-cuoi.bat', 'mo-cua-so-dam-cuoi.bat', 'config-dam-cuoi.json', 'public/dam-cuoi.html', 'public/dam-cuoi-control.html', 'public/js/dam-cuoi',
+      'public/assets/nhac-dam-cuoi/DAT-NHAC-VAO-DAY.txt'],
   },
 };
 

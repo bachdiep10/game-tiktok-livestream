@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Ăn cỗ đám cưới</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #2a0d12; color: #fbe9e7; }
+    .panel { background: #3a141b; border-color: #8e2a3a; }
+    h1 { color: #ffd54f; }
+    h2 { color: #ffd54f; }
+    .status { background: #4a1b24; }
+    input, code, .log { background: #1f080c; border-color: #8e2a3a; }
+    button { background: #5a2230; border-color: #a03c50; }
+    button:hover { background: #722b3d; }
+    button.primary { background: #c62828; border-color: #ef5350; }
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>💒 Ăn cỗ đám cưới LIVE</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập bình luận (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button data-sim="join">👋 Khách vào dự</button>
+        <button data-cmd="bia">🍺 "bia"</button>
+        <button data-cmd="nước ngọt">🧃 "nước ngọt"</button>
+        <button data-cmd="lên hát">🎤 "lên hát"</button>
+        <button data-cmd="kẹo cưới">🍬 "kẹo cưới"</button>
+        <button data-cmd="hạt dưa">🌻 "hạt dưa"</button>
+        <button data-cmd="buôn chuyện">💬 "buôn chuyện"</button>
+        <button data-cmd="nhà trai">💙 "nhà trai"</button>
+        <button data-cmd="nhà gái">💗 "nhà gái"</button>
+        <button data-cmd="ảnh cưới">📸 "ảnh cưới"</button>
+        <button data-cmd="nóng quá">🪭 "nóng quá"</button>
+        <button data-cmd="dzô">🍻 "dzô"</button>
+        <button data-cmd="xin nhảy">💃 "xin nhảy" (lên bục)</button>
+        <button data-cmd="ứng tuyển">🙋 "ứng tuyển"</button>
+        <button data-cmd="đuổi ra">🚪 "đuổi ra"</button>
+        <button data-cmd="tha thứ">💞 "tha thứ"</button>
+        <button data-cmd="xin phép về">✉️ "xin phép về"</button>
+        <button data-sim="chat">💬 Bình luận thường</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="follow">⭐ Theo dõi (cài hoa)</button>
+        <button data-sim="share">📣 Chia sẻ</button>
+        <button data-sim="gift1">🌹 Quà 1 xu</button>
+        <button data-sim="gift10">🎁 Quà 30 xu (bao két bia)</button>
+        <button data-sim="gift100">💎 Quà 299 xu (mâm chủ hôn)</button>
+        <button data-sim="voiceTest">🔊 Thử giọng MC</button>
+        <button data-sim="stage">🎤 Mời lên bục hát/nhảy</button>
+        <button data-sim="cast">💐 Tuyển phù dâu/rể</button>
+        <button data-sim="ex">😤 Người yêu cũ phá đám</button>
+        <button data-sim="raid">🚨 Trật tự phường đến</button>
+        <button data-sim="dog">🐕 Chó xông vào rạp</button>
+        <button data-sim="share5">📣 5 lượt chia sẻ</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử...">
+        <button id="btnChat">Gửi</button>
+      </div>
+
+      <p class="hint">Khi LIVE thật: đủ <b>5 lượt chia sẻ</b> thì tổ trật tự phường đến nhắc dọn rạp, thả tim dồn dập (<b>300 tim trong 1 phút</b>) thì chó xông vào rạp. Cứ 90 giây có một khách đặc biệt (MC, ca sĩ hát rong, thợ ảnh, trẻ con xin kẹo) ra thử thách cả rạp. Đổi số trong config-dam-cuoi.json (raidShares, dogLikes).</p>
+
+      <h2>3. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="15">+15 người vào</button>
+        <button data-bulk="40">+40 người vào</button>
+        <button id="btnGiftStorm">Mưa quà (10 quà)</button>
+        <button id="btnLikeStorm">Bão tim (150 tim)</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hết khách</button>
+      </div>
+
+      <h2>4. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-dam-cuoi.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+      <p class="hint">Muốn tự vẽ lại nền: <a href="dam-cuoi.html?export=1" target="_blank" style="color:#ffcc80">tải ảnh nền trống</a>, sửa xong lưu vào public/assets rồi điền tên file vào <b>backgroundImage</b> trong config-dam-cuoi.json.</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/dam-cuoi/weddingControl.js"></script>
+</body>
+</html>
