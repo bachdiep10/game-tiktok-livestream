@@ -4,12 +4,13 @@
 const TAU = Math.PI * 2;
 
 const SKIN = ['#f2c79b', '#e8b48a', '#d9a276', '#f6d2ae'];
+export const GENERAL_SCALE = 1.6;
 
-// o: { team, dir, walk, atk (0..1), hurt (0..1), general, mini, shield, dead (0..1), cheer, white, skin, healGlow, buff }
+// o: { team, dir, weapon ('spear' | 'sword' | 'bow'), walk, atk (0..1), hurt (0..1), general, mini, shield, dead (0..1), cheer, white, skin, healGlow, buff }
 export function drawSoldier(ctx, x, y, s, o, t) {
   const nui = o.team === 0;
   const dir = o.dir || 1;
-  const sc = s * (o.mini ? 0.72 : o.general ? 1.22 : 1);
+  const sc = s * (o.mini ? 0.72 : o.general ? GENERAL_SCALE : 1);
   ctx.save();
   ctx.translate(x, y);
   // bóng
@@ -27,9 +28,9 @@ export function drawSoldier(ctx, x, y, s, o, t) {
   const bob = Math.abs(Math.sin(walk)) * 2;
   const jump = o.cheer ? Math.abs(Math.sin(t * 12)) * 8 : 0;
   ctx.translate(0, -bob - jump);
-  const tunic = nui ? '#6d8b3a' : '#2a7fc9';
-  const tunic2 = nui ? '#4e6b26' : '#1a5a99';
-  const metal = nui ? '#c58b3a' : '#7fe0e8';
+  const tunic = nui ? '#3f9b3a' : '#2a7fc9';
+  const tunic2 = nui ? '#c8a04a' : '#1a5a99';
+  const metal = nui ? '#2f7d32' : '#cfe3f2';
   const hurt = o.hurt > 0;
   // áo choàng tướng
   if (o.general) {
@@ -102,46 +103,89 @@ export function drawSoldier(ctx, x, y, s, o, t) {
     ctx.lineTo(12, -18);
     ctx.closePath();
     ctx.fill();
+  } else if (o.weapon === 'bow') {
+    // cung tên
+    ctx.strokeStyle = '#7a5530';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(14, 6, 16, -1.3, 1.3);
+    ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(14 + 16 * Math.cos(-1.3), 6 + 16 * Math.sin(-1.3));
+    ctx.lineTo(14 - swing * 6, 6);
+    ctx.lineTo(14 + 16 * Math.cos(1.3), 6 + 16 * Math.sin(1.3));
+    ctx.stroke();
+    if (swing < 0.5) {
+      ctx.strokeStyle = '#5b3a1e';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(8, 6);
+      ctx.lineTo(36, 6);
+      ctx.stroke();
+      ctx.fillStyle = nui ? '#ffd54a' : '#7cf7ff';
+      ctx.fillRect(6, 4, 5, 4);
+    }
+  } else if (o.weapon === 'sword') {
+    // kiếm
+    ctx.fillStyle = '#5b3a1e';
+    ctx.fillRect(9, 3, 7, 6);
+    ctx.fillStyle = nui ? '#c58b3a' : '#d9c27a';
+    ctx.fillRect(14, 0, 4, 12);
+    ctx.fillStyle = '#e8eef5';
+    ctx.beginPath();
+    ctx.moveTo(18, 3);
+    ctx.lineTo(42, 0);
+    ctx.lineTo(46, 6);
+    ctx.lineTo(18, 9);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(120,140,160,0.9)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
   } else if (nui) {
     // giáo
     ctx.strokeStyle = '#7a5530';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(4, 10);
-    ctx.lineTo(30, -6);
+    ctx.moveTo(-2, 14);
+    ctx.lineTo(40, -12);
     ctx.stroke();
-    ctx.fillStyle = metal;
+    ctx.fillStyle = '#dfe5ea';
     ctx.beginPath();
-    ctx.moveTo(30, -6);
-    ctx.lineTo(40, -14);
-    ctx.lineTo(33, -2);
+    ctx.moveTo(40, -12);
+    ctx.lineTo(54, -22);
+    ctx.lineTo(44, -6);
     ctx.closePath();
     ctx.fill();
+    ctx.fillStyle = '#c62828';
+    ctx.fillRect(36, -12, 4, 6);
   } else {
-    // đinh ba
+    // giáo đinh ba
     ctx.strokeStyle = '#d9c27a';
     ctx.lineWidth = 3;
     ctx.beginPath();
-    ctx.moveTo(4, 10);
-    ctx.lineTo(30, -6);
+    ctx.moveTo(-2, 14);
+    ctx.lineTo(40, -12);
     ctx.stroke();
     ctx.strokeStyle = metal;
     ctx.lineWidth = 2.5;
     ctx.beginPath();
-    ctx.moveTo(27, -10);
-    ctx.lineTo(38, -16);
-    ctx.moveTo(30, -6);
-    ctx.lineTo(42, -10);
-    ctx.moveTo(32, -2);
-    ctx.lineTo(42, -2);
-    ctx.moveTo(27, -10);
-    ctx.lineTo(32, -2);
+    ctx.moveTo(37, -16);
+    ctx.lineTo(50, -24);
+    ctx.moveTo(40, -12);
+    ctx.lineTo(54, -16);
+    ctx.moveTo(42, -8);
+    ctx.lineTo(54, -6);
+    ctx.moveTo(37, -16);
+    ctx.lineTo(42, -8);
     ctx.stroke();
   }
   ctx.restore();
   // khiên (tay trước)
-  if (nui && !o.white) {
-    ctx.fillStyle = '#a0763c';
+  if (!o.white && o.weapon !== 'bow' && (nui || o.weapon === 'sword')) {
+    ctx.fillStyle = nui ? '#a0763c' : '#3d8de0';
     ctx.beginPath();
     ctx.arc(-9, -26, 9, 0, TAU);
     ctx.fill();

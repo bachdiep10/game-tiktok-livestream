@@ -399,7 +399,7 @@ export function trumpet() {
   o.start(t);
   o.stop(t + 1.05);
 }
-// thuồng luồng gầm
+// rắn biển gầm
 export function roar() {
   const a = ctx();
   if (!a || !throttle('roar', 800)) return;

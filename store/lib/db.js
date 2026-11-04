@@ -96,7 +96,7 @@ export const GUIDE_DAI_CHIEN = `1. Cài Node.js bản LTS tại nodejs.org (ch�
 3. Bấm đúp run-dai-chien.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
 4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
 5. Ở Bảng điều khiển: bấm các nút Giả lập ("1" theo Sơn Tinh, "2" theo Thủy Tinh, quà 299 xu...) để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
-6. Người xem gõ 1 theo Sơn Tinh (phe Núi), gõ 2 theo Thủy Tinh (phe Nước), ai không chọn vào phe ít người. Mỗi người có một chiến binh mang tên mình. Gõ 3 bắn, 4 chém, 5 khiên, 6 hồi máu, 7 đánh trống. Thả tim là thả lính từ trời xuống, đủ khí thế thì cả phe tổng tấn công. Theo dõi được phong tướng, chia sẻ gọi 3 viện binh. Quà nhỏ ném đá hoặc phun sóng, quà từ 10 xu gọi voi chiến hoặc thuồng luồng, quà từ 100 xu thì Sơn Tinh hoặc Thủy Tinh hiện thân. Phá được thành địch, hoặc hết giờ thành còn nhiều máu hơn thì thắng.
+6. Người xem gõ 1 = theo Sơn Tinh (phe Núi), gõ 2 = theo Thủy Tinh (phe Nước), ai không chọn vào phe ít người. Mỗi người có một chiến binh mang tên mình. Trang bị: gõ 3 cung tên, 4 kiếm, 5 giáo. Gõ 6 khiên, 7 hồi máu, 8 đánh trống, đủ khí thế thì cả phe tổng tấn công. Cứ 10 tim là 1 lính rơi xuống trận. Theo dõi được phong tướng (nhân vật to hẳn lên). Chia sẻ: Sơn Tinh gọi voi chiến, Thủy Tinh gọi rắn biển. Quà nhỏ: Sơn Tinh gọi đại bàng, Thủy Tinh gọi rùa thần. Quà từ 10 xu gọi voi chúa hoặc rắn biển khổng lồ, quà từ 100 xu thì Sơn Tinh hoặc Thủy Tinh hiện thân. Phá được thành địch, hoặc hết giờ thành còn nhiều máu hơn thì thắng.
 7. Nhạc riêng (nếu muốn): chép MP3 vào public\\assets\\nhac-dai-chien. Đổi thời gian ván, máu thành, số tim ra lính: sửa config-dai-chien.json.
 8. Bấm đúp mo-cua-so-dai-chien.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
@@ -152,8 +152,8 @@ const DEFAULT_GAMES = [
   {
     id: 'dai-chien', name: 'Sơn Tinh Thủy Tinh Đại Chiến',
     tagline: 'Người xem chia hai phe Núi và Nước, thả tim thả lính, tặng quà gọi thần',
-    description: 'Trận chiến hai phe ngay trên LIVE: người xem gõ 1 theo Sơn Tinh, gõ 2 theo Thủy Tinh và có một chiến binh mang tên mình. Gõ số để bắn, chém, dựng khiên, hồi máu, đánh trống. Thả tim là thả lính từ trời xuống, quà gọi voi chiến, thuồng luồng, quà lớn thì Sơn Tinh hoặc Thủy Tinh hiện thân. Phá thành địch để thắng, cuối ván vinh danh mãnh tướng.',
-    features: ['Hai phe đối đầu, ván 4 phút tự chạy', 'Gõ số 1–7 ra lệnh dễ trên điện thoại', 'Thả tim = thả lính, chia sẻ = viện binh', 'Quà = voi chiến, thuồng luồng, thần hiện thân', 'Nhạc trống trận tự tạo + giọng MC AI'],
+    description: 'Trận chiến hai phe ngay trên LIVE: người xem gõ 1 theo Sơn Tinh, gõ 2 theo Thủy Tinh và có một chiến binh mang tên mình. Gõ số để cầm cung tên, kiếm, giáo, dựng khiên, hồi máu, đánh trống. Thả tim là thả lính từ trời xuống, chia sẻ gọi voi chiến hoặc rắn biển, quà gọi đại bàng, rùa thần, quà lớn thì Sơn Tinh hoặc Thủy Tinh hiện thân. Phá thành địch để thắng, cuối ván vinh danh mãnh tướng.',
+    features: ['Hai phe đối đầu, ván 4 phút tự chạy', 'Gõ số 1–8 ra lệnh dễ trên điện thoại', 'Cung tên, kiếm, giáo, phong tướng', 'Chia sẻ = voi / rắn biển, quà = đại bàng, rùa, thần hiện thân', 'Nhạc trống trận tự tạo + giọng MC AI'],
     image: '/media/dai-chien.jpg', video: '/media/dai-chien.mp4', download: '', version: '2.2.0',
     guide: GUIDE_DAI_CHIEN, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"

@@ -1,8 +1,8 @@
 // Sơn Tinh – Thủy Tinh đại chiến: game tương tác TikTok LIVE, hai phe đánh nhau phá thành.
 // Người xem chọn phe (gõ 1 / 2), mỗi người có một chiến binh mang tên mình tự đánh.
-// Bình luận ra lệnh, thả tim thả lính từ trời xuống, chia sẻ gọi viện binh, quà gọi voi chiến, thuồng luồng, thần hiện thân.
-import { W, H, HORIZON_Y, FIELD, BASE_FRONT, TEAM, scaleAtY, drawStatic, drawBaseNui, drawBaseNuoc, drawFlood, drawGiant, drawElephant, drawSerpent, roundRectPath as rr } from './battlefield.js';
-import { drawSoldier } from './units.js';
+// Bình luận ra lệnh, thả tim thả lính từ trời xuống, chia sẻ gọi viện binh, chia sẻ gọi voi chiến / rắn biển, quà gọi đại bàng / rùa thần và thần hiện thân.
+import { W, H, HORIZON_Y, FIELD, BASE_FRONT, TEAM, scaleAtY, drawStatic, drawBaseNui, drawBaseNuoc, drawFlood, drawGiant, drawElephant, drawSerpent, drawEagle, drawTurtle, roundRectPath as rr } from './battlefield.js';
+import { drawSoldier, GENERAL_SCALE } from './units.js';
 import * as sfx from './chienAudio.js';
 import * as voice from '../audio.js';
 
@@ -20,9 +20,9 @@ const DEFAULTS = {
   resultSeconds: 12,
   baseHp: 1500,
   heroHp: 100,
-  generalHp: 200,
+  generalHp: 260,
   respawnSeconds: 6,
-  likesPerSoldier: 15,
+  likesPerSoldier: 10,
   maxUnitsPerTeam: 70,
   maxHeroesPerTeam: 45,
   ambientSoldiers: 8,
@@ -48,23 +48,27 @@ const DEFAULTS = {
   commands: {
     team0: ['phe núi', 'sơn tinh', 'theo núi', 'vào núi'],
     team1: ['phe nước', 'thủy tinh', 'thuỷ tinh', 'theo nước', 'vào nước'],
-    shoot: ['bắn', 'bắn tên', 'phun nước', 'ném đá'],
-    slash: ['chém', 'xông lên', 'xung phong', 'giết'],
-    shield: ['khiên', 'đỡ', 'phòng thủ'],
+    bow: ['cung tên', 'cung', 'bắn'],
+    sword: ['kiếm', 'chém'],
+    spear: ['giáo', 'đâm', 'xông lên', 'xung phong'],
+    shield: ['khiên', 'phòng thủ'],
     heal: ['hồi máu', 'hồi sức', 'chữa thương', 'băng bó'],
     drum: ['trống', 'cố lên', 'đánh trống', 'tiến lên'],
     surrender: ['đầu hàng', 'xin hàng', 'chạy thôi'],
   },
-  numberCommands: { 1: 'team0', 2: 'team1', 3: 'shoot', 4: 'slash', 5: 'shield', 6: 'heal', 7: 'drum' },
+  numberCommands: { 1: 'team0', 2: 'team1', 3: 'bow', 4: 'sword', 5: 'spear', 6: 'shield', 7: 'heal', 8: 'drum' },
   messages: {
     join: ['{name} gia nhập quân {team}', 'Chào {name}, xung trận cùng {team} nào', '{name} cầm giáo theo {team}', 'Thêm một chiến binh {team}: {name}'],
     switch: ['{name} đổi sang phe {team}', '{name} quay giáo theo {team}'],
     follow: ['{name} được phong làm tướng quân {team}', 'Cảm ơn {name} theo dõi, phong tướng cho {name}'],
-    share: ['{name} gọi viện binh cho {team}', 'Cảm ơn {name} chia sẻ, ba lính mới xuống trận'],
-    gift0: ['Cảm ơn {name} tặng {gift}, Sơn Tinh cho đá lăn xuống', 'Cảm ơn {name}, đá núi rơi như mưa'],
-    gift1: ['Cảm ơn {name} tặng {gift}, Thủy Tinh phun nước tới tấp', 'Cảm ơn {name}, nước dâng đánh úp quân Núi'],
-    beast0: ['Cảm ơn {name} tặng {gift}! Voi chiến ra trận', '{name} cưỡi voi chiến xông lên'],
-    beast1: ['Cảm ơn {name} tặng {gift}! Thuồng luồng nổi dậy', '{name} gọi thuồng luồng từ đáy biển'],
+    share0: ['Cảm ơn {name} chia sẻ, Sơn Tinh gọi voi chiến', '{name} chia sẻ, voi chiến xông ra trận'],
+    share1: ['Cảm ơn {name} chia sẻ, Thủy Tinh gọi rắn biển', '{name} chia sẻ, rắn biển trồi lên từ đáy biển'],
+    gift0: ['Cảm ơn {name} tặng {gift}, Sơn Tinh gọi đại bàng', 'Cảm ơn {name}, đại bàng núi lao xuống'],
+    gift1: ['Cảm ơn {name} tặng {gift}, Thủy Tinh gọi rùa thần', 'Cảm ơn {name}, rùa thần bò lên bờ'],
+    beast0: ['Cảm ơn {name} tặng {gift}! Voi chúa ra trận, đá lăn ầm ầm', '{name} cưỡi voi chúa xông lên'],
+    beast1: ['Cảm ơn {name} tặng {gift}! Rắn biển khổng lồ nổi dậy', '{name} gọi rắn biển khổng lồ, sóng dâng ngập trận'],
+    cheer0: ['Sơn Tinh vô địch!', 'Núi cao vạn trượng!', 'Phe Núi cố lên!', 'Giữ thành Núi!'],
+    cheer1: ['Thủy Tinh vô địch!', 'Nước dâng ngập trời!', 'Phe Nước cố lên!', 'Giữ thành Nước!'],
     god0: ['{name} tặng {gift}! Sơn Tinh hiện thân, dời non chặn nước', 'Cảm ơn {name}! Sơn Tinh nâng núi, quân Nước tan tác'],
     god1: ['{name} tặng {gift}! Thủy Tinh hiện thân, hô mưa gọi gió', 'Cảm ơn {name}! Thủy Tinh dâng nước, quân Núi chạy dài'],
     rally: ['Quân {team} khí thế ngút trời, tổng tấn công', 'Trống trận dồn dập, {team} tổng tấn công'],
@@ -74,12 +78,12 @@ const DEFAULTS = {
     baseLow: ['Thành {team} sắp vỡ, mau thả tim cứu thành', 'Thành {team} nguy rồi, gõ 5 dựng khiên'],
     reminder: [
       'Gõ 1 theo Sơn Tinh, gõ 2 theo Thủy Tinh',
-      'Thả tim để thả lính xuống chiến trường',
-      'Gõ 3 bắn tên, gõ 4 xông lên chém',
-      'Gõ 5 dựng khiên, gõ 6 hồi máu cho đồng đội',
-      'Gõ 7 đánh trống, đủ khí thế là tổng tấn công',
-      'Chia sẻ để gọi thêm viện binh',
-      'Tặng quà để gọi voi chiến, thuồng luồng, và thần hiện thân',
+      'Thả tim để thả lính xuống chiến trường, mười tim một lính',
+      'Gõ 3 cầm cung tên, gõ 4 cầm kiếm, gõ 5 cầm giáo',
+      'Gõ 6 dựng khiên, gõ 7 hồi máu cho đồng đội',
+      'Gõ 8 đánh trống, đủ khí thế là tổng tấn công',
+      'Chia sẻ để Sơn Tinh gọi voi, Thủy Tinh gọi rắn biển',
+      'Tặng quà để gọi đại bàng, rùa thần, và thần hiện thân',
       'Theo dõi kênh để được phong tướng',
     ],
   },
@@ -239,6 +243,8 @@ function makeUnit(team, kind, extra = {}) {
     mini: { hp: 45, atk: 7, speed: 82, range: 30, cd: 0.9 },
     filler: { hp: 60, atk: 8, speed: 66, range: 32, cd: 1.0 },
     beast: { hp: 520, atk: 30, speed: 46, range: 64, cd: 1.3 },
+    eagle: { hp: 70, atk: 14, speed: 150, range: 40, cd: 0.8 },
+    turtle: { hp: 170, atk: 9, speed: 36, range: 36, cd: 1.0 },
   }[kind];
   const u = {
     id: ++unitSeq,
@@ -265,10 +271,30 @@ function makeUnit(team, kind, extra = {}) {
     dropY: 0,
     skin: Math.floor(Math.random() * 4),
     expireAt: 0,
+    weapon: '',
     ...extra,
   };
   u.ty = u.y;
+  if (kind === 'hero' || kind === 'mini' || kind === 'filler') {
+    const w = extra.weapon || (kind === 'hero' ? 'spear' : pick(['spear', 'spear', 'sword', 'bow']));
+    setWeapon(u, w);
+  }
   return u;
+}
+
+// vũ khí: giáo đánh xa vừa + đẩy lùi, kiếm đánh nhanh, cung tên bắn xa
+const WEAPONS = {
+  spear: { atkMul: 1.15, range: 52, cd: 1.0 },
+  sword: { atkMul: 0.95, range: 30, cd: 0.6 },
+  bow: { atkMul: 0.8, range: 240, cd: 1.25 },
+};
+function setWeapon(u, w) {
+  const def = WEAPONS[w] || WEAPONS.spear;
+  if (!u.baseAtk) u.baseAtk = u.atk;
+  u.weapon = w;
+  u.atk = u.baseAtk * def.atkMul;
+  u.range = def.range;
+  u.cd = def.cd;
 }
 
 function spawnFiller(team) {
@@ -331,7 +357,8 @@ function applyGeneral(u) {
   const hp = Number(config.generalHp) || 200;
   u.maxHp = hp;
   u.hp = Math.max(u.hp, hp);
-  u.atk = 18;
+  u.baseAtk = 18;
+  setWeapon(u, u.weapon || 'spear');
   u.general = true;
 }
 
@@ -445,6 +472,7 @@ function damage(target, amount, attacker = null, kindTag = '') {
   let dmg = amount;
   if (now < target.shieldUntil) dmg *= 0.25;
   if (target.dropY > 0) dmg *= 0.3;
+  if (target.kind === 'turtle') dmg *= 0.5;
   dmg = Math.max(1, Math.round(dmg));
   target.hp -= dmg;
   target.hurtT = now;
@@ -509,7 +537,7 @@ function unitAct(u, dt) {
   const speedMul = buffed(u.team) ? 1.4 : 1;
   const atkMul = buffed(u.team) ? 1.5 : 1;
   const enemyFront = BASE_FRONT[1 - u.team];
-  const target = nearestEnemy(u, u.kind === 'beast' ? 300 : 240);
+  const target = nearestEnemy(u, u.kind === 'eagle' ? 900 : u.kind === 'beast' ? 300 : u.weapon === 'bow' ? 320 : 240);
   let moving = false;
   if (target) {
     const d = Math.hypot(target.x - u.x, (target.y - u.y) * 1.4);
@@ -530,8 +558,11 @@ function unitAct(u, dt) {
           dust(target.x, target.y, 6);
           if (u.team === 0) sfx.thud();
           else sfx.splash();
+        } else if (u.weapon === 'bow') {
+          shoot(u, target, 'arrow', u.atk * atkMul);
         } else {
           damage(target, u.atk * atkMul, u);
+          if (u.weapon === 'spear' && target.kind !== 'beast') target.x += u.dir * 8;
           sfx.clash();
           if (Math.random() < 0.35) sparks((u.x + target.x) / 2, u.y - 34, 3);
         }
@@ -545,7 +576,8 @@ function unitAct(u, dt) {
     }
   } else {
     // không có địch gần: tiến về thành địch
-    const atBase = u.team === 0 ? u.x >= enemyFront - 4 : u.x <= enemyFront + 4;
+    const reach = u.weapon === 'bow' ? 180 : 4;
+    const atBase = u.team === 0 ? u.x >= enemyFront - reach : u.x <= enemyFront + reach;
     if (atBase) {
       if (now >= u.nextAtk) {
         u.nextAtk = now + u.cd * 1000 * rand(0.9, 1.2);
@@ -576,18 +608,18 @@ function heroCommand(p, act) {
   }
   const atkMul = buffed(u.team) ? 1.5 : 1;
   switch (act) {
-    case 'shoot': {
-      const t = nearestEnemy(u, 560);
-      if (!t) {
-        say(p, 'Không thấy địch!', 1200);
-        break;
-      }
-      shoot(u, t, u.team === 0 ? 'arrow' : 'water', 26 * atkMul);
+    case 'shoot':
+    case 'bow': {
+      setWeapon(u, 'bow');
       u.atkT = now;
-      say(p, u.team === 0 ? 'Bắn!' : 'Phun nước!', 1000);
+      const t = nearestEnemy(u, 560);
+      if (t) shoot(u, t, 'arrow', 26 * atkMul);
+      say(p, t ? 'Cầm cung, bắn!' : 'Cầm cung tên!', 1200);
       break;
     }
-    case 'slash': {
+    case 'slash':
+    case 'sword': {
+      setWeapon(u, 'sword');
       u.x += u.dir * 70;
       u.atkT = now;
       let hits = 0;
@@ -600,7 +632,22 @@ function heroCommand(p, act) {
       }
       sfx.clash();
       sparks(u.x + u.dir * 30, u.y - 30, 10, ['#fff', '#ffe066']);
-      say(p, hits ? `Chém trúng ${hits}!` : 'Xông lên!', 1200);
+      say(p, hits ? `Kiếm chém trúng ${hits}!` : 'Rút kiếm!', 1200);
+      break;
+    }
+    case 'spear': {
+      setWeapon(u, 'spear');
+      u.atkT = now;
+      let hits = 0;
+      for (const e of units) {
+        if (e.team !== u.team && !e.deadT && (e.x - u.x) * u.dir > -10 && (e.x - u.x) * u.dir < 110 && Math.abs(e.y - u.y) < 40) {
+          damage(e, 28 * atkMul, u);
+          e.x += u.dir * 50;
+          hits++;
+        }
+      }
+      sfx.clash();
+      say(p, hits ? `Giáo đâm ${hits} tên!` : 'Cầm giáo!', 1200);
       break;
     }
     case 'shield':
@@ -647,21 +694,54 @@ function giftVolley(team, p, count) {
   }
 }
 
-function spawnBeast(team, p, label) {
-  if (units.filter((u) => u.kind === 'beast' && u.team === team && !u.deadT).length >= 4) {
-    giftVolley(team, p, 8);
+// chia sẻ: voi chiến / rắn biển. Quà vừa: voi chúa / rắn biển khổng lồ (to, khỏe, sống lâu hơn) + mưa đá / sóng
+function spawnBeast(team, p, label, big = false) {
+  if (units.filter((u) => u.kind === 'beast' && u.team === team && !u.deadT).length >= (big ? 5 : 3)) {
+    if (big) giftVolley(team, p, 8);
+    else for (let i = 0; i < 3; i++) dropMini(team, p, p.hero ? p.hero.x : null);
     return;
   }
-  const u = makeUnit(team, 'beast', { owner: p, name: truncate(p.user.name, 12), expireAt: now + Math.max(10, Number(config.beastSeconds) || 40) * 1000 });
+  const secs = Math.max(10, Number(config.beastSeconds) || 40) * (big ? 1 : 0.6);
+  const u = makeUnit(team, 'beast', { owner: p, name: truncate(p.user.name, 12), big, expireAt: now + secs * 1000 });
+  if (!big) {
+    u.maxHp = u.hp = 320;
+    u.atk = 22;
+  }
   u.y = lerp(FIELD.top, FIELD.bottom, 0.5) + rand(-80, 80);
   u.ty = u.y;
   units.push(u);
   if (team === 0) sfx.trumpet();
   else sfx.roar();
   dust(u.x, u.y, 16);
-  showBanner(team === 0 ? '🐘 VOI CHIẾN RA TRẬN' : '🐉 THUỒNG LUỒNG NỔI DẬY', truncate(p.user.name, 20), TEAM[team].light, 2200);
-  addToast(`${team === 0 ? '🐘' : '🐉'} ${truncate(p.user.name, 14)} gọi ${team === 0 ? 'voi chiến' : 'thuồng luồng'}`, TEAM[team].light);
-  announce(line(`beast${team}`, { name: p.user.name, gift: label }), 1, true);
+  const beastName = team === 0 ? (big ? 'VOI CHÚA' : 'VOI CHIẾN') : big ? 'RẮN BIỂN KHỔNG LỒ' : 'RẮN BIỂN';
+  showBanner(`${team === 0 ? '🐘' : '🐍'} ${beastName} RA TRẬN`, truncate(p.user.name, 20), TEAM[team].light, 2200);
+  addToast(`${team === 0 ? '🐘' : '🐍'} ${truncate(p.user.name, 14)} gọi ${beastName.toLowerCase()}`, TEAM[team].light);
+  if (big) {
+    giftVolley(team, p, 5);
+    announce(line(`beast${team}`, { name: p.user.name, gift: label }), 1, true);
+  } else announce(line(`share${team}`, { name: p.user.name }), 1);
+}
+
+// quà nhỏ: Sơn Tinh gọi đại bàng, Thủy Tinh gọi rùa thần
+function summonPets(team, p, n) {
+  const kind = team === 0 ? 'eagle' : 'turtle';
+  for (let i = 0; i < n; i++) {
+    if (units.filter((u) => u.kind === kind && u.team === team && !u.deadT).length >= 12) {
+      giftVolley(team, p, 3);
+      break;
+    }
+    const u = makeUnit(team, kind, { owner: p, name: truncate(p.user.name, 10), expireAt: now + (kind === 'eagle' ? 30000 : 45000) });
+    if (kind === 'eagle') {
+      u.x = team === 0 ? 60 : W - 60;
+      u.alt = 260;
+    } else {
+      u.x = team === 0 ? BASE_FRONT[0] : BASE_FRONT[1];
+      splashFx(u.x, u.y, 10);
+    }
+    units.push(u);
+  }
+  if (kind === 'eagle') sfx.arrow();
+  else sfx.splash(true);
 }
 
 function godStrike(team, p, label) {
@@ -760,11 +840,8 @@ function handleEvent(ev) {
     case 'share': {
       if (!user) break;
       const p = ensurePlayer(user);
-      for (let i = 0; i < 3; i++) dropMini(p.team, p, p.hero ? p.hero.x : null);
+      if (phase.name === 'battle') spawnBeast(p.team, p, '', false);
       addMorale(p.team, 20, p);
-      addToast(`📣 ${truncate(user.name, 16)} gọi 3 viện binh`, '#7cf7ff');
-      announce(line('share', { name: user.name, team: teamName(p.team) }), 0);
-      sfx.warHorn();
       break;
     }
     case 'giftStreak': {
@@ -796,16 +873,23 @@ function handleEvent(ev) {
         break;
       }
       if (coinsN >= tiers.big) godStrike(p.team, p, label);
-      else if (coinsN >= tiers.medium) spawnBeast(p.team, p, label);
+      else if (coinsN >= tiers.medium) spawnBeast(p.team, p, label, true);
       else {
-        giftVolley(p.team, p, clamp(3 + coinsN, 4, 9));
-        addToast(`${p.team === 0 ? '🪨' : '💧'} ${truncate(user.name, 14)}: ${truncate(label, 14)}`, TEAM[p.team].light);
+        summonPets(p.team, p, clamp(coinsN, 1, 4));
+        addToast(`${p.team === 0 ? '🦅 ' : '🐢 '}${truncate(user.name, 14)} gọi ${p.team === 0 ? 'đại bàng' : 'rùa thần'}`, TEAM[p.team].light);
         announce(line(`gift${p.team}`, { name: user.name, gift: label }), 1);
         sfx.sparkle();
       }
       break;
     }
     // ----- chỉ dùng khi thử ở bảng điều khiển
+    case 'cheerSim': {
+      if (!user) break;
+      const p = ensurePlayer(user);
+      say(p, line(`cheer${p.team}`), 3000);
+      addMorale(p.team, 3, p);
+      break;
+    }
     case 'rally':
       startRally(Number(ev.team) === 1 ? 1 : 0);
       break;
@@ -898,6 +982,7 @@ function endRound(winner) {
 
 // ------------------------------------------------------------------ cập nhật
 let lastFiller = 0;
+let lastCheer = 0;
 function update(dt) {
   if (phase.name === 'battle' && now >= phase.until) {
     const a = base[0].hp / base[0].max;
@@ -906,10 +991,19 @@ function update(dt) {
   }
   if (phase.name === 'result' && now >= phase.until) startRound();
 
+  // chiến binh thỉnh thoảng hô khẩu hiệu phe mình
+  if (phase.name === 'battle' && now - lastCheer > 4500) {
+    lastCheer = now;
+    const hs = units.filter((u) => u.kind === 'hero' && !u.deadT && u.player && !(u.player.bubble && now < u.player.bubble.until));
+    if (hs.length) {
+      const h = pick(hs);
+      say(h.player, line(`cheer${h.team}`), 2200);
+    }
+  }
   if (phase.name === 'battle' && now - lastFiller > 2500) {
     lastFiller = now;
     for (const t of [0, 1]) {
-      const n = units.filter((u) => u.team === t && !u.deadT && u.kind !== 'beast').length;
+      const n = units.filter((u) => u.team === t && !u.deadT && (u.kind === 'hero' || u.kind === 'mini' || u.kind === 'filler')).length;
       if (n < (Number(config.ambientSoldiers) || 0)) spawnFiller(t);
     }
   }
@@ -936,7 +1030,7 @@ function update(dt) {
       }
       continue;
     }
-    if (u.kind === 'beast' && u.expireAt && now > u.expireAt) {
+    if (u.expireAt && now > u.expireAt) {
       u.deadT = now;
       dust(u.x, u.y, 14);
       continue;
@@ -951,7 +1045,8 @@ function update(dt) {
       const b = live[j];
       const dx = b.x - a.x;
       const dy = (b.y - a.y) * 1.6;
-      const r = a.kind === 'beast' || b.kind === 'beast' ? 46 : 20;
+      if (a.kind === 'eagle' || b.kind === 'eagle') continue;
+      const r = a.kind === 'beast' || b.kind === 'beast' ? 46 : a.kind === 'turtle' || b.kind === 'turtle' ? 34 : 20;
       const d2 = dx * dx + dy * dy;
       if (d2 > 0.01 && d2 < r * r) {
         const d = Math.sqrt(d2);
@@ -1169,6 +1264,7 @@ function unitDrawOpts(u) {
     hurt: u.hurtT && now - u.hurtT < 150 ? 1 : 0,
     general: u.general,
     mini: u.kind === 'mini',
+    weapon: u.weapon,
     shield: now < u.shieldUntil,
     dead: u.deadT ? clamp((now - u.deadT) / 800, 0, 1) : 0,
     cheer: now < u.cheerUntil,
@@ -1204,10 +1300,22 @@ function drawUnit(u) {
   if (u.kind === 'beast') {
     if (u.deadT) ctx.globalAlpha = clamp(1 - (now - u.deadT) / 1500, 0, 1);
     const hurt = u.hurtT && now - u.hurtT < 150;
-    if (u.team === 0) drawElephant(ctx, u.x, y, s * 0.9, u.dir, now / 1000 + u.id, hurt, u.deadT ? '' : `🐘 ${u.name}`);
-    else drawSerpent(ctx, u.x, y, s * 0.9, u.dir, now / 1000 + u.id, hurt, u.deadT ? '' : `🐉 ${u.name}`);
+    const bs = s * (u.big ? 1.05 : 0.8);
+    if (u.team === 0) drawElephant(ctx, u.x, y, bs, u.dir, now / 1000 + u.id, hurt, u.deadT ? '' : `🐘 ${u.name}`);
+    else drawSerpent(ctx, u.x, y, bs, u.dir, now / 1000 + u.id, hurt, u.deadT ? '' : `🐍 ${u.name}`);
     ctx.globalAlpha = 1;
-    if (!u.deadT) hpBar(u.x, y - 180 * s, 90, u.hp / u.maxHp, TEAM[u.team].color);
+    if (!u.deadT) hpBar(u.x, y - 180 * bs, 90, u.hp / u.maxHp, TEAM[u.team].color);
+    return;
+  }
+  if (u.kind === 'eagle' || u.kind === 'turtle') {
+    if (u.deadT) ctx.globalAlpha = clamp(1 - (now - u.deadT) / 1200, 0, 1);
+    const hurt = u.hurtT && now - u.hurtT < 150;
+    if (u.kind === 'eagle') {
+      const swoop = u.atkT && now - u.atkT < 500 ? Math.sin(((now - u.atkT) / 500) * Math.PI) : 0;
+      const alt = u.deadT ? Math.max(0, 120 - (now - u.deadT) / 6) : 110 + Math.sin(now / 300 + u.id) * 12 - swoop * 80;
+      drawEagle(ctx, u.x, y, alt, s, u.dir, now / 1000 + u.id, hurt, u.deadT ? '' : `🦅 ${u.name}`);
+    } else drawTurtle(ctx, u.x, y, s * 0.9, u.dir, now / 1000 + u.id, hurt, u.deadT ? '' : `🐢 ${u.name}`);
+    ctx.globalAlpha = 1;
     return;
   }
   if (u.deadT && u.kind === 'hero' && now - u.deadT > 1500) {
@@ -1228,7 +1336,7 @@ function drawTag(u) {
   const p = u.player;
   if (!p || u.dropY > 0) return;
   const s = scaleAtY(u.y);
-  const sc = s * (u.general ? 1.22 : 1);
+  const sc = s * (u.general ? GENERAL_SCALE : 1);
   const x = u.x;
   const y = u.y - 84 * sc;
   const name = `${u.general ? '⭐' : ''}${truncate(p.user.name, 9)}`;
@@ -1389,6 +1497,9 @@ function drawHeader() {
     ctx.fillStyle = 'rgba(0,0,0,0.6)';
     rr(ctx, x0, y, w, 34, 17);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(255,213,74,0.85)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
     const bw = (w - 6) * k;
     const bg2 = ctx.createLinearGradient(x0, 0, x0 + w, 0);
     bg2.addColorStop(0, TEAM[t].dark);
@@ -1429,37 +1540,43 @@ function drawHeader() {
   }
 }
 
-const GUIDE = [
-  [['1', 'theo Núi', 0], ['2', 'theo Nước', 1], ['3', 'bắn'], ['4', 'chém'], ['5', 'khiên'], ['6', 'hồi máu'], ['7', 'trống']],
-];
-function drawGuide() {
-  const y = 276;
-  const items = GUIDE[0];
-  ctx.font = `800 22px ${FONT}`;
-  const widths = items.map(([n, label]) => ctx.measureText(`${n} ${label}`).width + 26);
-  const total = widths.reduce((a, b) => a + b, 0) + (items.length - 1) * 8;
+const GUIDE_TEAM = [['1', 'theo Sơn Tinh ⛰️', 0], ['2', 'theo Thủy Tinh 🌊', 1]];
+const GUIDE_ACT = [['3', 'cung tên'], ['4', 'kiếm'], ['5', 'giáo'], ['6', 'khiên'], ['7', 'hồi máu'], ['8', 'trống']];
+function chipRow(items, y, size, gap) {
+  ctx.font = `800 ${size}px ${FONT}`;
+  const widths = items.map(([n, label]) => ctx.measureText(`${n} = ${label}`).width + 30);
+  const total = widths.reduce((a, b) => a + b, 0) + (items.length - 1) * gap;
   let x = (W - total) / 2;
   items.forEach(([n, label, team], i) => {
     const w = widths[i];
-    ctx.fillStyle = team === 0 ? 'rgba(46,125,50,0.9)' : team === 1 ? 'rgba(21,101,192,0.9)' : 'rgba(0,0,0,0.6)';
-    rr(ctx, x, y - 18, w, 36, 18);
+    const h = size * 1.7;
+    ctx.fillStyle = team === 0 ? 'rgba(46,125,50,0.92)' : team === 1 ? 'rgba(21,101,192,0.92)' : 'rgba(10,14,30,0.72)';
+    rr(ctx, x, y - h / 2, w, h, h / 2);
     ctx.fill();
-    ctx.fillStyle = '#ffd54a';
+    ctx.strokeStyle = 'rgba(255,213,74,0.75)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.font = `900 22px ${FONT}`;
-    ctx.fillText(n, x + 12, y + 1);
+    ctx.font = `900 ${size}px ${FONT}`;
+    ctx.fillStyle = '#ffd54a';
+    ctx.fillText(n, x + 14, y + 1);
+    const nw = ctx.measureText(n).width;
+    ctx.font = `700 ${size - 2}px ${FONT}`;
     ctx.fillStyle = '#fff';
-    ctx.font = `700 20px ${FONT}`;
-    ctx.fillText(label, x + 30, y + 1);
-    x += w + 8;
+    ctx.fillText(` = ${label}`, x + 14 + nw, y + 1);
+    x += w + gap;
   });
-  chip(`❤️ ${Number(config.likesPerSoldier) || 15} tim = 1 lính  ·  📣 chia sẻ = 3 lính  ·  ⭐ theo dõi = phong tướng`, W / 2, 324, '#fff', 'rgba(0,0,0,0.5)', 19);
-  chip(`🎁 quà nhỏ = đá lăn / sóng  ·  ${config.giftTiers?.medium ?? 10} xu = 🐘🐉  ·  ${config.giftTiers?.big ?? 100} xu = thần hiện thân`, W / 2, 366, '#ffe9a8', 'rgba(0,0,0,0.5)', 19);
+}
+function drawGuide() {
+  chipRow(GUIDE_TEAM, 272, 26, 16);
+  chipRow(GUIDE_ACT, 322, 20, 7);
+  chip(`❤️ ${Number(config.likesPerSoldier) || 10} tim = 1 lính  ·  📣 chia sẻ = 🐘 voi / 🐍 rắn biển  ·  ⭐ theo dõi = phong tướng`, W / 2, 366, '#fff', 'rgba(10,14,30,0.6)', 18);
+  chip(`🎁 quà nhỏ = 🦅 đại bàng / 🐢 rùa  ·  ${config.giftTiers?.medium ?? 10} xu = voi chúa / rắn khổng lồ  ·  ${config.giftTiers?.big ?? 100} xu = thần hiện thân`, W / 2, 406, '#ffe9a8', 'rgba(10,14,30,0.6)', 18);
 }
 
 function drawToasts() {
-  let y = 420;
+  let y = 460;
   for (let i = toasts.length - 1; i >= 0; i--) {
     const t = toasts[i];
     const age = now - t.born;
@@ -1578,6 +1695,9 @@ function drawLeaders() {
     ctx.fillStyle = t === 0 ? 'rgba(27,94,32,0.6)' : 'rgba(13,60,120,0.6)';
     rr(ctx, x0, y0 - 20, w, 26 + top.length * 34, 16);
     ctx.fill();
+    ctx.strokeStyle = 'rgba(255,213,74,0.8)';
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
     ctx.font = `800 18px ${FONT}`;
     ctx.fillStyle = '#ffd54a';
     ctx.textAlign = 'left';

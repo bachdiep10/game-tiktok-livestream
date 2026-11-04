@@ -56,8 +56,8 @@ function send(obj) {
 }
 const sim = (event) => send({ cmd: 'sim', event });
 
-const CHATS = ['xin chào cả nhà', 'Sơn Tinh vô địch', 'Thủy Tinh cố lên', 'đánh mạnh vào', 'phe nào mạnh thế', 'vui quá', 'giữ thành nào anh em', 'ai làm tướng thế'];
-const CMDS = ['3', '3', '4', '4', '5', '6', '7', '7', 'chém', 'bắn', 'cố lên'];
+const CHATS = ['xin chào cả nhà', 'đánh mạnh vào', 'phe nào mạnh thế', 'vui quá', 'giữ thành nào anh em', 'ai làm tướng thế'];
+const CMDS = ['3', '4', '5', '5', '6', '7', '8', '8', 'kiếm', 'cung tên', 'giáo'];
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 const simUsers = [];
@@ -85,7 +85,8 @@ const actions = {
     sim({ type: 'join', user: u });
   },
   cmd: () => sim({ type: 'chat', user: namedUser(), text: pick(CMDS) }),
-  chat: () => sim({ type: 'chat', user: namedUser(), text: pick(CHATS) }),
+  // một nửa là hô khẩu hiệu đúng phe của người đó (game tự chọn câu theo phe)
+  chat: () => (Math.random() < 0.5 ? sim({ type: 'cheerSim', user: namedUser() }) : sim({ type: 'chat', user: namedUser(), text: pick(CHATS) })),
   like: () => sim({ type: 'like', user: namedUser(), count: 1 + Math.floor(Math.random() * 5) }),
   follow: () => sim({ type: 'follow', user: namedUser() }),
   share: () => sim({ type: 'share', user: namedUser() }),
