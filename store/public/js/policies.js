@@ -18,6 +18,8 @@ export function sellerBlock(s, site) {
     ['Địa chỉ', s.sellerAddress],
     ['Email', s.sellerEmail],
     ['Điện thoại / Zalo', s.contactPhone || s.contactZalo],
+    ['Fanpage', s.messengerUrl || s.contactFacebook],
+    ['Nhóm Zalo hỗ trợ', s.zaloGroup],
     ['Website', site],
   ].filter(r => r[1]);
   return `<ul>${rows.map(([k, v]) => `<li><b>${k}:</b> ${esc(v)}</li>`).join('')}</ul>`;
@@ -27,7 +29,7 @@ export function policyHtml(slug, { settings: s, plans = [] }) {
   const site = location.host;
   const brand = esc(s.brandName);
   const seller = esc(s.sellerName || s.brandName);
-  const contact = [s.contactZalo && `Zalo ${esc(s.contactZalo)}`, s.contactPhone && `điện thoại ${esc(s.contactPhone)}`, s.sellerEmail && `email ${esc(s.sellerEmail)}`].filter(Boolean).join(', ') || 'các kênh hỗ trợ ở chân trang';
+  const contact = [(s.messengerUrl || s.contactFacebook) && 'nhắn tin fanpage', s.zaloGroup && 'nhóm Zalo hỗ trợ', s.contactZalo && `Zalo ${esc(s.contactZalo)}`, s.contactPhone && `điện thoại ${esc(s.contactPhone)}`, s.sellerEmail && `email ${esc(s.sellerEmail)}`].filter(Boolean).join(', ') || 'các kênh hỗ trợ ở chân trang';
   const days = Number(s.refundDays) || 0;
   const planList = plans.length ? `<ul>${plans.map(p => `<li><b>${esc(p.name)}</b> – ${money(p.price)}: ${p.allGames ? 'tất cả game hiện có và game ra sau này' : `${p.slots} game`}, dùng trọn đời.</li>`).join('')}</ul>` : '';
 

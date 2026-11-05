@@ -88,12 +88,13 @@
   <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
 
   <script type="module">
-    import { $, $$, esc, applyBrand, gameList, zaloLink } from '/js/common.js';
+    import { $, $$, esc, applyBrand, gameList, supportLink } from '/js/common.js';
     const c = await applyBrand();
     const s = c.settings;
     $$('[data-move]').forEach(el => { el.textContent = `${s.moveLimit} lần trong ${s.moveWindowDays} ngày`; });
     $$('[data-offline]').forEach(el => { el.textContent = s.offlineDays || 3; });
-    if (s.contactZalo) $$('[data-help]').forEach(el => { el.innerHTML = `<a href="${esc(zaloLink(s.contactZalo))}" target="_blank" rel="noopener">Zalo hỗ trợ</a>`; });
+    if (supportLink(s)) $$('[data-help]').forEach(el => { el.innerHTML = `<a href="${esc(supportLink(s))}" target="_blank" rel="noopener">fanpage hỗ trợ</a>`; });
+    if (s.zaloGroup) $$('[data-help]').forEach(el => el.insertAdjacentHTML('afterend', ` hoặc vào <a href="${esc(s.zaloGroup)}" target="_blank" rel="noopener">nhóm Zalo hỗ trợ</a>`));
     if (s.guideUrl) $('#video').innerHTML = `<p><a class="btn sm" href="${esc(s.guideUrl)}" target="_blank" rel="noopener">▶ Xem video hướng dẫn</a></p>`;
     $('#games').innerHTML = gameList(c.games, { canDownload: false }).replaceAll('<details class="guide">', '<details class="guide" open>');
     $$('#games .dl-row small').forEach(el => { el.textContent = 'Tải trong Tài khoản của tôi sau khi mua'; });

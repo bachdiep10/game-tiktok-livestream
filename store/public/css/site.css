@@ -296,3 +296,17 @@ input:focus, textarea:focus, select:focus { border-color: var(--brand); box-shad
 .post-cover { max-height: 440px; object-fit: cover; }
 .nav a { white-space: nowrap; }
 @media (max-width: 420px) { .logo-img { height: 28px; } .top .wrap { gap: 10px; } .nav { gap: 10px; } .nav .btn.sm { padding-left: 12px; padding-right: 12px; } }
+
+/* nút Tải về trong danh sách game (không bị kiểu ô xám của .dl a) */
+.dl a.btn { background: var(--grad); color: #fff; border: 0; padding: 9px 18px; border-radius: 999px; gap: 6px; box-shadow: 0 8px 22px rgba(255, 61, 127, 0.3); white-space: nowrap; }
+.dl a.btn:hover { color: #fff; box-shadow: 0 12px 28px rgba(255, 61, 127, 0.42); }
+/* hỗ trợ: nút chat nổi + ô hỗ trợ sau khi mua */
+.chat-fab { position: fixed; right: 18px; bottom: 18px; z-index: 40; display: flex; align-items: center; gap: 8px; padding: 12px 18px 12px 14px; border-radius: 999px; background: linear-gradient(135deg, #00b2ff, #006aff); color: #fff; font-weight: 700; text-decoration: none; box-shadow: 0 10px 30px rgba(0, 106, 255, 0.4); }
+.chat-fab:hover { transform: translateY(-2px); }
+@media (max-width: 560px) { .chat-fab span { display: none; } .chat-fab { padding: 13px; } }
+.support-box { margin-top: 14px; padding: 14px 16px; border-radius: 14px; background: #eef5ff; border: 1px solid #cfe2ff; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.support-box small { display: block; color: var(--muted); font-size: 13.5px; margin-top: 2px; }
+.support-box .sb-btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.dl .support-box { display: flex; }
+.support-box .btn { background: linear-gradient(135deg, #00b2ff, #006aff); box-shadow: none; color: #fff; }
+.support-box .btn.zalo { background: #0068ff; }

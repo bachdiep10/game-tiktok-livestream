@@ -84,6 +84,7 @@ function publicSettings() {
     brandName: s.brandName, tagline: s.tagline, heroEyebrow: s.heroEyebrow, heroTitle: s.heroTitle,
     heroSubtitle: s.heroSubtitle, heroVideo: s.heroVideo, promo: s.promo,
     contactZalo: s.contactZalo, contactFacebook: s.contactFacebook, contactTiktok: s.contactTiktok, contactPhone: s.contactPhone,
+    messengerUrl: s.messengerUrl, zaloGroup: s.zaloGroup,
     guideUrl: s.guideUrl, moveLimit: s.moveLimit, moveWindowDays: s.moveWindowDays, offlineDays: s.offlineDays,
     sellerName: s.sellerName, sellerEmail: s.sellerEmail, sellerAddress: s.sellerAddress, sellerTaxId: s.sellerTaxId, refundDays: s.refundDays,
   };
@@ -985,10 +986,23 @@ app.get('/tai-ve/:id', (req, res) => {
 
 // ---------- SEO: trang có sẵn nội dung + thẻ meta cho Google, Facebook, Zalo ----------
 const seo = createSeo({ publicDir: path.join(__dirname, 'public'), getData: () => { db.refresh(); return D; }, baseUrl });
-const sendHtml = (res, html) => res.type('html').set('Cache-Control', 'public, max-age=60').send(injectTracking(html, D.settings));
+// Mỗi bản cập nhật có mã riêng (băm nội dung JS/CSS): trang HTML gọi /js/x.js?v=<mã> nên trình duyệt
+// và CDN của Hostinger luôn lấy file mới sau khi cập nhật, không còn trang trắng do giữ file cũ.
+const PUBLIC_DIR = path.join(__dirname, 'public');
+const ASSET_V = (() => {
+  const h = crypto.createHash('sha1');
+  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const f = path.join(d, e.name);
+    if (e.isDirectory()) { if (e.name !== 'media') walk(f); } else if (/\.(js|css|html)$/.test(e.name)) h.update(e.name).update(fs.readFileSync(f));
+  } };
+  walk(PUBLIC_DIR);
+  return h.digest('hex').slice(0, 10);
+})();
+const versionAssets = (html) => html.replace(/((?:src|href)=")(\/(?:js|css|admin)\/[^"?#]+\.(?:js|css))(")/g, `$1$2?v=${ASSET_V}$3`);
+const sendHtml = (res, html) => res.type('html').set('Cache-Control', 'public, max-age=60').send(versionAssets(injectTracking(html, D.settings)));
 // Trang tài khoản và đơn hàng cũng cần mã đo lường (đăng ký, mua hàng)
 const privatePage = (file) => (req, res) => res.type('html').set({ 'Cache-Control': 'no-cache', 'X-Robots-Tag': 'noindex, nofollow' })
-  .send(injectTracking(fs.readFileSync(path.join(__dirname, 'public', file), 'utf8'), D.settings));
+  .send(versionAssets(injectTracking(fs.readFileSync(path.join(__dirname, 'public', file), 'utf8'), D.settings)));
 app.get(['/tai-khoan', '/tai-khoan.html'], privatePage('tai-khoan.html'));
 app.get(['/don-hang', '/don-hang.html'], privatePage('don-hang.html'));
 app.get(['/', '/index.html', '/index'], (req, res) => sendHtml(res, seo.home(req)));
@@ -1008,7 +1022,19 @@ app.get('/chinh-sach.html', (req, res) => res.redirect(301, '/chinh-sach/chinh-s
 
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
 app.use('/media', express.static(path.join(__dirname, 'public', 'media'), { maxAge: '7d' }));
-app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
+// Các trang HTML tĩnh còn lại (vd. /admin/): gắn mã phiên bản cho JS/CSS, luôn hỏi lại máy chủ
+app.use((req, res, next) => {
+  if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+  let rel = req.path;
+  if (rel.endsWith('/')) rel += 'index.html';
+  else if (!path.extname(rel)) rel += '.html';
+  if (!rel.endsWith('.html')) return next();
+  const file = path.join(PUBLIC_DIR, path.normalize(rel));
+  if (!file.startsWith(PUBLIC_DIR + path.sep) || !fs.existsSync(file)) return next();
+  res.type('html').set('Cache-Control', 'no-cache').send(versionAssets(fs.readFileSync(file, 'utf8')));
+});
+// JS/CSS: trình duyệt phải hỏi lại máy chủ mỗi lần (304 nếu không đổi), kể cả file được import bên trong module
+app.use(express.static(PUBLIC_DIR, { extensions: ['html'], setHeaders: (res, f) => { if (/\.(js|css|html|webmanifest)$/.test(f)) res.set('Cache-Control', 'no-cache'); } }));
 app.use((req, res) => res.status(404).type('html').send('<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="robots" content="noindex"><title>Không tìm thấy trang</title><body style="font-family:sans-serif;text-align:center;padding:60px"><h1>Không tìm thấy trang</h1><p><a href="/">Về trang chủ</a></p></body></html>'));
 
 app.use((err, req, res, next) => {

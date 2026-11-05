@@ -222,7 +222,7 @@ const DEFAULT_SETTINGS = {
   heroSubtitle: 'Người xem vào LIVE là có nhân vật mang tên mình. Thả tim, bình luận, tặng quà đều hiện lên màn hình. Cài trên máy tính, chạy cùng TikTok LIVE Studio.',
   heroVideo: '/media/quan-bar.mp4',
   promo: 'Gói Combo rẻ hơn mua lẻ 3 game. Game mới ra hằng tháng.',
-  contactZalo: '', contactFacebook: '', contactTiktok: '', contactPhone: '',
+  contactZalo: '', contactFacebook: '', contactTiktok: '', contactPhone: '', messengerUrl: '', zaloGroup: '',
   // Thông tin người bán (hiện ở chân trang và các trang chính sách)
   sellerName: '', sellerEmail: '', sellerAddress: '', sellerTaxId: '', refundDays: 7,
   // Chuyển khoản thủ công (dùng khi chưa cài PayOS): mã ngân hàng theo VietQR, ví dụ "MB", "VCB", "TCB"

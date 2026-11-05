@@ -271,7 +271,11 @@ try {
     await j('DELETE', `/api/admin/posts/${dup.id}`);
     as('user'); await j('GET', '/api/admin/posts', undefined, 401); as('admin');
     assert.match((await page('/')).html, /href="\/favicon\.ico"/);
-    step('tin tức: nháp ẩn, đăng hiện ở /tin-tuc + trang chủ + sitemap, hẹn giờ, chống mã độc; favicon');
+    const adm = await page('/admin/');
+    assert.match(adm.html, /src="\/admin\/admin\.js\?v=[0-9a-f]{10}"/); assert.equal(adm.headers.get('cache-control'), 'no-cache');
+    assert.match((await page('/')).html, /href="\/css\/site\.css\?v=[0-9a-f]{10}"/);
+    assert.equal((await page('/js/common.js')).headers.get('cache-control'), 'no-cache');
+    step('tin tức: nháp ẩn, đăng hiện ở /tin-tuc + trang chủ + sitemap, hẹn giờ, chống mã độc; favicon; JS/CSS có mã phiên bản, không bị giữ bản cũ');
   }
 
   {

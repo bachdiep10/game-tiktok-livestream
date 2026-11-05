@@ -606,7 +606,9 @@ function renderSettings() {
         ${f('gtmId', 'Google Tag Manager', 'Dạng GTM-XXXXXXX')}${f('ga4Id', 'Google Analytics 4 (tuỳ chọn)', 'Dạng G-XXXXXXXXXX. Bỏ trống nếu GA4 đã cài trong GTM.')}
         ${f('metaPixelId', 'Meta (Facebook) Pixel ID', 'Dãy số, VD 1497281003464233')}${f('tiktokPixelId', 'TikTok Pixel ID (tuỳ chọn)', 'Lấy ở TikTok Ads Manager › Events')}
       </div></div>
-      <div class="box-s"><h2>Liên hệ hỗ trợ</h2><p class="note">Để trống mục nào thì mục đó không hiện.</p><div class="form-grid">
+      <div class="box-s"><h2>Liên hệ hỗ trợ</h2><p class="note">Để trống mục nào thì mục đó không hiện. Nút "Chat hỗ trợ" trên web mở fanpage; chưa có fanpage thì mở Zalo.</p><div class="form-grid">
+        ${f('messengerUrl', 'Link chat fanpage (Messenger)', 'VD: https://m.me/tenfanpage. Hiện nút chat nổi ở góc màn hình và nút "Chat hỗ trợ".', 'text', true)}
+        ${f('zaloGroup', 'Link nhóm Zalo hỗ trợ', 'VD: https://zalo.me/g/abcxyz. Hiện cho khách sau khi mua và ở mục Hỗ trợ.', 'text', true)}
         ${f('contactZalo', 'Zalo', 'Số điện thoại hoặc link zalo.me')}${f('contactPhone', 'Số điện thoại')}
         ${f('contactFacebook', 'Facebook', 'Link fanpage')}${f('contactTiktok', 'TikTok', 'Link kênh TikTok')}
       </div></div>

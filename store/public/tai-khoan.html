@@ -47,7 +47,7 @@
   <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
 
   <script type="module">
-    import { $, $$, api, esc, moneyFull, copy, toast, applyBrand, me, catalog, zaloLink, gameList } from '/js/common.js';
+    import { $, $$, api, esc, moneyFull, copy, toast, applyBrand, me, catalog, zaloLink, gameList, supportLink } from '/js/common.js';
     import { track, trackOnce } from '/js/track.js';
     const q = new URLSearchParams(location.search);
     const next = q.get('next');
@@ -81,7 +81,7 @@
       $('#forgot')?.addEventListener('click', async (e) => {
         e.preventDefault();
         const s = (await catalog()).settings;
-        if (s.contactZalo) window.open(zaloLink(s.contactZalo), '_blank'); else toast('Vui lòng liên hệ người bán để cấp lại mật khẩu.');
+        if (supportLink(s)) window.open(supportLink(s), '_blank'); else toast('Vui lòng liên hệ người bán để cấp lại mật khẩu.');
       });
       $('#af').onsubmit = async (e) => {
         e.preventDefault();

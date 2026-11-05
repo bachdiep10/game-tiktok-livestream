@@ -92,6 +92,8 @@ function renderFaq() {
 function renderSupport() {
   const s = C.settings;
   const items = [];
+  if (s.messengerUrl) items.push(`<a href="${esc(s.messengerUrl)}" target="_blank" rel="noopener"><span class="ico" style="background:#0084ff22">💬</span><span>Chat fanpage<small>Trả lời nhanh nhất</small></span></a>`);
+  if (s.zaloGroup) items.push(`<a href="${esc(s.zaloGroup)}" target="_blank" rel="noopener"><span class="ico" style="background:#0068ff22">👥</span><span>Nhóm Zalo<small>Hỗ trợ & tin cập nhật</small></span></a>`);
   if (s.contactZalo) items.push(`<a href="${esc(zaloLink(s.contactZalo))}" target="_blank" rel="noopener"><span class="ico" style="background:#0068ff22">💬</span><span>Zalo<small>Hỗ trợ cài đặt</small></span></a>`);
   if (s.contactFacebook) items.push(`<a href="${esc(s.contactFacebook)}" target="_blank" rel="noopener"><span class="ico" style="background:#1877f222">📘</span><span>Facebook<small>Nhắn tin fanpage</small></span></a>`);
   if (s.contactTiktok) items.push(`<a href="${esc(s.contactTiktok)}" target="_blank" rel="noopener"><span class="ico" style="background:#ff2d5522">🎵</span><span>TikTok<small>Xem game chạy LIVE</small></span></a>`);
