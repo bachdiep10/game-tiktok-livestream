@@ -310,3 +310,20 @@ input:focus, textarea:focus, select:focus { border-color: var(--brand); box-shad
 .dl .support-box { display: flex; }
 .support-box .btn { background: linear-gradient(135deg, #00b2ff, #006aff); box-shadow: none; color: #fff; }
 .support-box .btn.zalo { background: #0068ff; }
+
+/* menu ☰ trên điện thoại */
+.menu-btn { display: none; width: 42px; height: 42px; flex: 0 0 42px; border: 1px solid var(--line); border-radius: 12px; background: #fff; cursor: pointer; padding: 0; flex-direction: column; align-items: center; justify-content: center; gap: 5px; }
+.menu-btn span { display: block; width: 20px; height: 2px; border-radius: 2px; background: var(--text); transition: transform .2s, opacity .2s; }
+.menu-btn.on span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.menu-btn.on span:nth-child(2) { opacity: 0; }
+.menu-btn.on span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+.mnav { position: absolute; top: 100%; left: 0; right: 0; background: #fff; border-bottom: 1px solid var(--line); box-shadow: 0 18px 40px rgba(22, 18, 52, 0.14); padding: 8px 16px 16px; display: flex; flex-direction: column; }
+.mnav[hidden] { display: none; }
+.mnav a { padding: 13px 4px; border-bottom: 1px solid var(--line); color: var(--text); text-decoration: none; font-weight: 600; font-size: 16px; }
+.mnav a:last-child { border-bottom: 0; }
+.mnav a.mn-cta { margin-top: 10px; border: 0; border-radius: 999px; background: var(--grad); color: #fff; text-align: center; }
+@media (max-width: 760px) {
+  .menu-btn { display: inline-flex; }
+  .top .wrap { gap: 10px; }
+  .nav .acc { display: none; }
+}
