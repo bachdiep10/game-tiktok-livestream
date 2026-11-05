@@ -238,7 +238,7 @@ const DEFAULT_SETTINGS = {
   // SEO (để trống = tự tạo từ tên game và bảng giá)
   seoTitle: '', seoDescription: '', ogImage: '', googleVerification: '',
   // Đo lường quảng cáo: Google Tag Manager, Google Analytics 4, Meta (Facebook) Pixel, TikTok Pixel
-  gtmId: 'GTM-NZQB5F5V', ga4Id: '', metaPixelId: '1497281003464233', tiktokPixelId: '',
+  gtmId: 'GTM-NZQB5F5V', ga4Id: 'G-33XXV3JKWQ', metaPixelId: '1497281003464233', tiktokPixelId: '',
 };
 
 // Lấy khối JSON hoàn chỉnh đầu tiên trong chuỗi (bỏ phần rác dính phía sau)
