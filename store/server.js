@@ -998,10 +998,13 @@ const ASSET_V = (() => {
   walk(PUBLIC_DIR);
   return h.digest('hex').slice(0, 10);
 })();
-// import trong module (vd. from '/js/common.js') cũng gắn mã phiên bản: CDN Hostinger tự phục vụ file tĩnh
-// và bỏ Cache-Control, nên chỉ đổi đường dẫn mới chắc chắn lấy được file mới
-const versionImports = (code) => code.replace(/(\bfrom\s*['"]|\bimport\s*\(\s*['"])((?:\.\/|\/js\/|\/admin\/)[^'"?#]+\.js)(['"])/g, `$1$2?v=${ASSET_V}$3`);
-const versionAssets = (html) => versionImports(html.replace(/((?:src|href)=")(\/(?:js|css|admin)\/[^"?#]+\.(?:js|css))(")/g, `$1$2?v=${ASSET_V}$3`));
+// import bên trong module (vd. from '/js/common.js'): CDN Hostinger tự phục vụ file .js từ đĩa, không qua Node,
+// nên dùng import map trong HTML (HTML luôn do Node trả) để trỏ mọi file JS sang bản ?v=<mã>
+const JS_FILES = ['js', 'admin'].flatMap(d => fs.readdirSync(path.join(PUBLIC_DIR, d)).filter(f => f.endsWith('.js')).map(f => `/${d}/${f}`));
+const IMPORT_MAP = `<script type="importmap">${JSON.stringify({ imports: Object.fromEntries(JS_FILES.map(f => [f, `${f}?v=${ASSET_V}`])) })}</script>`;
+const versionAssets = (html) => html
+  .replace(/((?:src|href)=")(\/(?:js|css|admin)\/[^"?#]+\.(?:js|css))(")/g, `$1$2?v=${ASSET_V}$3`)
+  .replace(/<head>/i, `<head>\n  ${IMPORT_MAP}`);
 const sendHtml = (res, html) => res.type('html').set('Cache-Control', 'public, max-age=60').send(versionAssets(injectTracking(html, D.settings)));
 // Trang tài khoản và đơn hàng cũng cần mã đo lường (đăng ký, mua hàng)
 const privatePage = (file) => (req, res) => res.type('html').set({ 'Cache-Control': 'no-cache', 'X-Robots-Tag': 'noindex, nofollow' })
@@ -1035,18 +1038,6 @@ app.use((req, res, next) => {
   const file = path.join(PUBLIC_DIR, path.normalize(rel));
   if (!file.startsWith(PUBLIC_DIR + path.sep) || !fs.existsSync(file)) return next();
   res.type('html').set('Cache-Control', 'no-cache').send(versionAssets(fs.readFileSync(file, 'utf8')));
-});
-// File JS của web: gắn mã phiên bản vào các import bên trong
-const jsCache = new Map();
-app.get(/^\/(js|admin)\/[\w.-]+\.js$/, (req, res, next) => {
-  const file = path.join(PUBLIC_DIR, path.normalize(req.path));
-  if (!file.startsWith(PUBLIC_DIR + path.sep) || !fs.existsSync(file)) return next();
-  let code = jsCache.get(file);
-  if (code === undefined) { code = versionImports(fs.readFileSync(file, 'utf8')); jsCache.set(file, code); }
-  const etag = `"${ASSET_V}-${crypto.createHash('sha1').update(code).digest('hex').slice(0, 12)}"`;
-  res.set({ 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': req.query.v === ASSET_V ? 'public, max-age=31536000, immutable' : 'no-cache', ETag: etag });
-  if (req.headers['if-none-match'] === etag) return res.status(304).end();
-  res.send(code);
 });
 // JS/CSS: trình duyệt phải hỏi lại máy chủ mỗi lần (304 nếu không đổi), kể cả file được import bên trong module
 app.use(express.static(PUBLIC_DIR, { extensions: ['html'], setHeaders: (res, f) => { if (/\.(js|css|html|webmanifest)$/.test(f)) res.set('Cache-Control', 'no-cache'); } }));

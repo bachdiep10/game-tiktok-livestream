@@ -275,10 +275,10 @@ try {
     assert.match(adm.html, /src="\/admin\/admin\.js\?v=[0-9a-f]{10}"/); assert.equal(adm.headers.get('cache-control'), 'no-cache');
     assert.match((await page('/')).html, /href="\/css\/site\.css\?v=[0-9a-f]{10}"/);
     assert.equal((await page('/js/common.js')).headers.get('cache-control'), 'no-cache');
-    const adminJs = (await page('/admin/admin.js')).html;
-    assert.match(adminJs, /from '\/js\/common\.js\?v=[0-9a-f]{10}'/); assert.match(adminJs, /from '\/js\/markdown\.js\?v=[0-9a-f]{10}'/);
-    assert.match((await page('/js/site.js')).html, /from '\.\/common\.js\?v=[0-9a-f]{10}'/);
-    assert.match((await page('/tai-khoan.html')).html, /from '\/js\/common\.js\?v=[0-9a-f]{10}'/);
+    const im = JSON.parse(adm.html.match(/<script type="importmap">(.*?)<\/script>/)[1]).imports;
+    assert.match(im['/js/common.js'], /^\/js\/common\.js\?v=[0-9a-f]{10}$/); assert.ok(im['/js/markdown.js'] && im['/js/track.js']);
+    assert.ok((await page('/')).html.indexOf('type="importmap"') < (await page('/')).html.indexOf('type="module"'));
+    assert.match((await page('/tai-khoan.html')).html, /type="importmap"/);
     step('tin tức: nháp ẩn, đăng hiện ở /tin-tuc + trang chủ + sitemap, hẹn giờ, chống mã độc; favicon; JS/CSS có mã phiên bản, không bị giữ bản cũ');
   }
 
