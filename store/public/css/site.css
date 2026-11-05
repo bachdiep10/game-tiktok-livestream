@@ -44,6 +44,10 @@ img, video { max-width: 100%; display: block; }
 .top { position: sticky; top: 0; z-index: 20; backdrop-filter: blur(14px); background: rgba(255, 255, 255, 0.86); border-bottom: 1px solid var(--line); }
 .top .wrap { display: flex; align-items: center; gap: 24px; height: 66px; }
 .logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 19px; text-decoration: none; letter-spacing: -0.02em; }
+.logo-img { height: 44px; width: auto; display: block; }
+.logo-img.sm { height: 34px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (max-width: 520px) { .logo-img { height: 34px; } }
 .logo-mark { width: 34px; height: 34px; border-radius: 10px; background: var(--grad); display: grid; place-items: center; font-size: 17px; box-shadow: 0 6px 20px rgba(255, 61, 127, 0.4); }
 .nav { display: flex; gap: 22px; margin-left: auto; align-items: center; }
 .nav a { text-decoration: none; color: var(--muted); font-weight: 500; font-size: 15px; }
@@ -258,3 +262,37 @@ input:focus, textarea:focus, select:focus { border-color: var(--brand); box-shad
 @media (max-width: 760px) { .game-detail { grid-template-columns: 1fr; } .gd-media { max-width: 360px; margin: 0 auto; width: 100%; } }
 .game .more { font-weight: 700; font-size: 14.5px; color: var(--brand); text-decoration: none; margin-top: 4px; }
 .game .more:hover { text-decoration: underline; }
+
+/* ---------- tin tức ---------- */
+.posts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+@media (max-width: 900px) { .posts { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .posts { grid-template-columns: 1fr; } }
+.post-card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; }
+.pc-img { display: block; aspect-ratio: 16 / 9; background: var(--soft); overflow: hidden; }
+.pc-img img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .3s; }
+.post-card:hover .pc-img img { transform: scale(1.03); }
+.pc-ph { display: grid; place-items: center; height: 100%; }
+.pc-ph img { width: 72px; height: 72px; object-fit: contain; opacity: .5; }
+.pc-body { padding: 14px 18px 18px; }
+.pc-body time { font-size: 13px; color: var(--muted); }
+.pc-body h3 { margin: 4px 0 8px; font-size: 17px; line-height: 1.4; }
+.pc-body h3 a { color: var(--text); text-decoration: none; }
+.pc-body h3 a:hover { color: var(--brand); }
+.pc-body p { margin: 0; color: var(--muted); font-size: 14.5px; line-height: 1.6; }
+.sec-head .more { font-weight: 600; white-space: nowrap; }
+.pager { display: flex; justify-content: center; align-items: center; gap: 14px; margin: 28px 0 0; color: var(--muted); }
+.post { max-width: 820px; margin: 0 auto; }
+.post-meta { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+.post-cover { width: 100%; border-radius: 14px; margin: 0 0 18px; display: block; }
+.post-body { font-size: 16.5px; }
+.post-body h2 { font-size: 22px; } .post-body h3 { font-size: 18.5px; margin: 22px 0 6px; }
+.post-body img { max-width: 100%; height: auto; border-radius: 12px; display: block; margin: 14px auto; }
+.post-body blockquote { margin: 16px 0; padding: 10px 16px; border-left: 4px solid var(--accent); background: var(--soft); border-radius: 0 10px 10px 0; }
+.post-body hr { border: 0; border-top: 1px solid var(--line); margin: 24px 0; }
+.embed { position: relative; aspect-ratio: 16 / 9; margin: 16px 0; }
+.embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; border-radius: 12px; }
+.post-cta { margin-top: 28px; padding: 16px 18px; border-radius: 14px; background: var(--soft); display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; }
+.sec-head h1 { font-size: clamp(28px, 3.6vw, 40px); letter-spacing: -0.02em; margin: 0 0 6px; line-height: 1.2; }
+.post-cover { max-height: 440px; object-fit: cover; }
+.nav a { white-space: nowrap; }
+@media (max-width: 420px) { .logo-img { height: 28px; } .top .wrap { gap: 10px; } .nav { gap: 10px; } .nav .btn.sm { padding-left: 12px; padding-right: 12px; } }

@@ -292,6 +292,7 @@ function normalize(data) {
     licenses: data.licenses || [],
     users: data.users || [],
     bankTxns: data.bankTxns || [],
+    posts: data.posts || [],
     bank: data.bank || { state: {}, lastRun: 0, lastError: '' },
     admin: data.admin || { passwordHash: '', salt: '' },
     secret: data.secret || '',

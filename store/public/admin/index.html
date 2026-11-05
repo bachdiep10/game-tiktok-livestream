@@ -10,12 +10,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/site.css">
   <link rel="stylesheet" href="/admin/admin.css">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔑</text></svg>">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" type="image/png" sizes="192x192" href="/media/icon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
 </head>
 <body class="admin">
   <div id="login" class="login" hidden>
     <form class="panel" id="loginForm">
-      <div class="logo" style="margin-bottom:18px"><span class="logo-mark">🔑</span><span id="loginBrand">Quản trị</span></div>
+      <div class="logo" style="margin-bottom:18px"><img class="logo-img" src="/media/logo.png" width="210" height="50" alt=""></div><p class="note" id="loginBrand" style="margin:0 0 12px">Quản trị</p>
       <h2 id="loginTitle" style="margin:0 0 6px">Đăng nhập</h2>
       <p class="note" id="loginNote" style="margin:0 0 18px">Nhập mật khẩu quản trị.</p>
       <div class="field"><label for="pw">Mật khẩu</label><input id="pw" type="password" required autocomplete="current-password"></div>
@@ -27,7 +30,7 @@
 
   <div id="app" class="shell" hidden>
     <aside class="side">
-      <a class="logo" href="/" target="_blank"><span class="logo-mark">🎮</span><span id="brand">LiveGame</span></a>
+      <a class="logo" href="/" target="_blank"><img class="logo-img sm" src="/media/icon-192.png" width="34" height="34" alt=""><span id="brand">LiveGame</span></a>
       <nav id="tabs">
         <a data-tab="overview" class="on">📊 Tổng quan</a>
         <a data-tab="orders">🧾 Đơn hàng <span class="pill" id="pendingPill" hidden></span></a>
@@ -35,6 +38,7 @@
         <a data-tab="licenses">🔑 License key</a>
         <a data-tab="users">👥 Khách hàng</a>
         <a data-tab="games">🎮 Game</a>
+        <a data-tab="posts">📰 Tin tức</a>
         <a data-tab="plans">💰 Gói giá & Hỏi đáp</a>
         <a data-tab="settings">⚙️ Cài đặt</a>
       </nav>
@@ -47,6 +51,7 @@
       <section data-view="licenses" hidden></section>
       <section data-view="users" hidden></section>
       <section data-view="games" hidden></section>
+      <section data-view="posts" hidden></section>
       <section data-view="plans" hidden></section>
       <section data-view="settings" hidden></section>
     </main>

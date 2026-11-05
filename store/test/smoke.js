@@ -250,6 +250,31 @@ try {
   step('SEO: trang chủ có sẵn game + FAQ + thẻ meta; trang /game/<id> chỉ cho game đang bán; sitemap, robots, noindex trang riêng');
 
   {
+    // Tin tức: nháp không hiện, đăng thì hiện ở /tin-tuc, bài riêng, trang chủ, sitemap; nội dung được lọc an toàn
+    as('admin');
+    const draft = (await j('POST', '/api/admin/posts', { title: 'Mẹo tăng tim khi LIVE Đám cưới', content: '## Mở đầu\nĐoạn **đậm** và [link](https://netxioviet.com).\n\n- ý 1\n- ý 2\n\n<script>alert(1)</script>\n[xấu](javascript:alert(1))\n![ảnh](/uploads/a.jpg)' })).post;
+    assert.equal(draft.slug, 'meo-tang-tim-khi-live-dam-cuoi'); assert.equal(draft.status, 'draft');
+    assert.equal((await page(`/tin-tuc/${draft.slug}`)).status, 404);
+    const pub = (await j('PATCH', `/api/admin/posts/${draft.id}`, { status: 'published' })).post;
+    assert.ok(pub.publishedAt);
+    const art = await page(`/tin-tuc/${pub.slug}`);
+    assert.equal(art.status, 200);
+    assert.match(art.html, /<h1>Mẹo tăng tim khi LIVE Đám cưới<\/h1>/); assert.match(art.html, /<h2>Mở đầu<\/h2>/); assert.match(art.html, /<strong>đậm<\/strong>/);
+    assert.match(art.html, /<li>ý 1<\/li>/); assert.match(art.html, /"@type":"BlogPosting"/); assert.match(art.html, /og:image" content="[^"]*\/uploads\/a\.jpg/);
+    assert.doesNotMatch(art.html, /<script>alert/); assert.doesNotMatch(art.html, /href="javascript:/);
+    assert.match((await page('/tin-tuc')).html, new RegExp(`/tin-tuc/${pub.slug}`));
+    assert.match((await page('/')).html, /Bài viết mới/);
+    assert.match((await page('/sitemap.xml')).html, new RegExp(`/tin-tuc/${pub.slug}<`));
+    const dup = (await j('POST', '/api/admin/posts', { title: 'Mẹo tăng tim khi LIVE Đám cưới', status: 'published', publishedAt: Date.now() + 86400000 })).post;
+    assert.equal(dup.slug, 'meo-tang-tim-khi-live-dam-cuoi-2');
+    assert.equal((await page(`/tin-tuc/${dup.slug}`)).status, 404); // hẹn giờ: chưa tới giờ đăng
+    await j('DELETE', `/api/admin/posts/${dup.id}`);
+    as('user'); await j('GET', '/api/admin/posts', undefined, 401); as('admin');
+    assert.match((await page('/')).html, /href="\/favicon\.ico"/);
+    step('tin tức: nháp ẩn, đăng hiện ở /tin-tuc + trang chủ + sitemap, hẹn giờ, chống mã độc; favicon');
+  }
+
+  {
     // Tiến trình cũ (dữ liệu cũ trong bộ nhớ) không được ghi đè thay đổi của tiến trình mới
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lgdb-'));
     const oldP = new DB(dir), newP = new DB(dir);

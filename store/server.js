@@ -37,7 +37,7 @@ const keys = loadKeyPair(DATA_DIR);
 const app = express();
 app.set('trust proxy', true);
 app.disable('x-powered-by');
-app.use(express.json({ limit: '200kb' }));
+app.use(express.json({ limit: '1mb' }));
 // Nhiều tiến trình cùng chạy: mỗi yêu cầu API/tải game giữ khoá dữ liệu tới khi trả lời xong
 app.use(async (req, res, next) => {
   if (!req.path.startsWith('/api/') && !req.path.startsWith('/tai-ve/')) return next();
@@ -897,6 +897,57 @@ app.put('/api/admin/faq', (req, res) => {
   res.json({ ok: true, faq: D.faq });
 });
 
+// ---------- tin tức ----------
+const postSlug = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
+  .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80).replace(/-+$/, '');
+const postView = (p) => ({ ...p, url: `/tin-tuc/${p.slug}` });
+
+function applyPost(p, b) {
+  if (b.title !== undefined) p.title = clean(b.title, 200);
+  if (b.excerpt !== undefined) p.excerpt = clean(b.excerpt, 400);
+  if (b.cover !== undefined) p.cover = clean(b.cover, 500);
+  if (b.content !== undefined) p.content = String(b.content ?? '').slice(0, 100000);
+  if (b.seoTitle !== undefined) p.seoTitle = clean(b.seoTitle, 120);
+  if (b.seoDescription !== undefined) p.seoDescription = clean(b.seoDescription, 300);
+  if (b.status !== undefined) p.status = b.status === 'published' ? 'published' : 'draft';
+  if (b.publishedAt !== undefined && b.publishedAt !== '') { const t = Number(b.publishedAt) || Date.parse(b.publishedAt); if (t) p.publishedAt = t; }
+  if (p.status === 'published' && !p.publishedAt) p.publishedAt = now();
+  if (b.slug !== undefined || !p.slug) {
+    let base = postSlug(b.slug || p.title) || `bai-viet-${p.id}`;
+    let sl = base;
+    for (let i = 2; D.posts.some(x => x.id !== p.id && x.slug === sl); i++) sl = `${base}-${i}`;
+    p.slug = sl;
+  }
+  p.updatedAt = now();
+}
+
+app.get('/api/admin/posts', (req, res) => {
+  res.json({ ok: true, posts: [...D.posts].sort((a, b) => (b.publishedAt || b.createdAt) - (a.publishedAt || a.createdAt)).map(postView) });
+});
+app.post('/api/admin/posts', (req, res) => {
+  if (!clean(req.body.title)) return fail(res, 400, 'Nhập tiêu đề bài viết.');
+  const p = { id: crypto.randomBytes(5).toString('hex'), slug: '', title: '', excerpt: '', cover: '', content: '', seoTitle: '', seoDescription: '', status: 'draft', publishedAt: 0, createdAt: now(), updatedAt: now() };
+  applyPost(p, req.body);
+  D.posts.push(p);
+  db.save();
+  res.json({ ok: true, post: postView(p) });
+});
+app.patch('/api/admin/posts/:id', (req, res) => {
+  const p = D.posts.find(x => x.id === req.params.id);
+  if (!p) return fail(res, 404, 'Không có bài viết.');
+  if (req.body.title !== undefined && !clean(req.body.title)) return fail(res, 400, 'Nhập tiêu đề bài viết.');
+  applyPost(p, req.body);
+  db.save();
+  res.json({ ok: true, post: postView(p) });
+});
+app.delete('/api/admin/posts/:id', (req, res) => {
+  const i = D.posts.findIndex(x => x.id === req.params.id);
+  if (i < 0) return fail(res, 404, 'Không có bài viết.');
+  D.posts.splice(i, 1);
+  db.save();
+  res.json({ ok: true });
+});
+
 const UPLOAD_TYPES = { '.jpg': 1, '.jpeg': 1, '.png': 1, '.webp': 1, '.gif': 1, '.mp4': 1, '.webm': 1 };
 app.post('/api/admin/upload', express.raw({ type: () => true, limit: '80mb' }), (req, res) => {
   const ext = path.extname(String(req.query.name || '')).toLowerCase();
@@ -936,6 +987,8 @@ const seo = createSeo({ publicDir: path.join(__dirname, 'public'), getData: () =
 const sendHtml = (res, html) => res.type('html').set('Cache-Control', 'public, max-age=60').send(html);
 app.get(['/', '/index.html', '/index'], (req, res) => sendHtml(res, seo.home(req)));
 app.get('/game/:id', (req, res, next) => { const html = seo.gamePage(req, req.params.id); if (!html) return next(); sendHtml(res, html); });
+app.get(['/tin-tuc', '/tin-tuc/'], (req, res) => sendHtml(res, seo.newsList(req)));
+app.get('/tin-tuc/:slug', (req, res, next) => { const html = seo.newsPost(req, req.params.slug); if (!html) return next(); sendHtml(res, html); });
 app.get(['/huong-dan', '/huong-dan.html'], (req, res) => sendHtml(res, seo.guidePage(req)));
 app.get(['/tra-cuu', '/tra-cuu.html'], (req, res) => sendHtml(res, seo.lookupPage(req)));
 app.get('/robots.txt', (req, res) => res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(seo.robots(req)));

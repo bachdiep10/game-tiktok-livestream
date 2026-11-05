@@ -3,6 +3,7 @@
 // Trang vẫn dùng site.js như cũ: JS chỉ vẽ lại đúng nội dung đã có sẵn.
 import fs from 'node:fs';
 import path from 'node:path';
+import { renderMarkdown, plainText, firstImage } from '../public/js/markdown.js';
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => `${Math.round(n / 1000).toLocaleString('vi-VN')}K`;
@@ -18,6 +19,14 @@ export const POLICY_PAGES = [
   { slug: 'bao-mat', title: 'Chính sách quyền riêng tư', desc: 'Cách cửa hàng thu thập, sử dụng và bảo vệ thông tin của khách hàng.' },
   { slug: 'dieu-khoan', title: 'Điều khoản sử dụng & bản quyền', desc: 'Điều khoản sử dụng game và license key, quyền sở hữu trí tuệ.' },
 ];
+
+// Bài viết đang hiện: đã đăng và tới giờ đăng (hẹn giờ đăng thì chờ tới lúc đó)
+export const publishedPosts = (D) => (D.posts || [])
+  .filter(p => p.status === 'published' && (p.publishedAt || 0) <= Date.now())
+  .sort((a, b) => (b.publishedAt || 0) - (a.publishedAt || 0));
+const postCover = (p) => p.cover || firstImage(p.content) || '';
+const postExcerpt = (p, n = 180) => p.excerpt || plainText(p.content, n);
+const viDate = (t) => new Date(t).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'Asia/Ho_Chi_Minh' });
 
 const PRIVATE_PAGES = ['/tai-khoan', '/don-hang', '/admin'];
 
@@ -41,7 +50,8 @@ export function createSeo({ publicDir, getData, baseUrl }) {
     const games = D.games.filter(g => g.visible).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     const single = D.plans.find(p => p.slots === 1 && !p.allGames);
     const abs = (u) => (!u ? '' : /^https?:/.test(u) ? u : `${base}${u.startsWith('/') ? '' : '/'}${u}`);
-    return { D, s, base, games, single, abs };
+    const posts = publishedPosts(D);
+    return { D, s, base, games, single, abs, posts };
   };
 
   const sameAs = (s) => [s.contactFacebook, s.contactTiktok].filter(u => /^https?:/.test(u || ''));
@@ -50,6 +60,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
     const { s, base } = ctx;
     return {
       '@type': 'Organization', '@id': `${base}/#org`, name: s.brandName, url: `${base}/`,
+      logo: `${base}/media/icon-512.png`,
       ...(s.sellerEmail ? { email: s.sellerEmail } : {}),
       ...(s.contactPhone ? { telephone: s.contactPhone } : {}),
       ...(sameAs(s).length ? { sameAs: sameAs(s) } : {}),
@@ -170,7 +181,13 @@ export function createSeo({ publicDir, getData, baseUrl }) {
       .replace('<div class="games" id="games"></div>', `<div class="games" id="games">${gameCards(ctx)}</div>`)
       .replace('<div class="plans" id="plans"></div>', `<div class="plans" id="plans">${planCards(ctx)}</div>`)
       .replace('<div class="faq" id="faq"></div>', `<div class="faq" id="faq">${D.faq.map(f => `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`).join('')}</div>`)
-      .replace('<span data-brand>LiveGame</span>', `<span data-brand>${esc(s.brandName)}</span>`);
+      .replace('<span class="sr" data-brand>LiveGame</span>', `<span class="sr" data-brand>${esc(s.brandName)}</span>`);
+    if (ctx.posts.length) html = html.replace('<!-- tin-moi -->', `<section id="tin-tuc">
+      <div class="wrap">
+        <div class="sec-head"><div><div class="kicker">Tin tức</div><h2>Bài viết mới</h2></div><a class="more" href="/tin-tuc">Xem tất cả →</a></div>
+        <div class="posts">${postCards(ctx.posts.slice(0, 3))}</div>
+      </div>
+    </section>`);
     if (hv) html = html.replace('<video id="heroVideo"', `<video id="heroVideo" src="${esc(hv)}" aria-label="Video game chạy trên TikTok LIVE"`);
     return html;
   }
@@ -235,8 +252,92 @@ export function createSeo({ publicDir, getData, baseUrl }) {
     html = html.replace(/<main>[\s\S]*<\/main>/, body)
       .replace(/<!-- video demo -->[\s\S]*?<\/body>/, '<script type="module">import { applyBrand } from \'/js/common.js\'; applyBrand();</script>\n</body>')
       .replace(/href="#(game|bang-gia|hoi-dap)"/g, 'href="/#$1"')
-      .replace('<span data-brand>LiveGame</span>', `<span data-brand>${esc(s.brandName)}</span>`);
+      .replace('<span class="sr" data-brand>LiveGame</span>', `<span class="sr" data-brand>${esc(s.brandName)}</span>`);
     return html;
+  }
+
+  // Giữ header/footer của trang chủ, thay phần thân
+  function shell(ctx, head, body) {
+    return withHead(read('index.html'), headTags(ctx, head))
+      .replace(/<main>[\s\S]*<\/main>/, body)
+      .replace(/<!-- video demo -->[\s\S]*?<\/body>/, '<script type="module">import { applyBrand } from \'/js/common.js\'; applyBrand();</script>\n</body>')
+      .replace(/href="#(game|bang-gia|hoi-dap)"/g, 'href="/#$1"')
+      .replace('<span class="sr" data-brand>LiveGame</span>', `<span class="sr" data-brand>${esc(ctx.s.brandName)}</span>`);
+  }
+
+  function postCards(list) {
+    return list.map(p => {
+      const cover = postCover(p);
+      return `
+    <article class="post-card">
+      <a class="pc-img" href="/tin-tuc/${esc(p.slug)}">${cover ? `<img src="${esc(cover)}" alt="${esc(p.title)}" loading="lazy">` : '<span class="pc-ph"><img src="/media/icon-192.png" alt=""></span>'}</a>
+      <div class="pc-body">
+        <time datetime="${new Date(p.publishedAt).toISOString()}">${viDate(p.publishedAt)}</time>
+        <h3><a href="/tin-tuc/${esc(p.slug)}">${esc(p.title)}</a></h3>
+        <p>${esc(postExcerpt(p, 150))}</p>
+      </div>
+    </article>`;
+    }).join('');
+  }
+
+  // ---------- tin tức: /tin-tuc và /tin-tuc/<slug> ----------
+  const PER_PAGE = 12;
+  function newsList(req) {
+    const ctx = site(req);
+    const { s, base, posts } = ctx;
+    const pages = Math.max(1, Math.ceil(posts.length / PER_PAGE));
+    const page = Math.min(pages, Math.max(1, parseInt(req.query.trang, 10) || 1));
+    const list = posts.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+    const url = `${base}/tin-tuc${page > 1 ? `?trang=${page}` : ''}`;
+    const link = (n) => `/tin-tuc${n > 1 ? `?trang=${n}` : ''}`;
+    const body = `
+  <main class="page">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="breadcrumb"><a href="/">Trang chủ</a> › <span>Tin tức</span></nav>
+      <div class="sec-head"><div><div class="kicker">Tin tức</div><h1>Tin tức & mẹo LIVE</h1><p>Cập nhật game mới, mẹo tăng tương tác và kinh nghiệm livestream TikTok.</p></div></div>
+      ${list.length ? `<div class="posts">${postCards(list)}</div>` : '<div class="panel"><p class="note">Chưa có bài viết nào.</p></div>'}
+      ${pages > 1 ? `<nav class="pager">${page > 1 ? `<a class="btn ghost sm" href="${link(page - 1)}" rel="prev">← Trang trước</a>` : ''}<span>Trang ${page}/${pages}</span>${page < pages ? `<a class="btn ghost sm" href="${link(page + 1)}" rel="next">Trang sau →</a>` : ''}</nav>` : ''}
+    </div>
+  </main>`;
+    const graph = { '@context': 'https://schema.org', '@graph': [orgLd(ctx), { '@type': 'Blog', '@id': `${base}/tin-tuc#blog`, name: `Tin tức ${s.brandName}`, url: `${base}/tin-tuc`, inLanguage: 'vi-VN', publisher: { '@id': `${base}/#org` },
+      blogPost: list.map(p => ({ '@type': 'BlogPosting', headline: p.title, url: `${base}/tin-tuc/${p.slug}`, datePublished: new Date(p.publishedAt).toISOString() })) }] };
+    return shell(ctx, { title: pageTitle(page > 1 ? `Tin tức (trang ${page})` : 'Tin tức & mẹo livestream TikTok', s), desc: 'Tin tức, mẹo tăng tương tác và kinh nghiệm livestream TikTok với game tương tác.', url, image: `${base}/media/og-logo.jpg`, extra: ld(graph) }, body);
+  }
+
+  function newsPost(req, slugName) {
+    const ctx = site(req);
+    const { s, base, posts, abs } = ctx;
+    const p = posts.find(x => x.slug === slugName);
+    if (!p) return null;
+    const url = `${base}/tin-tuc/${p.slug}`;
+    const cover = postCover(p);
+    const desc = p.seoDescription || postExcerpt(p, 160);
+    const others = posts.filter(x => x.id !== p.id).slice(0, 3);
+    const graph = { '@context': 'https://schema.org', '@graph': [orgLd(ctx),
+      { '@type': 'BlogPosting', '@id': `${url}#post`, headline: p.title, description: desc, url, mainEntityOfPage: url, inLanguage: 'vi-VN',
+        datePublished: new Date(p.publishedAt).toISOString(), dateModified: new Date(p.updatedAt || p.publishedAt).toISOString(),
+        ...(cover ? { image: [abs(cover)] } : {}), author: { '@id': `${base}/#org` }, publisher: { '@id': `${base}/#org` } },
+      { '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: `${base}/` },
+        { '@type': 'ListItem', position: 2, name: 'Tin tức', item: `${base}/tin-tuc` },
+        { '@type': 'ListItem', position: 3, name: p.title, item: url },
+      ] }] };
+    const body = `
+  <main class="page">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="breadcrumb"><a href="/">Trang chủ</a> › <a href="/tin-tuc">Tin tức</a> › <span>${esc(p.title)}</span></nav>
+      <article class="panel policy post">
+        <h1>${esc(p.title)}</h1>
+        <p class="post-meta"><time datetime="${new Date(p.publishedAt).toISOString()}">${viDate(p.publishedAt)}</time> · ${esc(s.brandName)}</p>
+        ${p.cover ? `<img class="post-cover" src="${esc(p.cover)}" alt="${esc(p.title)}">` : ''}
+        <div class="post-body">${renderMarkdown(p.content)}</div>
+        <div class="post-cta"><b>Muốn LIVE có game tương tác như vậy?</b> <a class="btn sm" href="/#game">Xem các game</a></div>
+      </article>
+      ${others.length ? `<section style="margin-top:32px"><h2>Bài viết khác</h2><div class="posts">${postCards(others)}</div></section>` : ''}
+    </div>
+  </main>`;
+    return shell(ctx, { title: pageTitle(p.seoTitle || p.title, s), desc, url, image: cover ? abs(cover) : `${base}/media/og-logo.jpg`, type: 'article',
+      extra: `<meta property="article:published_time" content="${new Date(p.publishedAt).toISOString()}">\n  ${ld(graph)}` }, body);
   }
 
   // ---------- các trang tĩnh khác: chỉ cần thẻ head ----------
@@ -244,7 +345,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
     const ctx = site(req);
     const html = read(file);
     return withHead(html, headTags(ctx, { title: pageTitle(title, ctx.s), desc, url: `${ctx.base}${canonical}`, robots }))
-      .replace('<span data-brand>LiveGame</span>', `<span data-brand>${esc(ctx.s.brandName)}</span>`);
+      .replace('<span class="sr" data-brand>LiveGame</span>', `<span class="sr" data-brand>${esc(ctx.s.brandName)}</span>`);
   }
 
   function guidePage(req) {
@@ -289,13 +390,15 @@ export function createSeo({ publicDir, getData, baseUrl }) {
   }
 
   function sitemap(req) {
-    const { base, games } = site(req);
+    const { base, games, posts } = site(req);
     const day = (t) => new Date(t || Date.now()).toISOString().slice(0, 10);
     const latest = Math.max(0, ...games.map(g => g.updatedAt || g.createdAt || 0)) || Date.now();
     const urls = [
       { loc: `${base}/`, lastmod: day(latest), priority: '1.0', changefreq: 'weekly' },
       ...games.map(g => ({ loc: `${base}/game/${g.id}`, lastmod: day(g.updatedAt || g.createdAt), priority: '0.9', changefreq: 'monthly', image: g.image })),
       { loc: `${base}/huong-dan.html`, priority: '0.7', changefreq: 'monthly' },
+      { loc: `${base}/tin-tuc`, lastmod: posts[0] ? day(posts[0].updatedAt || posts[0].publishedAt) : undefined, priority: '0.6', changefreq: 'weekly' },
+      ...posts.map(p => ({ loc: `${base}/tin-tuc/${p.slug}`, lastmod: day(p.updatedAt || p.publishedAt), priority: '0.6', changefreq: 'monthly', image: postCover(p) || undefined })),
       { loc: `${base}/tra-cuu.html`, priority: '0.4', changefreq: 'yearly' },
       ...POLICY_PAGES.map(p => ({ loc: `${base}/chinh-sach/${p.slug}`, priority: '0.3', changefreq: 'yearly' })),
     ];
@@ -307,5 +410,5 @@ ${urls.map(u => `  <url><loc>${esc(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.last
 `;
   }
 
-  return { home, gamePage, guidePage, policyPage, lookupPage, robots, sitemap };
+  return { home, gamePage, guidePage, policyPage, lookupPage, robots, sitemap, newsList, newsPost };
 }

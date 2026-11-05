@@ -64,3 +64,9 @@ pre.pub { white-space: pre-wrap; word-break: break-all; font-size: 12px; backgro
   .form-grid, .plans-ed { grid-template-columns: 1fr; }
   .faq-ed { grid-template-columns: 1fr; }
 }
+.md-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+.md-bar button, .md-bar .mdb { font: inherit; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--line); background: #fff; color: var(--text); cursor: pointer; }
+.md-bar button:hover, .md-bar .mdb:hover { background: var(--soft-2); }
+.md-bar .grow { flex: 1; }
+#mdText { font-size: 15px; line-height: 1.6; }
+.md-prev { border: 1px solid var(--line); border-radius: 12px; padding: 6px 18px; min-height: 300px; max-height: 60vh; overflow: auto; background: #fff; }

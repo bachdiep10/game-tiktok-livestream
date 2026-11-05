@@ -1,4 +1,5 @@
 import { $, $$, api, esc, money, moneyFull, copy, toast } from '/js/common.js';
+import { renderMarkdown } from '/js/markdown.js';
 
 const S = { tab: 'overview', orders: [], licenses: [], games: [], config: null, filter: {} };
 const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: '2-digit' }) : '—';
@@ -62,6 +63,7 @@ async function refresh(silent) {
   if (t === 'bank') { S.bank = await call('/api/admin/bank'); renderBank(); }
   if (t === 'licenses') { await loadGamesConfig(); S.licenses = (await call('/api/admin/licenses')).licenses; renderLicenses(); }
   if (t === 'games') { await loadGamesConfig(); renderGames(); }
+  if (t === 'posts') { S.posts = (await call('/api/admin/posts')).posts; renderPosts(); }
   if (t === 'users') { S.users = (await call('/api/admin/users')).users; renderUsers(); }
   if (t === 'plans') { await loadGamesConfig(); renderPlans(); }
   if (t === 'settings') { await loadGamesConfig(); renderSettings(); }
@@ -340,6 +342,161 @@ function gameDialog(g) {
       else r = await call('/api/admin/games', { ...body, id: fd.get('id') });
       closeDialog();
       toast(r.filledCombo ? `Đã lưu. ${r.filledCombo} key Combo được nhận game này.` : 'Đã lưu');
+      refresh();
+    };
+  });
+}
+
+// ---------- tin tức ----------
+const postState = (p) => p.status !== 'published' ? '<span class="tag-s locked">Nháp</span>'
+  : p.publishedAt > Date.now() ? `<span class="tag-s">Hẹn ${fmt(p.publishedAt)}</span>` : '<span class="tag-s claimed">Đang hiện</span>';
+
+function renderPosts() {
+  const list = S.posts || [];
+  view('posts').innerHTML = `
+    <div class="bar"><h1>Tin tức</h1><button class="btn sm" id="newPost">＋ Viết bài mới</button></div>
+    <p class="note" style="margin-top:-6px">Bài đã đăng hiện ở <a href="/tin-tuc" target="_blank">/tin-tuc</a>, 3 bài mới nhất hiện trên trang chủ và được đưa vào sitemap cho Google.</p>
+    ${list.length ? `<div class="tbl-wrap"><table><thead><tr><th>Bài viết</th><th>Trạng thái</th><th>Ngày đăng</th><th></th></tr></thead><tbody>
+      ${list.map(p => `<tr>
+        <td><b>${esc(p.title)}</b><br><small class="note">/tin-tuc/${esc(p.slug)}</small></td>
+        <td>${postState(p)}</td>
+        <td>${p.publishedAt ? fmt(p.publishedAt) : '—'}</td>
+        <td><div class="acts">
+          ${p.status === 'published' ? `<a class="btn ghost sm" href="${esc(p.url)}" target="_blank">Xem</a>` : ''}
+          <button data-act="editPost" data-id="${esc(p.id)}">Sửa</button>
+          <button data-act="togglePost" data-id="${esc(p.id)}">${p.status === 'published' ? 'Ẩn' : 'Đăng'}</button>
+          <button class="bad" data-act="delPost" data-id="${esc(p.id)}">Xoá</button>
+        </div></td></tr>`).join('')}</tbody></table></div>` : '<div class="tbl-wrap"><div class="empty">Chưa có bài viết. Bấm "Viết bài mới" để bắt đầu.</div></div>'}`;
+  $('#newPost').onclick = () => postDialog();
+  $$('[data-act]', view('posts')).forEach(b => b.onclick = async () => {
+    const p = S.posts.find(x => x.id === b.dataset.id);
+    if (b.dataset.act === 'editPost') return postDialog(p);
+    if (b.dataset.act === 'togglePost') {
+      await call(`/api/admin/posts/${p.id}`, { status: p.status === 'published' ? 'draft' : 'published' }, 'PATCH');
+      toast(p.status === 'published' ? 'Đã ẩn bài' : 'Đã đăng bài'); return refresh();
+    }
+    if (b.dataset.act === 'delPost') {
+      if (!confirm(`Xoá hẳn bài "${p.title}"? Không khôi phục được.`)) return;
+      await call(`/api/admin/posts/${p.id}`, undefined, 'DELETE'); toast('Đã xoá'); refresh();
+    }
+  });
+}
+
+const localDT = (t) => { if (!t) return ''; const d = new Date(t - new Date(t).getTimezoneOffset() * 60000); return d.toISOString().slice(0, 16); };
+
+async function uploadFile(f) {
+  toast('Đang tải ảnh lên…');
+  const res = await fetch(`/api/admin/upload?name=${encodeURIComponent(f.name)}`, { method: 'POST', body: f });
+  const j = await res.json().catch(() => ({ ok: false, error: 'Lỗi tải lên' }));
+  if (!j.ok) { toast(j.error); throw new Error(j.error); }
+  toast('Đã tải lên');
+  return j.url;
+}
+
+function postDialog(p) {
+  const edit = Boolean(p);
+  const cur = p || { title: '', slug: '', excerpt: '', cover: '', content: '', seoTitle: '', seoDescription: '', status: 'draft', publishedAt: 0 };
+  dialog(`
+    <h3>${edit ? 'Sửa bài viết' : 'Viết bài mới'}</h3>
+    <form id="pf">
+      <div class="form-grid">
+        <div class="field full"><label>Tiêu đề</label><input name="title" required maxlength="200" value="${esc(cur.title)}"></div>
+        <div class="field full"><label>Nội dung</label>
+          <div class="md-bar">
+            <button type="button" data-md="h2" title="Tiêu đề lớn">H2</button><button type="button" data-md="h3" title="Tiêu đề nhỏ">H3</button>
+            <button type="button" data-md="b" title="Chữ đậm"><b>B</b></button><button type="button" data-md="i" title="Chữ nghiêng"><i>I</i></button>
+            <button type="button" data-md="ul" title="Danh sách">• Danh sách</button><button type="button" data-md="ol" title="Danh sách số">1. Danh sách</button>
+            <button type="button" data-md="quote" title="Trích dẫn">❝</button><button type="button" data-md="link" title="Chèn link">🔗 Link</button>
+            <label class="mdb" title="Chèn ảnh">🖼 Ảnh<input type="file" accept="image/*" id="mdImg" hidden></label>
+            <button type="button" data-md="yt" title="Chèn video YouTube">▶ YouTube</button>
+            <span class="grow"></span><button type="button" id="mdPrevBtn">👁 Xem trước</button>
+          </div>
+          <textarea name="content" id="mdText" rows="16" placeholder="Viết nội dung ở đây. Bôi đen chữ rồi bấm nút trên thanh công cụ để định dạng.">${esc(cur.content)}</textarea>
+          <div class="post-body md-prev" id="mdPrev" hidden></div>
+          <small>Mẹo: dòng bắt đầu bằng <code>## </code> là tiêu đề, <code>- </code> là danh sách, <code>**chữ**</code> là in đậm. Dán link YouTube thành 1 dòng riêng để chèn video.</small></div>
+        ${uploader('cover', 'Ảnh bìa (ngang 16:9, VD 1200×675)', cur.cover, 'image/*', 'Để trống thì dùng ảnh đầu tiên trong bài.')}
+        <div class="field full"><label>Tóm tắt (hiện ở danh sách bài và trên Google)</label><textarea name="excerpt" rows="2" maxlength="400">${esc(cur.excerpt)}</textarea><small>Để trống thì tự lấy đoạn đầu của bài.</small></div>
+        <div class="field"><label>Ngày giờ đăng</label><input name="publishedAt" type="datetime-local" value="${localDT(cur.publishedAt)}"><small>Để trống = lúc bấm Đăng. Chọn ngày sau = hẹn giờ đăng.</small></div>
+        <details class="field full"><summary class="note" style="cursor:pointer">Đường dẫn & SEO (không bắt buộc)</summary>
+          <div class="form-grid" style="margin-top:10px">
+            <div class="field full"><label>Đường dẫn</label><input name="slug" value="${esc(cur.slug)}" placeholder="tự tạo từ tiêu đề"><small>Địa chỉ bài: /tin-tuc/<b id="slugPrev">${esc(cur.slug || '…')}</b></small></div>
+            <div class="field full"><label>Tiêu đề trên Google</label><input name="seoTitle" maxlength="120" value="${esc(cur.seoTitle)}" placeholder="mặc định = tiêu đề bài"></div>
+            <div class="field full"><label>Mô tả trên Google</label><textarea name="seoDescription" rows="2" maxlength="300" placeholder="mặc định = tóm tắt">${esc(cur.seoDescription)}</textarea></div>
+          </div></details>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn ghost" type="submit" data-st="draft" style="flex:1">Lưu nháp</button>
+        <button class="btn" type="submit" data-st="published" style="flex:1">${cur.status === 'published' ? 'Lưu & cập nhật' : 'Đăng bài'}</button>
+      </div>
+    </form>`, (el) => {
+    $('#dlg .box').style.width = 'min(900px,100%)';
+    const ta = $('#mdText', el);
+    const wrap = (before, after = before, ph = 'chữ') => {
+      const { selectionStart: a, selectionEnd: b, value: v } = ta;
+      const sel = v.slice(a, b) || ph;
+      ta.setRangeText(before + sel + after, a, b, 'end');
+      ta.focus(); ta.setSelectionRange(a + before.length, a + before.length + sel.length);
+    };
+    const linePrefix = (pre) => {
+      const { selectionStart: a, selectionEnd: b, value: v } = ta;
+      const start = v.lastIndexOf('\n', a - 1) + 1;
+      const block = v.slice(start, b) || 'nội dung';
+      const lines = block.split('\n').map((l, i) => (typeof pre === 'function' ? pre(i) : pre) + l.replace(/^(#{2,4}\s+|[-*+]\s+|\d+[.)]\s+|>\s?)/, ''));
+      ta.setRangeText(lines.join('\n'), start, b, 'end'); ta.focus();
+    };
+    const insertBlock = (text) => {
+      const a = ta.selectionStart, v = ta.value;
+      const pre = a && v[a - 1] !== '\n' ? '\n\n' : '';
+      ta.setRangeText(`${pre}${text}\n`, a, ta.selectionEnd, 'end'); ta.focus();
+    };
+    $$('[data-md]', el).forEach(b => b.onclick = () => {
+      const k = b.dataset.md;
+      if (k === 'b') wrap('**');
+      if (k === 'i') wrap('*');
+      if (k === 'h2') linePrefix('## ');
+      if (k === 'h3') linePrefix('### ');
+      if (k === 'ul') linePrefix('- ');
+      if (k === 'ol') linePrefix(i => `${i + 1}. `);
+      if (k === 'quote') linePrefix('> ');
+      if (k === 'link') { const u = prompt('Dán đường link (https://...)'); if (u) wrap('[', `](${u.trim()})`, 'chữ hiện ra'); }
+      if (k === 'yt') { const u = prompt('Dán link video YouTube'); if (u) insertBlock(u.trim()); }
+      if (!$('#mdPrev', el).hidden) $('#mdPrev', el).innerHTML = renderMarkdown(ta.value);
+    });
+    $('#mdImg', el).onchange = async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const url = await uploadFile(f);
+      insertBlock(`![${f.name.replace(/\.[^.]+$/, '').replace(/[[\]]/g, '')}](${url})`);
+      e.target.value = '';
+    };
+    $('#mdPrevBtn', el).onclick = () => {
+      const pv = $('#mdPrev', el), show = pv.hidden;
+      pv.hidden = !show; ta.hidden = show;
+      pv.innerHTML = show ? renderMarkdown(ta.value) || '<p class="note">Chưa có nội dung.</p>' : '';
+      $('#mdPrevBtn', el).textContent = show ? '✏️ Viết tiếp' : '👁 Xem trước';
+    };
+    $('[data-up=cover]', el).onchange = async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const url = await uploadFile(f);
+      $('input[name=cover]', el).value = url;
+      $('[data-prev=cover]', el).innerHTML = `<img class="prev" src="${url}" alt="">`;
+    };
+    const slugIn = $('input[name=slug]', el);
+    $('input[name=title]', el).oninput = (e) => { if (!edit && !slugIn.dataset.touched) $('#slugPrev', el).textContent = 'tự tạo từ tiêu đề'; };
+    slugIn.oninput = () => { slugIn.dataset.touched = 1; $('#slugPrev', el).textContent = slugIn.value || 'tự tạo từ tiêu đề'; };
+    let status = cur.status;
+    $$('button[data-st]', el).forEach(b => b.onclick = () => { status = b.dataset.st; });
+    $('#pf', el).onsubmit = async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const dt = fd.get('publishedAt');
+      const body = {
+        title: fd.get('title'), slug: fd.get('slug'), excerpt: fd.get('excerpt'), cover: fd.get('cover'), content: ta.value,
+        seoTitle: fd.get('seoTitle'), seoDescription: fd.get('seoDescription'),
+        status, publishedAt: dt ? new Date(dt).getTime() : '',
+      };
+      const r = edit ? await call(`/api/admin/posts/${p.id}`, body, 'PATCH') : await call('/api/admin/posts', body);
+      closeDialog();
+      toast(r.post.status === 'published' ? 'Đã đăng bài' : 'Đã lưu nháp');
       refresh();
     };
   });
