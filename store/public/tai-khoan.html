@@ -48,6 +48,7 @@
 
   <script type="module">
     import { $, $$, api, esc, moneyFull, copy, toast, applyBrand, me, catalog, zaloLink, gameList } from '/js/common.js';
+    import { track, trackOnce } from '/js/track.js';
     const q = new URLSearchParams(location.search);
     const next = q.get('next');
     const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
@@ -88,6 +89,7 @@
         const body = Object.fromEntries(new FormData(e.target));
         try {
           await api(mode === 'login' ? '/api/account/login' : '/api/account/register', body);
+          if (mode === 'register') track('CompleteRegistration', { content_name: next && next.includes('mua') ? 'mua' : 'tai-khoan' });
           if (next && next.startsWith('/') && !next.startsWith('//')) { location.href = next; return; }
           load();
         } catch (err) { $('#aerr').textContent = err.message; }
@@ -114,6 +116,9 @@
     function accountView(d) {
       const u = d.user;
       const pending = d.orders.filter(o => o.status === 'pending');
+      // Đơn vừa thanh toán (7 ngày gần đây) chưa được tính: báo "Mua hàng" 1 lần cho mỗi đơn
+      d.orders.filter(o => o.status === 'paid' && o.paidAt && Date.now() - o.paidAt < 7 * 864e5).forEach(o =>
+        trackOnce(`buy_${o.code}`, 'Purchase', { value: o.amount, content_ids: [o.planId], content_name: o.planName, content_type: 'product', num_items: (o.gameNames || []).length || 1, order_id: o.code }, `order_${o.code}`));
       $('#root').innerHTML = `
         <div class="panel wrap-panel">
           <div class="acc-head">

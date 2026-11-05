@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { DB } from './lib/db.js';
 import { createSeo } from './lib/seo.js';
+import { injectTracking } from './lib/tracking.js';
 import * as payos from './lib/payos.js';
 import { parseBankEmail, findOrderCode, fetchNewMails } from './lib/bankmail.js';
 import { newKey, normalizeKey, loadKeyPair, signTicket, entitledGames, fillEmptySlots, movesInWindow } from './lib/license.js';
@@ -149,7 +150,7 @@ function orderView(o) {
     qr: `https://img.vietqr.io/image/${encodeURIComponent(s.bankCode)}-${encodeURIComponent(s.bankAccount)}-compact2.png?amount=${o.amount}&addInfo=${encodeURIComponent(o.transferContent)}&accountName=${encodeURIComponent(s.bankOwner || '')}`,
   } : null;
   return {
-    code: o.code, status: o.status, amount: o.amount, planName: plan?.name || o.planId,
+    code: o.code, status: o.status, amount: o.amount, planId: o.planId, planName: plan?.name || o.planId,
     gameNames: o.games.map(id => D.games.find(g => g.id === id)?.name || id),
     customer: { name: o.customer.name }, createdAt: o.createdAt, paidAt: o.paidAt || null,
     checkoutUrl: o.status === 'pending' ? (o.checkoutUrl || '') : '',
@@ -355,7 +356,7 @@ app.get('/api/account/me', (req, res) => {
   const u = currentUser(req);
   if (!u) return res.json({ ok: true, user: null });
   const orders = D.orders.filter(o => o.userId === u.id).sort((a, b) => b.createdAt - a.createdAt).map(o => ({
-    code: o.code, status: o.status, amount: o.amount, planName: findPlan(o.planId)?.name || o.planId,
+    code: o.code, status: o.status, amount: o.amount, planId: o.planId, planName: findPlan(o.planId)?.name || o.planId,
     gameNames: o.games.map(id => D.games.find(g => g.id === id)?.name || id), createdAt: o.createdAt, paidAt: o.paidAt || null,
     claimedAt: o.claimedAt || null, licenseKey: o.licenseKey || '', link: `/don-hang.html?code=${o.code}&t=${orderToken(o.code)}`,
   }));
@@ -984,7 +985,12 @@ app.get('/tai-ve/:id', (req, res) => {
 
 // ---------- SEO: trang có sẵn nội dung + thẻ meta cho Google, Facebook, Zalo ----------
 const seo = createSeo({ publicDir: path.join(__dirname, 'public'), getData: () => { db.refresh(); return D; }, baseUrl });
-const sendHtml = (res, html) => res.type('html').set('Cache-Control', 'public, max-age=60').send(html);
+const sendHtml = (res, html) => res.type('html').set('Cache-Control', 'public, max-age=60').send(injectTracking(html, D.settings));
+// Trang tài khoản và đơn hàng cũng cần mã đo lường (đăng ký, mua hàng)
+const privatePage = (file) => (req, res) => res.type('html').set({ 'Cache-Control': 'no-cache', 'X-Robots-Tag': 'noindex, nofollow' })
+  .send(injectTracking(fs.readFileSync(path.join(__dirname, 'public', file), 'utf8'), D.settings));
+app.get(['/tai-khoan', '/tai-khoan.html'], privatePage('tai-khoan.html'));
+app.get(['/don-hang', '/don-hang.html'], privatePage('don-hang.html'));
 app.get(['/', '/index.html', '/index'], (req, res) => sendHtml(res, seo.home(req)));
 app.get('/game/:id', (req, res, next) => { const html = seo.gamePage(req, req.params.id); if (!html) return next(); sendHtml(res, html); });
 app.get(['/tin-tuc', '/tin-tuc/'], (req, res) => sendHtml(res, seo.newsList(req)));

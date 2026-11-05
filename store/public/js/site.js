@@ -1,4 +1,5 @@
 import { $, $$, api, esc, money, moneyFull, applyBrand, zaloLink, me } from './common.js';
+import { track } from './track.js';
 
 let C; // catalog
 let currentPlan = null;
@@ -135,6 +136,7 @@ async function openBuy(planId, gameId) {
     }));
   }
   openModal('#buyModal');
+  track('InitiateCheckout', { value: p.price, content_ids: [p.id], content_name: p.name, content_type: 'product', num_items: p.allGames ? C.games.length : need });
 }
 
 document.addEventListener('click', e => {

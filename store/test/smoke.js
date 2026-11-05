@@ -275,6 +275,21 @@ try {
   }
 
   {
+    // Mã đo lường quảng cáo: có ở trang khách, không có ở trang quản trị, ID sai bị bỏ qua
+    for (const u of ['/', '/huong-dan.html', '/tai-khoan.html', '/don-hang.html', '/chinh-sach/bao-mat']) {
+      const h = (await page(u)).html;
+      assert.match(h, /GTM-NZQB5F5V/, u); assert.match(h, /fbq\('init','1497281003464233'\)/, u);
+      assert.equal((h.match(/window\.LG_TRACK/g) || []).length, 1, u);
+    }
+    assert.doesNotMatch((await page('/admin/')).html, /fbevents|gtm\.js/);
+    await j('PUT', '/api/admin/settings', { metaPixelId: '123\'};alert(1)//', gtmId: '' });
+    const h = (await page('/')).html;
+    assert.doesNotMatch(h, /'};alert|fbevents|gtm\.start/);
+    await j('PUT', '/api/admin/settings', { metaPixelId: '1497281003464233', gtmId: 'GTM-NZQB5F5V' });
+    step('đo lường: GTM + Meta Pixel ở mọi trang khách, không ở quản trị, chặn mã sai');
+  }
+
+  {
     // Tiến trình cũ (dữ liệu cũ trong bộ nhớ) không được ghi đè thay đổi của tiến trình mới
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lgdb-'));
     const oldP = new DB(dir), newP = new DB(dir);

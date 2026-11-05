@@ -26,6 +26,7 @@
 
   <script type="module">
     import { $, api, esc, moneyFull, copy, applyBrand, gameList } from '/js/common.js';
+    import { trackOnce } from '/js/track.js';
     const q = new URLSearchParams(location.search);
     const code = q.get('code'), t = q.get('t');
     let timer;
@@ -101,6 +102,9 @@
       try {
         const { order } = await api(`/api/orders/${encodeURIComponent(code)}?t=${encodeURIComponent(t)}`);
         render(order);
+        if (order.status === 'paid' && (!order.paidAt || Date.now() - order.paidAt < 7 * 864e5)) {
+          trackOnce(`buy_${order.code}`, 'Purchase', { value: order.amount, content_ids: [order.planId || order.planName], content_name: order.planName, content_type: 'product', num_items: (order.gameNames || []).length || 1, order_id: order.code }, `order_${order.code}`);
+        }
         clearTimeout(timer);
         if (order.status === 'pending') timer = setTimeout(load, 5000);
       } catch (e) {

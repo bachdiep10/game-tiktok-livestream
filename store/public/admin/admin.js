@@ -602,6 +602,10 @@ function renderSettings() {
         ${f('ogImage', 'Ảnh khi chia sẻ link (Facebook, Zalo)', 'Link ảnh 1200×630. Để trống = ảnh game đầu tiên.', 'text', true)}
         ${f('googleVerification', 'Mã xác minh Google Search Console', 'Chỉ dán phần content của thẻ google-site-verification.', 'text', true)}
       </div></div>
+      <div class="box-s"><h2>Đo lường quảng cáo (Facebook, Google, TikTok)</h2><p class="note">Mã được chèn vào mọi trang khách xem (không chèn vào trang quản trị). Web tự gửi sự kiện: <b>ViewContent</b> (xem trang game), <b>InitiateCheckout</b> (mở khung mua), <b>CompleteRegistration</b> (đăng ký), <b>Purchase</b> (đơn đã thanh toán, có giá trị VND, mỗi đơn tính 1 lần), <b>Contact</b> (bấm Zalo). Trong GTM các sự kiện có tên view_item, begin_checkout, sign_up, purchase, contact. Nếu đã gắn Meta Pixel ở đây thì <b>không</b> gắn thêm Meta Pixel trong GTM, tránh đếm 2 lần. Để trống ô nào thì tắt mã đó.</p><div class="form-grid">
+        ${f('gtmId', 'Google Tag Manager', 'Dạng GTM-XXXXXXX')}${f('ga4Id', 'Google Analytics 4 (tuỳ chọn)', 'Dạng G-XXXXXXXXXX. Bỏ trống nếu GA4 đã cài trong GTM.')}
+        ${f('metaPixelId', 'Meta (Facebook) Pixel ID', 'Dãy số, VD 1497281003464233')}${f('tiktokPixelId', 'TikTok Pixel ID (tuỳ chọn)', 'Lấy ở TikTok Ads Manager › Events')}
+      </div></div>
       <div class="box-s"><h2>Liên hệ hỗ trợ</h2><p class="note">Để trống mục nào thì mục đó không hiện.</p><div class="form-grid">
         ${f('contactZalo', 'Zalo', 'Số điện thoại hoặc link zalo.me')}${f('contactPhone', 'Số điện thoại')}
         ${f('contactFacebook', 'Facebook', 'Link fanpage')}${f('contactTiktok', 'TikTok', 'Link kênh TikTok')}
