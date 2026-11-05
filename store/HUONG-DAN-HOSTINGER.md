@@ -15,7 +15,7 @@ Gói **Premium không chạy được Node.js**. Hãy dùng gói **Business** (h
    - Framework: **Express**. Nếu không có Express thì chọn **Other**.
    - Phiên bản Node: **22.x** (hoặc 20.x).
    - Entry file: `server.js`
-   - Output directory (nếu bị hỏi): `public`
+   - Output directory (nếu bị hỏi): để trống (web chạy hoàn toàn bằng Node, thư mục giao diện là `web`)
 5. Chọn tên miền cho trang web, rồi bấm **Deploy**. Chờ build xong, khoảng 1–3 phút.
 6. Mở `https://ten-mien/admin/`, **tạo mật khẩu quản trị ngay**, vì người đầu tiên mở trang này sẽ đặt mật khẩu.
 7. Trong **Cài đặt** của trang quản trị:

@@ -985,10 +985,10 @@ app.get('/tai-ve/:id', (req, res) => {
 });
 
 // ---------- SEO: trang có sẵn nội dung + thẻ meta cho Google, Facebook, Zalo ----------
-const seo = createSeo({ publicDir: path.join(__dirname, 'public'), getData: () => { db.refresh(); return D; }, baseUrl });
+const seo = createSeo({ publicDir: path.join(__dirname, 'web'), getData: () => { db.refresh(); return D; }, baseUrl });
 // Mỗi bản cập nhật có mã riêng (băm nội dung JS/CSS): trang HTML gọi /js/x.js?v=<mã> nên trình duyệt
 // và CDN của Hostinger luôn lấy file mới sau khi cập nhật, không còn trang trắng do giữ file cũ.
-const PUBLIC_DIR = path.join(__dirname, 'public');
+const PUBLIC_DIR = path.join(__dirname, 'web');
 const ASSET_V = (() => {
   const h = crypto.createHash('sha1');
   const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
@@ -1008,7 +1008,7 @@ const versionAssets = (html) => html
 const sendHtml = (res, html) => res.type('html').set('Cache-Control', 'public, max-age=60').send(versionAssets(injectTracking(html, D.settings)));
 // Trang tài khoản và đơn hàng cũng cần mã đo lường (đăng ký, mua hàng)
 const privatePage = (file) => (req, res) => res.type('html').set({ 'Cache-Control': 'no-cache', 'X-Robots-Tag': 'noindex, nofollow' })
-  .send(versionAssets(injectTracking(fs.readFileSync(path.join(__dirname, 'public', file), 'utf8'), D.settings)));
+  .send(versionAssets(injectTracking(fs.readFileSync(path.join(__dirname, 'web', file), 'utf8'), D.settings)));
 app.get(['/tai-khoan', '/tai-khoan.html'], privatePage('tai-khoan.html'));
 app.get(['/don-hang', '/don-hang.html'], privatePage('don-hang.html'));
 app.get(['/', '/index.html', '/index'], (req, res) => sendHtml(res, seo.home(req)));
@@ -1027,7 +1027,7 @@ app.get(['/chinh-sach', '/chinh-sach/:slug'], (req, res) => sendHtml(res, seo.po
 app.get('/chinh-sach.html', (req, res) => res.redirect(301, '/chinh-sach/chinh-sach-ban-hang'));
 
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
-app.use('/media', express.static(path.join(__dirname, 'public', 'media'), { maxAge: '7d' }));
+app.use('/media', express.static(path.join(__dirname, 'web', 'media'), { maxAge: '7d' }));
 // Các trang HTML tĩnh còn lại (vd. /admin/): gắn mã phiên bản cho JS/CSS, luôn hỏi lại máy chủ
 app.use((req, res, next) => {
   if (req.method !== 'GET' && req.method !== 'HEAD') return next();
@@ -1040,7 +1040,13 @@ app.use((req, res, next) => {
   res.type('html').set('Cache-Control', 'no-cache').send(versionAssets(fs.readFileSync(file, 'utf8')));
 });
 // JS/CSS: trình duyệt phải hỏi lại máy chủ mỗi lần (304 nếu không đổi), kể cả file được import bên trong module
-app.use(express.static(PUBLIC_DIR, { extensions: ['html'], setHeaders: (res, f) => { if (/\.(js|css|html|webmanifest)$/.test(f)) res.set('Cache-Control', 'no-cache'); } }));
+// Thư mục giao diện tên "web" (không phải "public"): Passenger/CDN của Hostinger tự trả mọi file trong "public"
+// mà không qua Node, làm trang .html thiếu import map và trình duyệt giữ JS cũ (trang Tài khoản kẹt "Đang tải").
+// File có ?v=<mã đúng> thì cho giữ lâu; còn lại luôn hỏi lại máy chủ.
+app.use(express.static(PUBLIC_DIR, { extensions: ['html'], setHeaders: (res, f) => {
+  if (!/\.(js|css|html|webmanifest)$/.test(f)) return;
+  res.set('Cache-Control', res.req?.query?.v === ASSET_V ? 'public, max-age=31536000, immutable' : 'no-cache');
+} }));
 app.use((req, res) => res.status(404).type('html').send('<!doctype html><html lang="vi"><meta charset="utf-8"><meta name="robots" content="noindex"><title>Không tìm thấy trang</title><body style="font-family:sans-serif;text-align:center;padding:60px"><h1>Không tìm thấy trang</h1><p><a href="/">Về trang chủ</a></p></body></html>'));
 
 app.use((err, req, res, next) => {

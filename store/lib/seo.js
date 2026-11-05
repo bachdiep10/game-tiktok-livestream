@@ -3,7 +3,7 @@
 // Trang vẫn dùng site.js như cũ: JS chỉ vẽ lại đúng nội dung đã có sẵn.
 import fs from 'node:fs';
 import path from 'node:path';
-import { renderMarkdown, plainText, firstImage } from '../public/js/markdown.js';
+import { renderMarkdown, plainText, firstImage } from '../web/js/markdown.js';
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => `${Math.round(n / 1000).toLocaleString('vi-VN')}K`;
