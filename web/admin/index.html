@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Quản trị</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/site.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" type="image/png" sizes="192x192" href="/media/icon-192.png">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/site.webmanifest">
+</head>
+<body class="admin">
+  <div id="login" class="login" hidden>
+    <form class="panel" id="loginForm">
+      <div class="logo" style="margin-bottom:18px"><img class="logo-img" src="/media/logo.png" width="210" height="50" alt=""></div><p class="note" id="loginBrand" style="margin:0 0 12px">Quản trị</p>
+      <h2 id="loginTitle" style="margin:0 0 6px">Đăng nhập</h2>
+      <p class="note" id="loginNote" style="margin:0 0 18px">Nhập mật khẩu quản trị.</p>
+      <div class="field"><label for="pw">Mật khẩu</label><input id="pw" type="password" required autocomplete="current-password"></div>
+      <div class="field" id="pw2Wrap" hidden><label for="pw2">Nhập lại mật khẩu</label><input id="pw2" type="password" autocomplete="new-password"></div>
+      <div class="err" id="loginErr"></div>
+      <button class="btn block" type="submit" id="loginBtn">Đăng nhập</button>
+    </form>
+  </div>
+
+  <div id="app" class="shell" hidden>
+    <aside class="side">
+      <a class="logo" href="/" target="_blank"><img class="logo-img sm" src="/media/icon-192.png" width="34" height="34" alt=""><span id="brand">LiveGame</span></a>
+      <nav id="tabs">
+        <a data-tab="overview" class="on">📊 Tổng quan</a>
+        <a data-tab="orders">🧾 Đơn hàng <span class="pill" id="pendingPill" hidden></span></a>
+        <a data-tab="bank">🏦 Biến động số dư</a>
+        <a data-tab="licenses">🔑 License key</a>
+        <a data-tab="users">👥 Khách hàng</a>
+        <a data-tab="games">🎮 Game</a>
+        <a data-tab="posts">📰 Tin tức</a>
+        <a data-tab="plans">💰 Gói giá & Hỏi đáp</a>
+        <a data-tab="settings">⚙️ Cài đặt</a>
+      </nav>
+      <button class="btn ghost sm" id="logout">Đăng xuất</button>
+    </aside>
+    <main class="main">
+      <section data-view="overview"></section>
+      <section data-view="orders" hidden></section>
+      <section data-view="bank" hidden></section>
+      <section data-view="licenses" hidden></section>
+      <section data-view="users" hidden></section>
+      <section data-view="games" hidden></section>
+      <section data-view="posts" hidden></section>
+      <section data-view="plans" hidden></section>
+      <section data-view="settings" hidden></section>
+    </main>
+  </div>
+
+  <div class="modal" id="dlg"><div class="box" style="width:min(640px,100%)"><button class="x" data-close>×</button><div id="dlgBody"></div></div></div>
+
+  <script type="module" src="/admin/admin.js"></script>
+</body>
+</html>

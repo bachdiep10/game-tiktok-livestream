@@ -1,0 +1,20 @@
+{
+  "name": "game-live-store",
+  "version": "1.0.0",
+  "description": "Website bán game TikTok LIVE + máy chủ quản lý license key (1 key = 1 máy)",
+  "main": "server.js",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test/smoke.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "imapflow": "^2.10.0",
+    "mailparser": "^3.14.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
