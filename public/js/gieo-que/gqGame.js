@@ -26,6 +26,14 @@ const DEFAULTS = {
   readerName: 'Ông Từ',
   subtitle: 'Bình luận "xin xăm" + chia sẻ live để vào danh sách • Tặng quà vào ngay',
   footer: 'Quẻ theo bộ Quan Âm linh xăm 100 quẻ • Chỉ mang tính giải trí',
+  showRules: true,
+  rulesTitle: 'LUẬT CHƠI',
+  rules: [
+    'Bình luận "xin xăm" + chia sẻ live = vào danh sách · Tặng quà = vào ngay',
+    'Xếp hạng: 1 xu = {coinPoints} điểm · 1 chia sẻ = {sharePoints} điểm · {likesPerPoint} tim = 1 điểm',
+    'Tới lượt: {wishSeconds} giây gõ điều muốn xin · Cả phòng đoán keo: thánh / âm / dương',
+    'Ra Hạ quẻ: tặng quà giải hạn · {giaiHanSmall} xu lên 1 bậc · {giaiHanBig} xu lên Cát quẻ',
+  ],
   imageFolder: 'assets/gieo-que',
   readerWidth: 560,
   coinPoints: 10,
@@ -1320,12 +1328,39 @@ function drawParticles() {
   }
   ctx.globalAlpha = 1;
 }
+// luật chơi luôn hiện ở đáy màn hình, chữ lấy từ config (thay {coinPoints}... bằng số thật)
+function drawRules() {
+  if (!config.showRules || !Array.isArray(config.rules) || !config.rules.length) return;
+  const lines = config.rules.slice(0, 4).map((r) => String(r).replace(/\{(\w+)\}/g, (m, k) => (config[k] ?? m)));
+  const x = 30;
+  const w = W - 60;
+  const lh = 33;
+  const h = 48 + lines.length * lh;
+  const y = H - 40 - h;
+  ctx.save();
+  ctx.fillStyle = 'rgba(28,6,3,0.78)';
+  rr(ctx, x, y, w, h, 18);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,213,79,0.55)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.font = `900 24px ${FONT}`;
+  ctx.fillStyle = '#ffd54f';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`📜 ${config.rulesTitle || 'LUẬT CHƠI'}`, W / 2, y + 22);
+  ctx.font = `700 24px ${FONT}`;
+  ctx.fillStyle = '#fff3d6';
+  ctx.textAlign = 'left';
+  lines.forEach((l, i) => ctx.fillText(`${i + 1}. ${l}`, x + 22, y + 56 + i * lh, w - 44));
+  ctx.restore();
+}
 function drawFooter() {
   ctx.save();
   ctx.font = `600 20px ${FONT}`;
   ctx.fillStyle = 'rgba(255,240,210,0.75)';
   ctx.textAlign = 'center';
-  ctx.fillText(config.footer, W / 2, H - 26, W - 40);
+  ctx.fillText(config.footer, W / 2, H - 20, W - 40);
   ctx.restore();
 }
 
@@ -1348,6 +1383,7 @@ function frame(t) {
   drawKeoToss();
   drawToasts();
   drawParticles();
+  drawRules();
   drawCaption();
   drawFooter();
   if (audioBlocked) {

@@ -85,7 +85,7 @@ const PRODUCTS = {
   'gieo-que': {
     name: 'Gieo Quẻ Xin Xăm', folder: 'GieoQue', control: '/gieo-que-control.html', guide: GUIDE_GIEO_QUE,
     files: ['run-gieo-que.bat', 'mo-cua-so-gieo-que.bat', 'config-gieo-que.json', 'public/gieo-que.html', 'public/gieo-que-control.html', 'public/js/gieo-que',
-      'public/assets/gieo-que', 'public/assets/nhac-gieo-que/DAT-NHAC-VAO-DAY.txt'],
+      'public/assets/gieo-que', 'public/assets/nhac-gieo-que'],
   },
 };
 

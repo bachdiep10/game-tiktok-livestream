@@ -4,6 +4,15 @@
   "readerName": "Ông Từ",
   "subtitle": "Bình luận \"xin xăm\" + chia sẻ live để vào danh sách • Tặng quà vào ngay",
   "footer": "Quẻ theo bộ Quan Âm linh xăm 100 quẻ • Chỉ mang tính giải trí",
+  "_ghi_chu_luat": "Bảng luật chơi ở đáy màn hình (tối đa 4 dòng). Viết {coinPoints}, {sharePoints}, {likesPerPoint}, {wishSeconds}, {giaiHanSmall}, {giaiHanBig} để game tự điền số theo cấu hình. showRules: false để ẩn.",
+  "showRules": true,
+  "rulesTitle": "LUẬT CHƠI",
+  "rules": [
+    "Bình luận \"xin xăm\" + chia sẻ live = vào danh sách · Tặng quà = vào ngay",
+    "Xếp hạng: 1 xu = {coinPoints} điểm · 1 chia sẻ = {sharePoints} điểm · {likesPerPoint} tim = 1 điểm",
+    "Tới lượt: {wishSeconds} giây gõ điều muốn xin · Cả phòng đoán keo: thánh / âm / dương",
+    "Ra Hạ quẻ: tặng quà giải hạn · {giaiHanSmall} xu lên 1 bậc · {giaiHanBig} xu lên Cát quẻ"
+  ],
   "_ghi_chu_anh": "Ảnh riêng đặt trong public/assets/gieo-que (nen.jpg, nen-vip.jpg, nen-giai-han.jpg, ong-tu.png, ong-tu-noi.png, ong-xam.png, ong-xam-vang.png, que-xam.png, keo.png, to-que.png, lu-huong.png, bua.png, the-ten.png). Ảnh PNG nền xanh lá #00FF00 được tự xoá nền. readerWidth: độ rộng ảnh Ông Từ.",
   "imageFolder": "assets/gieo-que",
   "readerWidth": 560,
