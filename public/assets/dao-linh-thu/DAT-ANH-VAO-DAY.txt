@@ -1,0 +1,13 @@
+Anh tu thiet ke cho game Dao Linh Thu (khong bat buoc). Thieu anh nao thi game dung hinh 3D co san (thu muc fluent).
+Dat dung ten file vao thu muc nay roi bam F5 o cua so game. Anh PNG co the de NEN XANH LA (#00FF00), game tu xoa nen.
+
+  nen.jpg            1080 x 1920, bau troi + bien o 1/4 duoi, giua anh de trong
+  nen-bao.jpg        1080 x 1920, giong nen.jpg nhung troi giong (dung khi co boss, khong bat buoc)
+  dao-1.png ... dao-5.png   1080 x 1080, hon dao bay cac cap, mat co phang o khoang y = 300..400 (hoac 1 file dao.png cho moi cap)
+  vit-dung.png, tho-dung.png, cho-dung.png   512 x 512, Pet dung, chan cham mep duoi
+  Tu the (thay vit bang tho, cho): vit-nhay, vit-an, vit-tam, vit-choi, vit-buon, vit-dien, vit-dong-bang, vit-khong-lo, vit-duoi-nuoc (.png)
+  nha-1.png ... nha-5.png   512 x 512, nha cua Pet 5 cap, chan nha o mep duoi
+  boss-1.png, boss-2.png (+ boss-1-dau.png, boss-2-dau.png khi bi danh)   768 x 768
+  ruong.png, ruong-mo.png, ruong-rong.png, phan.png, rac.png, bun-dau.png, sau-rieng.png   256 x 256
+
+Ban quyen hinh co san trong thu muc fluent: Microsoft Fluent Emoji (giay phep MIT), xem fluent/BAN-QUYEN-HINH.txt

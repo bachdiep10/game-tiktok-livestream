@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Đảo Linh Thú</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #0b2233; color: #e6f7ff; }
+    .panel { background: #10324a; border-color: #2f6a8f; }
+    h1, h2 { color: #ffe066; }
+    .status { background: #164260; }
+    input, code, .log { background: #071a28; border-color: #2f6a8f; }
+    button { background: #1b4f73; border-color: #3d7fac; }
+    button:hover { background: #24638f; }
+    button.primary { background: #e8304a; border-color: #ff6b80; }
+    .preview iframe { border-color: #2f6a8f; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>🏝️ Đảo Linh Thú LIVE</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button data-sim="join">👋 Người xem vào</button>
+        <button data-sim="chat">💬 Bình luận</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-cmd="xay">🪵 "xay"</button>
+        <button data-cmd="tam">🧼 "tam"</button>
+        <button data-cmd="choi">⚽ "choi"</button>
+        <button data-cmd="don">🧹 "don"</button>
+        <button data-cmd="cuu">🛟 "cuu"</button>
+        <button data-cmd="danh">⚔️ "danh"</button>
+        <button data-cmd="1">1️⃣ Bình chọn 1</button>
+        <button data-cmd="2">2️⃣ Bình chọn 2</button>
+        <button data-sim="follow">⭐ Theo dõi</button>
+        <button data-sim="share">📣 Chia sẻ (rương)</button>
+        <button data-sim="gift1">💩 Quà 1 xu (phân)</button>
+        <button data-sim="gift30">⚡ Quà 30 xu (sét/băng)</button>
+        <button data-sim="gift299">👹 Quà 299 xu (boss/khổng lồ)</button>
+        <button data-sim="qte">🌊 Pet rơi xuống biển</button>
+        <button data-sim="vote">🍽️ Bình chọn món ăn</button>
+        <button data-sim="shares50">📣 +50 lượt chia sẻ</button>
+        <button data-sim="voiceTest">🔊 Thử giọng</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử...">
+        <button id="btnChat">Gửi</button>
+      </div>
+      <p class="hint">Cách chơi: streamer là <b>Trùm Đảo</b>, giữ cho Pet vui (thanh <b>Hạnh Phúc</b> không về 0). <b>Thả tim</b> = +2% năng lượng, đủ 100% Pet nhảy <b>Vũ điệu ngáo</b>. Comment <b>xay</b> góp gỗ xây nhà, <b>tam</b> tắm Pet, <b>choi</b> ném bóng, <b>don</b> dọn rác. <b>Chia sẻ</b> = rương rơi xuống đảo, <b>bấm chuột vào rương</b> để mở (tự mở sau 15 giây), đủ 50 lượt có Rương Rồng, mốc 100 / 500 lượt nâng cấp đảo, mở Pet mới. <b>Quà nhỏ</b> = thả phân, <b>quà trung</b> (10–99 xu) = sét đánh hoặc mưa băng: <b>streamer gõ phím bất kỳ liên tục</b> để cứu. <b>Quà lớn</b> (100+ xu) = Boss phá nhà (cả phòng thả tim, gõ "danh" để đánh) hoặc Khổng Lồ Trọc Đầu. Cứ 5 phút Pet rơi xuống biển / bị đại bàng tha: spam "cuu" 30 giây. Cứ 2 phút rưỡi có bình chọn 1/2 cho Pet ăn. Sửa số liệu trong config-dao-linh-thu.json.</p>
+
+      <h2>3. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="20">+20 người vào</button>
+        <button id="btnGiftStorm">Mưa quà (6 quà)</button>
+        <button id="btnLikeStorm">Bão tim (150 tim)</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hết, chơi lại</button>
+      </div>
+
+      <h2>4. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Nên chạy <b>mo-cua-so-dao-linh-thu.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture): như vậy streamer bấm chuột mở rương và gõ phím phá băng ngay trên cửa sổ game.</p>
+      <p class="hint">Ảnh tự thiết kế (không bắt buộc): chép vào <b>public\assets\dao-linh-thu</b> (nen.jpg, dao-1.png, vit-dung.png, tho-dung.png, cho-dung.png, ruong.png...). Ảnh PNG để nền xanh lá, game tự xoá nền. Xem DAT-ANH-VAO-DAY.txt trong thư mục đó.</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/dao-linh-thu/dltControl.js"></script>
+</body>
+</html>

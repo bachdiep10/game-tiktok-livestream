@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH, GUIDE_LEO_NUI } from '../store/lib/db.js';
+import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH, GUIDE_LEO_NUI, GUIDE_DAO_LINH_THU } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -81,6 +81,11 @@ const PRODUCTS = {
     name: 'Leo Núi Everest', folder: 'LeoNui', control: '/leo-nui-control.html', guide: GUIDE_LEO_NUI,
     files: ['run-leo-nui.bat', 'mo-cua-so-leo-nui.bat', 'config-leo-nui.json', 'public/leo-nui.html', 'public/leo-nui-control.html', 'public/js/leo-nui',
       'public/assets/leo-nui', 'public/assets/nhac-leo-nui/DAT-NHAC-VAO-DAY.txt'],
+  },
+  'dao-linh-thu': {
+    name: 'Đảo Linh Thú', folder: 'DaoLinhThu', control: '/dao-linh-thu-control.html', guide: GUIDE_DAO_LINH_THU,
+    files: ['run-dao-linh-thu.bat', 'mo-cua-so-dao-linh-thu.bat', 'config-dao-linh-thu.json', 'public/dao-linh-thu.html', 'public/dao-linh-thu-control.html', 'public/js/dao-linh-thu',
+      'public/assets/dao-linh-thu', 'public/assets/nhac-dao-linh-thu/DAT-NHAC-VAO-DAY.txt'],
   },
 };
 

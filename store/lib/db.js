@@ -149,6 +149,19 @@ export const GUIDE_LEO_NUI = `1. Cài Node.js bản LTS tại nodejs.org (chỉ 
 10. Bấm đúp mo-cua-so-leo-nui.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_DAO_LINH_THU = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DaoLinhThu. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-dao-linh-thu.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập ("xay", "tam", chia sẻ, quà 1 xu, quà 299 xu...) để thử, nút "Tự chạy demo" để xem cả đảo hoạt động. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Streamer là Trùm Đảo, nuôi Pet (Vịt Ngáo, Thỏ Đột Biến, Chó Shiba) trên hòn đảo bay. Giữ thanh Hạnh Phúc không về 0. Thả tim = +2% năng lượng, đủ 100% Pet nhảy Vũ điệu ngáo.
+7. Người xem gõ "xay" góp gỗ xây nhà (5 cấp), "tam" tắm Pet, "choi" ném bóng, "don" dọn rác. Mỗi lượt chia sẻ rơi 1 rương kho báu, streamer bấm chuột vào rương để mở, đủ 50 lượt có Rương Rồng. Mốc 100 / 250 lượt chia sẻ nâng cấp đảo, 500 lượt mở Pet mới.
+8. Quà nhỏ = thả phân lên đảo (người xem gõ "don" để dọn). Quà 10–99 xu = sét đánh hoặc mưa băng, streamer gõ phím bất kỳ liên tục để cứu Pet. Quà từ 100 xu = Boss phá nhà (cả phòng thả tim, gõ "danh" để đánh) hoặc Pet hoá Khổng Lồ Trọc Đầu.
+9. Cứ 5 phút Pet rơi xuống biển hoặc bị đại bàng tha đi: cả phòng spam "cuu" trong 30 giây để cứu. Cứ 2 phút rưỡi có bình chọn 1 / 2 chọn món cho Pet ăn. Người comment nhiều nhất làm Phó Đảo Chủ, người chia sẻ nhiều nhất đội vương miện.
+10. Đổi số liệu, từ khoá, tên Pet, mốc chia sẻ: sửa config-dao-linh-thu.json rồi bấm F5. Ảnh riêng (nền, đảo, Pet, nhà, boss, rương): chép vào public\\assets\\dao-linh-thu (xem DAT-ANH-VAO-DAY.txt). Nhạc riêng: chép MP3 vào public\\assets\\nhac-dao-linh-thu.
+11. Bấm đúp mo-cua-so-dao-linh-thu.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Bấm chuột vào cửa sổ game một lần để bật tiếng.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 export const GUIDE_DUOI_HINH = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
 2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DuoiHinh. Không chạy trực tiếp bên trong file ZIP.
 3. Bấm đúp run-duoi-hinh.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
@@ -268,6 +281,16 @@ const DEFAULT_GAMES = [
     guide: GUIDE_LEO_NUI, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 11, isNew: true,
+  },
+  {
+    id: 'dao-linh-thu', name: 'Đảo Linh Thú',
+    tagline: 'Nuôi Pet trên đảo bay: người xem thả tim, comment, chia sẻ để Pet vui, quà gọi boss phá đảo',
+    description: 'Streamer làm Trùm Đảo nuôi Pet hài hước (Vịt Ngáo, Thỏ Đột Biến, Chó Shiba) trên hòn đảo bay. Thả tim nạp năng lượng cho Pet nhảy Vũ điệu ngáo, comment xay / tam / choi / don để xây nhà, tắm, chơi bóng, dọn rác. Mỗi lượt chia sẻ rơi một rương kho báu, mốc chia sẻ nâng cấp đảo và mở Pet mới. Quà để chọc phá: thả phân, sét đánh, mưa băng, triệu hồi Boss phá nhà. Định kỳ Pet rơi xuống biển, cả phòng spam "cuu" để cứu, có bình chọn món ăn, Phó Đảo Chủ và vương miện cho top chia sẻ.',
+    features: ['Pet phản ứng theo tim, comment, chia sẻ, quà', 'Chia sẻ = rương kho báu, mốc chia sẻ mở cấp đảo và Pet mới', 'Quà chọc phá: phân, sét đánh, mưa băng, Boss phá nhà', 'Minigame cứu Pet spam comment, bình chọn 1/2', 'Phó Đảo Chủ, vương miện Top chia sẻ, giọng AI tiếng Việt'],
+    image: '/media/dao-linh-thu.jpg', video: '/media/dao-linh-thu.mp4', download: '', version: '2.6.0',
+    guide: GUIDE_DAO_LINH_THU, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 12, isNew: true,
   },
 ];
 
