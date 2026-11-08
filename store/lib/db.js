@@ -137,6 +137,18 @@ export const GUIDE_TAROT = `1. Cài Node.js bản LTS tại nodejs.org (chỉ l�
 Lưu ý: nội dung bói chỉ mang tính giải trí.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_LEO_NUI = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\LeoNui. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-leo-nui.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập (thả tim, quà 1 xu, quà 299 xu, bão tuyết...) để thử, nút "Tự chạy demo" để xem cả đoàn leo. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Mỗi người xem vào LIVE là một nhà leo núi đứng ở trạm gốc 5.364 m, đua lên đỉnh Everest 8.849 m. Thả tim = leo lên (2 m mỗi tim), bình luận = 5 m, theo dõi +40 m, chia sẻ +60 m.
+7. Quà = vọt lên và tăng tốc: quà nhỏ x1,5, từ 10 xu x2, từ 100 xu x3 kèm trực thăng cứu hộ chở lên. Màn hình có Top 3 độ cao, thanh độ cao bên phải có ảnh đại diện, số người xem, số tim, nhiệt độ, lời cảm ơn quà.
+8. Thời tiết đổi liên tục: bão tuyết làm tim chỉ còn nửa sức (gõ "cố lên" để leo tiếp), sau bão có thể tuyết lở, ai đứng yên lâu sẽ trượt xuống. Ai lên đỉnh đầu tiên thắng vòng, tên vào Bảng vàng, rồi cả đoàn về trạm gốc chơi vòng mới.
+9. Đổi số mét, mức quà, thời tiết, tiêu đề: sửa config-leo-nui.json rồi bấm F5. Ảnh riêng (nền, người leo, lều, đỉnh núi, trực thăng): chép vào public\\assets\\leo-nui (xem DAT-ANH-VAO-DAY.txt). Nhạc riêng: chép MP3 vào public\\assets\\nhac-leo-nui.
+10. Bấm đúp mo-cua-so-leo-nui.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 export const GUIDE_DUOI_HINH = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
 2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DuoiHinh. Không chạy trực tiếp bên trong file ZIP.
 3. Bấm đúp run-duoi-hinh.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
@@ -246,6 +258,16 @@ const DEFAULT_GAMES = [
     guide: GUIDE_DUOI_HINH, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 10, isNew: true,
+  },
+  {
+    id: 'leo-nui', name: 'Leo Núi Everest',
+    tagline: 'Mỗi người xem một nhà leo núi, thả tim và tặng quà để đua lên đỉnh 8.849 m',
+    description: 'Cuộc đua leo đỉnh Everest ngay trên LIVE: mỗi người xem là một nhà leo núi xuất phát từ trạm gốc 5.364 m. Thả tim, bình luận để leo lên, quà giúp vọt lên và tăng tốc x1,5 đến x3, quà lớn có trực thăng cứu hộ chở lên. Top 3 độ cao, thanh độ cao có ảnh đại diện, nhiệt độ, bão tuyết và tuyết lở làm cuộc đua kịch tính. Ai lên đỉnh đầu tiên thắng vòng và được ghi tên vào Bảng vàng.',
+    features: ['Mỗi người xem một nhà leo núi có tên và ảnh đại diện', 'Thả tim = leo, quà = tăng tốc x1,5 / x2 / x3', 'Quà lớn gọi trực thăng chở lên', 'Bão tuyết, tuyết lở, nhiệt độ theo độ cao', 'Top 3, thanh độ cao, Bảng vàng người lên đỉnh'],
+    image: '/media/leo-nui.jpg', video: '/media/leo-nui.mp4', download: '', version: '2.5.0',
+    guide: GUIDE_LEO_NUI, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 11, isNew: true,
   },
 ];
 

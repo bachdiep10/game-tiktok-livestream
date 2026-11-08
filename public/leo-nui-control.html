@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Leo núi Everest</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #0d1726; color: #e6f0ff; }
+    .panel { background: #14233a; border-color: #2f4f7a; }
+    h1, h2 { color: #ffd34d; }
+    .status { background: #1b2f4d; }
+    input, code, .log { background: #0a1320; border-color: #2f4f7a; }
+    button { background: #1f3a5f; border-color: #3d6596; }
+    button:hover { background: #29497a; }
+    button.primary { background: #e8304a; border-color: #ff6b80; }
+    .preview iframe { border-color: #2f4f7a; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>🏔️ Leo núi Everest LIVE</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button data-sim="join">👋 Người xem vào</button>
+        <button data-sim="chat">💬 Bình luận</button>
+        <button data-sim="cheer">💬 "cố lên"</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="follow">⭐ Theo dõi</button>
+        <button data-sim="share">📣 Chia sẻ</button>
+        <button data-sim="gift1">🌹 Quà 1 xu (x1,5)</button>
+        <button data-sim="gift30">🍩 Quà 30 xu (x2)</button>
+        <button data-sim="gift299">🚁 Quà 299 xu (trực thăng)</button>
+        <button data-weather="storm">❄️ Bão tuyết</button>
+        <button data-weather="clear">☀️ Trời nắng</button>
+        <button data-sim="avalanche">⚠️ Tuyết lở</button>
+        <button data-sim="summitTest">🏆 Người dẫn đầu lên đỉnh</button>
+        <button data-sim="voiceTest">🔊 Thử giọng</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử...">
+        <button id="btnChat">Gửi</button>
+      </div>
+      <p class="hint">Cách chơi: mỗi người xem là một nhà leo núi xuất phát từ <b>trạm gốc 5.364 m</b>, đua lên <b>đỉnh 8.849 m</b>. <b>Thả tim</b> = leo lên (2 m mỗi tim), <b>bình luận</b> = 5 m, theo dõi +40 m, chia sẻ +60 m. <b>Quà</b> = vọt lên và tăng tốc x1,5 (từ 10 xu x2, từ 100 xu x3 kèm trực thăng chở lên). Thời tiết đổi liên tục: <b>bão tuyết</b> làm tim chỉ còn nửa sức, gõ "cố lên" được 15 m; sau bão hay có <b>tuyết lở</b>, ai đứng yên lâu sẽ trượt xuống (không thấp hơn trại đã tới). Ai lên đỉnh đầu tiên thắng vòng, tên vào Bảng vàng, rồi cả đoàn về trạm gốc chơi vòng mới. Sửa số mét, quà trong config-leo-nui.json.</p>
+
+      <h2>3. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="30">+30 người vào</button>
+        <button id="btnGiftStorm">Mưa quà (8 quà)</button>
+        <button id="btnLikeStorm">Bão tim (150 tim)</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hết, chơi lại</button>
+      </div>
+
+      <h2>4. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-leo-nui.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+      <p class="hint">Ảnh tự thiết kế (không bắt buộc): chép vào <b>public\assets\leo-nui</b> với tên nen.jpg (bầu trời, núi xa), nguoi-leo-1.png ... nguoi-leo-8.png (người leo, nền trong suốt), leu.png, dinh-nui.png, truc-thang.png. Xem file DAT-ANH-VAO-DAY.txt trong thư mục đó.</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/leo-nui/leoControl.js"></script>
+</body>
+</html>

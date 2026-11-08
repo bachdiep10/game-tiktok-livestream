@@ -1,0 +1,11 @@
+Anh tu thiet ke cho game Leo nui (khong bat buoc). Thieu anh nao thi game dung hinh tu ve.
+Dat dung ten file vao thu muc nay roi bam F5 o cua so game:
+
+  nen.jpg          1080 x 2120, bau troi + day nui xa (phia sau suon tuyet)
+  nen-bao.jpg      1080 x 2120, giong nen.jpg nhung troi bao tuyet (khong bat buoc)
+  nguoi-leo-1.png  ... nguoi-leo-8.png  512 x 512, nen trong suot, nguoi leo nui nhin tu sau lung, chan cham mep duoi
+  leu.png          512 x 384, nen trong suot, leu cam trai
+  dinh-nui.png     1024 x 1024, nen trong suot, cum co + cot moc tren dinh, chan cot co o giua mep duoi anh
+  truc-thang.png   768 x 384, nen trong suot, truc thang cuu ho nhin ngang
+
+Luu y: anh "trong suot" phai trong suot that (PNG co kenh alpha), khong phai nen o vuong xam trang ve san.
