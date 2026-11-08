@@ -1,0 +1,10 @@
+Dat anh rieng cua ban vao thu muc nay (khong bat buoc). Thieu anh nao thi game dung hinh co san.
+Anh PNG ve tren nen xanh la dong mau #00FF00 se duoc game tu xoa nen.
+
+nen.jpg            1080x1920  nen san co (phan 360-1500 de trong, game tu ke 4 lan dua)
+hop-qua.png        512x512    hop qua random
+xuong-vang.png     512x512    khuc xuong vang (man an mung)
+do-mu-coi.png, do-mu-cu-nhan.png, do-tai-nghe.png, do-mu-ao-thuat.png, do-vuong-mien.png   512x512  mu
+do-phao-boi.png, do-bang-khen.png, do-micro-vang.png, do-dua-phep.png, do-ngoc-quy.png, do-doi-canh.png   512x512  phu kien
+
+Cun, kinh, ao do game tu ve. Hinh emoji co san nam trong thu muc fluent (giay phep MIT, xem BAN-QUYEN-HINH.txt).

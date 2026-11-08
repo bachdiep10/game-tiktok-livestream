@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH, GUIDE_LEO_NUI, GUIDE_GIEO_QUE } from '../store/lib/db.js';
+import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH, GUIDE_LEO_NUI, GUIDE_GIEO_QUE, GUIDE_DOI_CUN } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -86,6 +86,11 @@ const PRODUCTS = {
     name: 'Gieo Quẻ Xin Xăm', folder: 'GieoQue', control: '/gieo-que-control.html', guide: GUIDE_GIEO_QUE,
     files: ['run-gieo-que.bat', 'mo-cua-so-gieo-que.bat', 'config-gieo-que.json', 'public/gieo-que.html', 'public/gieo-que-control.html', 'public/js/gieo-que',
       'public/assets/gieo-que', 'public/assets/nhac-gieo-que'],
+  },
+  'doi-cun': {
+    name: 'Đội Cún Quậy', folder: 'DoiCun', control: '/doi-cun-control.html', guide: GUIDE_DOI_CUN,
+    files: ['run-doi-cun.bat', 'mo-cua-so-doi-cun.bat', 'config-doi-cun.json', 'public/doi-cun.html', 'public/doi-cun-control.html', 'public/js/doi-cun',
+      'public/assets/doi-cun', 'public/assets/nhac-doi-cun/DAT-NHAC-VAO-DAY.txt'],
   },
 };
 

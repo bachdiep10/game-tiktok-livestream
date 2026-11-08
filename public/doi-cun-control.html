@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Đội Cún Quậy</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #13261a; color: #eafbe9; }
+    .panel { background: #1b3524; border-color: #3c7a4c; }
+    h1, h2 { color: #ffe14d; }
+    .status { background: #224430; }
+    input, code, .log { background: #0e1d14; border-color: #3c7a4c; }
+    button { background: #2a5a39; border-color: #4c9a62; }
+    button:hover { background: #357048; }
+    button.primary { background: #e8304a; border-color: #ff6b80; }
+    .preview iframe { border-color: #3c7a4c; }
+    .t1 { border-color: #ffb020 !important; } .t2 { border-color: #3f8cff !important; }
+    .t3 { border-color: #ff5fa8 !important; } .t4 { border-color: #22c47a !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>🐶 Đội Cún Quậy LIVE</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button class="t1" data-team="1">1️⃣ Vào đội Vàng</button>
+        <button class="t2" data-team="2">2️⃣ Vào đội Mực</button>
+        <button class="t3" data-team="3">3️⃣ Vào đội Bông</button>
+        <button class="t4" data-team="4">4️⃣ Vào đội Lu</button>
+        <button data-sim="like">❤️ Thả tim (5-15)</button>
+        <button data-sim="like30">❤️ 30 tim (1 hộp)</button>
+        <button data-sim="share">🔁 Chia sẻ (hộp xịn)</button>
+        <button data-sim="follow">⭐ Theo dõi</button>
+        <button data-sim="chat">💬 Bình luận</button>
+        <button data-say="nhảy">🦘 "nhảy"</button>
+        <button data-say="sủa">🐶 "sủa"</button>
+        <button data-say="ăn">🦴 "ăn"</button>
+        <button data-say="hít đất">💪 "hít đất"</button>
+        <button data-say="lắc">💃 "lắc"</button>
+        <button data-sim="choc">👉 "chọc" đội khác</button>
+        <button data-sim="gift">🎁 Quà 1 xu (thêm hộp)</button>
+        <button data-sim="rageTest">🔥 Cún nổi điên</button>
+        <button data-sim="fullsetTest">👑 Full set</button>
+        <button data-sim="golden">⏰ Giờ Vàng ngay</button>
+        <button data-sim="finishTest">🏆 Đội dẫn đầu về đích</button>
+        <button data-sim="voiceTest">🔊 Thử giọng</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử, ví dụ: chọc 2">
+        <button id="btnChat">Gửi</button>
+      </div>
+      <p class="hint">Cách chơi: 4 đội cún <b>Vàng (1), Mực (2), Bông (3), Lu (4)</b> đua tới Khúc Xương Vàng. Người xem <b>comment 1-4</b> để vào đội (chưa chọn thì tự xếp vào đội ít người). <b>Thả tim</b> = cún chạy, cứ <b>30 tim</b> được 1 <b>hộp đồ random</b> mặc cho cún (mũ, kính, áo, phụ kiện; Thường / Hiếm / Huyền thoại, càng hiếm chạy càng nhanh). <b>Share</b> = hộp đồ xịn, share đủ 5 lần = Huyền thoại. Đủ 4 món cùng bộ = <b>FULL SET</b> chạy x2. Gõ <b>"chọc 2"</b> để chọc cún đội 2: nó lùi lại nhưng thanh Cáu đầy thì nó <b>nổi điên</b> chạy x2. Gõ nhảy, sủa, ăn, hít đất, lắc để cún làm trò. <b>30 giây cuối là Giờ Vàng</b>: mọi điểm x2, đội bét x1,5. Cún về đích trước (hoặc dẫn đầu khi hết 3 phút) thắng. Game không cần quà xu. Sửa số trong config-doi-cun.json.</p>
+
+      <h2>3. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="40">+40 người vào đội</button>
+        <button id="btnLikeStorm">Bão tim (300 tim)</button>
+        <button id="btnShareStorm">5 lượt share</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hết, chơi lại</button>
+      </div>
+
+      <h2>4. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-doi-cun.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+      <p class="hint">Ảnh tự thiết kế (không bắt buộc): chép vào <b>public\assets\doi-cun</b> (nen.jpg, hop-qua.png, xuong-vang.png, do-....png cho từng món đồ). Ảnh PNG nền xanh lá #00FF00 được tự xoá nền. Xem file DAT-ANH-VAO-DAY.txt trong thư mục đó.</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/doi-cun/cunControl.js"></script>
+</body>
+</html>

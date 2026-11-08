@@ -162,6 +162,19 @@ export const GUIDE_GIEO_QUE = `1. Cài Node.js bản LTS tại nodejs.org (chỉ
 Lưu ý: nội dung quẻ chỉ mang tính giải trí.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_DOI_CUN = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DoiCun. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-doi-cun.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập (vào đội, thả tim, chia sẻ, "chọc", nổi điên, full set, Giờ Vàng...) để thử, nút "Tự chạy demo" để xem cả vòng. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. 4 đội cún Vàng, Mực, Bông, Lu đua tới Khúc Xương Vàng. Người xem comment 1, 2, 3, 4 để vào đội (chưa chọn thì được tự xếp vào đội ít người).
+7. Thả tim cho cún chạy, cứ 30 tim được 1 hộp đồ random mặc cho cún (mũ, kính, áo, phụ kiện; hạng Thường, Hiếm, Huyền thoại, càng hiếm chạy càng nhanh). Chia sẻ LIVE được hộp đồ xịn, chia sẻ đủ 5 lần được đồ Huyền thoại. Theo dõi kênh được 1 hộp. Cả phòng đủ 500 tim thì mưa hộp quà cho mọi đội. Mặc đủ 4 món cùng bộ là FULL SET, cún chạy x2.
+8. Gõ "chọc 2" để chọc cún đội 2: cún bị lùi lại nhưng thanh Cáu tăng, Cáu đầy thì cún nổi điên chạy x2. Gõ nhảy, sủa, ăn, hít đất, lắc để cún đội mình làm trò và chạy thêm.
+9. Mỗi vòng 3 phút, 30 giây cuối là Giờ Vàng: mọi điểm x2, đội về bét x1,5. Cún chạm xương trước (hoặc dẫn đầu khi hết giờ) thắng, vinh danh 3 người góp công nhiều nhất và Nhà tạo mẫu, rồi sang vòng mới. Game không cần quà xu, quà (nếu có) chỉ được thêm hộp đồ.
+10. Đổi số tim mỗi hộp, tỉ lệ đồ hiếm, thời gian vòng: sửa config-doi-cun.json rồi bấm F5. Ảnh riêng (nền, hộp quà, từng món đồ): chép vào public\\assets\\doi-cun (xem DAT-ANH-VAO-DAY.txt). Muốn nhạc riêng: chép MP3 vào public\\assets\\nhac-doi-cun.
+11. Bấm đúp mo-cua-so-doi-cun.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 export const GUIDE_DUOI_HINH = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
 2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DuoiHinh. Không chạy trực tiếp bên trong file ZIP.
 3. Bấm đúp run-duoi-hinh.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
@@ -291,6 +304,16 @@ const DEFAULT_GAMES = [
     guide: GUIDE_GIEO_QUE, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 12, isNew: true,
+  },
+  {
+    id: 'doi-cun', name: 'Đội Cún Quậy',
+    tagline: '4 đội cún đua tới Khúc Xương Vàng, thả tim và share để mặc đồ random cho cún',
+    description: 'Người xem comment 1 đến 4 để vào đội cún Vàng, Mực, Bông hoặc Lu. Thả tim cho cún chạy, cứ 30 tim mở 1 hộp đồ random (mũ, kính, áo, phụ kiện) mặc cho cún đội mình, share được đồ xịn, đủ bộ thì FULL SET chạy x2. Gõ "chọc" để chọc cún đội khác nhưng coi chừng nó nổi điên. 30 giây cuối Giờ Vàng nhân đôi điểm, cún chạm xương trước thắng. Game chạy bằng tim, share, comment, không cần quà xu.',
+    features: ['4 đội cún, comment 1-4 để chọn đội', '24 món đồ random 3 hạng, đủ bộ thành FULL SET', 'Tim, share, follow mở hộp đồ, không cần quà xu', 'Chọc cún đội khác, cún nổi điên chạy x2', 'Giờ Vàng 30 giây cuối, vinh danh MVP và Nhà tạo mẫu'],
+    image: '/media/doi-cun.jpg', video: '/media/doi-cun.mp4', download: '', version: '2.7.0',
+    guide: GUIDE_DOI_CUN, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 13, isNew: true,
   },
 ];
 
