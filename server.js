@@ -17,6 +17,7 @@ const RONG_RAN_CONFIG_PATH = path.join(__dirname, 'config-rong-ran.json');
 const DAI_CHIEN_CONFIG_PATH = path.join(__dirname, 'config-dai-chien.json');
 const BIA_HOI_CONFIG_PATH = path.join(__dirname, 'config-bia-hoi.json');
 const DAM_CUOI_CONFIG_PATH = path.join(__dirname, 'config-dam-cuoi.json');
+const TAROT_CONFIG_PATH = path.join(__dirname, 'config-tarot.json');
 const DUOI_HINH_CONFIG_PATH = path.join(__dirname, 'config-duoi-hinh.json');
 
 function loadConfig(file = CONFIG_PATH) {
@@ -38,8 +39,9 @@ const MIME = {
   '.json': 'application/json; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
-  '.svg': 'image/svg+xml',
+  '.jpeg': 'image/jpeg',
   '.webp': 'image/webp',
+  '.svg': 'image/svg+xml',
   '.gif': 'image/gif',
   '.ico': 'image/x-icon',
   '.mp3': 'audio/mpeg',
@@ -66,7 +68,7 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(loadConfig()));
     return;
   }
-  const MUSIC_FOLDERS = { '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca', '/dai-chien-music.json': 'nhac-dai-chien', '/bia-hoi-music.json': 'nhac-bia-hoi', '/dam-cuoi-music.json': 'nhac-dam-cuoi', '/duoi-hinh-music.json': 'nhac-duoi-hinh' };
+  const MUSIC_FOLDERS = { '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca', '/dai-chien-music.json': 'nhac-dai-chien', '/bia-hoi-music.json': 'nhac-bia-hoi', '/dam-cuoi-music.json': 'nhac-dam-cuoi', '/tarot-music.json': 'nhac-tarot', '/duoi-hinh-music.json': 'nhac-duoi-hinh' };
   if (MUSIC_FOLDERS[pathname]) {
     // danh sách bài hát trong thư mục nhạc của game (public/assets/nhac-bar, nhac-tra-da, nhac-rong-ran, nhac-cau-ca, nhac-dai-chien), xếp theo tên file
     const folder = MUSIC_FOLDERS[pathname];
@@ -144,6 +146,23 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/dam-cuoi-config.json') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(loadConfig(DAM_CUOI_CONFIG_PATH)));
+    return;
+  }
+  if (pathname === '/tarot-images.json') {
+    // ảnh tự thiết kế cho game Tarot (public/assets/tarot) -> game chỉ tải những file có thật
+    let list = [];
+    try {
+      list = fs.readdirSync(path.join(PUBLIC_DIR, 'assets', 'tarot')).filter((f) => /\.(png|jpe?g|webp)$/i.test(f));
+    } catch {
+      /* chưa có thư mục */
+    }
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(list));
+    return;
+  }
+  if (pathname === '/tarot-config.json') {
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(loadConfig(TAROT_CONFIG_PATH)));
     return;
   }
   if (pathname === '/duoi-hinh-config.json') {
@@ -539,6 +558,7 @@ server.listen(PORT, '0.0.0.0', () => {
   if (has('dai-chien.html')) console.log(`  ⚔️  Sơn Tinh Thủy Tinh đại chiến (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/dai-chien.html   ·  điều khiển  http://127.0.0.1:${PORT}/dai-chien-control.html`);
   if (has('bia-hoi.html')) console.log(`  🍺 Bia hơi vỉa hè (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/bia-hoi.html   ·  điều khiển  http://127.0.0.1:${PORT}/bia-hoi-control.html`);
   if (has('dam-cuoi.html')) console.log(`  💒 Ăn cỗ đám cưới (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/dam-cuoi.html   ·  điều khiển  http://127.0.0.1:${PORT}/dam-cuoi-control.html`);
+  if (has('tarot.html')) console.log(`  🔮 Bói bài Tarot (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/tarot.html   ·  điều khiển  http://127.0.0.1:${PORT}/tarot-control.html`);
   if (has('duoi-hinh.html')) console.log(`  🧩 Đuổi hình bắt chữ (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/duoi-hinh.html   ·  điều khiển  http://127.0.0.1:${PORT}/duoi-hinh-control.html`);
   if (has('bar.html')) console.log(`  🪩 Quán bar (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/bar.html   ·  điều khiển  http://127.0.0.1:${PORT}/bar-control.html`);
   console.log('');

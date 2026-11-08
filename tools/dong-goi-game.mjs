@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_DUOI_HINH } from '../store/lib/db.js';
+import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -66,6 +66,11 @@ const PRODUCTS = {
     name: 'Ăn Cỗ Đám Cưới', folder: 'DamCuoi', control: '/dam-cuoi-control.html', guide: GUIDE_DAM_CUOI,
     files: ['run-dam-cuoi.bat', 'mo-cua-so-dam-cuoi.bat', 'config-dam-cuoi.json', 'public/dam-cuoi.html', 'public/dam-cuoi-control.html', 'public/js/dam-cuoi',
       'public/assets/nhac-dam-cuoi/DAT-NHAC-VAO-DAY.txt'],
+  },
+  tarot: {
+    name: 'Bói Bài Tarot', folder: 'BoiTarot', control: '/tarot-control.html', guide: GUIDE_TAROT,
+    files: ['run-tarot.bat', 'mo-cua-so-tarot.bat', 'config-tarot.json', 'public/tarot.html', 'public/tarot-control.html', 'public/js/tarot',
+      'public/assets/tarot', 'public/assets/nhac-tarot/DAT-NHAC-VAO-DAY.txt'],
   },
   'duoi-hinh': {
     name: 'Đuổi Hình Bắt Chữ', folder: 'DuoiHinh', control: '/duoi-hinh-control.html', guide: GUIDE_DUOI_HINH,

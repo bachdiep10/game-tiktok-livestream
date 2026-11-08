@@ -1,0 +1,7 @@
+Dat anh tu thiet ke vao day (khong bat buoc, thieu anh nao game dung hinh tu ve):
+- nen.jpg        anh nen phong boi 1080x1920, khong chu, khong nguoi, khong la bai
+- nhan-vat.png   nhan vat thay boi, nen trong suot, tu dau toi bung
+- nhan-vat-noi.png  (tuy chon) giong nhan-vat.png nhung mieng mo, dung khi dang noi
+- mat-sau.png    mat sau la bai 600x970
+- la-00.png ... la-21.png   mat truoc 22 la bai 600x970, khong ghi chu
+Sua xong bam F5 o cua so game.

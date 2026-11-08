@@ -125,6 +125,18 @@ export const GUIDE_DAM_CUOI = `1. Cài Node.js bản LTS tại nodejs.org (chỉ
 10. Bấm đúp mo-cua-so-dam-cuoi.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_TAROT = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\BoiTarot. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-tarot.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập (gõ "3", quà 1 xu, quà 299 xu...) để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Người xem tặng quà bất kỳ để vào hàng chờ xem bói, quà càng lớn càng được xem sớm (quà từ 100 xu là VIP). Gõ 1 Công việc, 2 Tiền tài, 3 Tình duyên, 4 Học vấn để chọn chủ đề. Thả tim và chia sẻ được cộng điểm ưu tiên.
+7. Mỗi lượt khoảng 45 giây: cô Nguyệt xào bài, trải 3 lá Gốc rễ, Hiện tại, Thời gian tới, đọc ý nghĩa và lời giải từng lá theo chủ đề, rồi lý giải chung. Vắng người thì bốc 1 lá cho cả phòng. Bộ bài 22 lá Ẩn Chính, có lá xuôi và lá ngược.
+8. Đổi tên nhân vật, thời gian từng bước, quà nào ứng với chủ đề nào: sửa config-tarot.json rồi bấm F5. Thay ảnh nền, nhân vật, lá bài bằng ảnh riêng: chép vào public\\assets\\tarot (xem DAT-ANH-VAO-DAY.txt). Nhạc riêng: chép MP3 vào public\\assets\\nhac-tarot.
+9. Bấm đúp mo-cua-so-tarot.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Lưu ý: nội dung bói chỉ mang tính giải trí.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 export const GUIDE_DUOI_HINH = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
 2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DuoiHinh. Không chạy trực tiếp bên trong file ZIP.
 3. Bấm đúp run-duoi-hinh.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
@@ -216,6 +228,16 @@ const DEFAULT_GAMES = [
     visible: false, order: 8, isNew: true,
   },
   {
+    id: 'tarot', name: 'Bói Bài Tarot',
+    tagline: 'Người xem tặng quà để được xem bói 3 lá: công việc, tiền tài, tình duyên, học vấn',
+    description: 'Phòng xem bói Tarot ngay trên LIVE: người xem tặng quà để vào hàng chờ, quà càng lớn càng được xem sớm. Gõ 1 đến 4 để chọn chủ đề Công việc, Tiền tài, Tình duyên, Học vấn. Cô Nguyệt xào bài, trải 3 lá Gốc rễ, Hiện tại, Thời gian tới, đọc ý nghĩa và lời giải từng lá bằng giọng AI, rồi lý giải chung. Có hàng chờ, lời cảm ơn quà, lá bài cho cả phòng khi vắng người.',
+    features: ['Hàng chờ xếp theo giá trị quà', 'Gõ 1–4 chọn chủ đề', '22 lá Ẩn Chính, xuôi và ngược, lời giải theo từng chủ đề', 'Giọng đọc AI tiếng Việt đọc từng lá', 'Thay được ảnh nền, nhân vật, lá bài'],
+    image: '/media/tarot.jpg', video: '/media/tarot.mp4', download: '', version: '2.4.0',
+    guide: GUIDE_TAROT, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 9, isNew: true,
+  },
+  {
     id: 'duoi-hinh', name: 'Đuổi Hình Bắt Chữ',
     tagline: 'Gameshow đoán chữ qua hình: người xem gõ đáp án, đua Top 5 Thánh soi hình',
     description: 'Mỗi câu ghép 2–4 hình emoji 3D thành một từ tiếng Việt (đàn + ong = đàn ông). Người xem gõ đáp án vào bình luận, ai đúng trước được nhiều điểm hơn, bảng xếp hạng Top 5 luôn hiện trên màn hình. Thả tim để mở chữ gợi ý, đủ mục tiêu tim thì nhân đôi điểm, quà lớn mở siêu gợi ý. Có sẵn 265 câu từ dễ đến khó và thư viện 1.600 hình để tự soạn thêm câu.',
@@ -223,7 +245,7 @@ const DEFAULT_GAMES = [
     image: '/media/duoi-hinh.jpg', video: '/media/duoi-hinh.mp4', download: '', version: '2.4.0',
     guide: GUIDE_DUOI_HINH, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
-    visible: false, order: 9, isNew: true,
+    visible: false, order: 10, isNew: true,
   },
 ];
 
