@@ -1,0 +1,1 @@
+Chép ảnh câu đố riêng (PNG/JPG) vào đây rồi ghi tên file trong cauDoThem của config-duoi-hinh.json.

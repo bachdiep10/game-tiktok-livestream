@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thư viện hình · Đuổi hình bắt chữ</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, "Segoe UI", sans-serif; background: #140a2e; color: #f1eaff; }
+    header { position: sticky; top: 0; z-index: 2; background: #22124a; padding: 14px 20px; border-bottom: 1px solid #4b2a8f; }
+    h1 { margin: 0 0 8px; font-size: 22px; color: #ffd54a; }
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    input, select { padding: 9px 12px; border-radius: 10px; border: 1px solid #4b2a8f; background: #0e0622; color: #fff; font-size: 15px; }
+    input#q { flex: 1; min-width: 220px; }
+    button { padding: 9px 12px; border-radius: 10px; border: 1px solid #5c35b0; background: #3a1f7a; color: #fff; cursor: pointer; font-size: 14px; }
+    .hint { font-size: 13px; color: #c7b8ef; margin: 6px 0 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; padding: 16px 20px; }
+    .cell { background: #22124a; border: 1px solid #3a2373; border-radius: 12px; padding: 6px; text-align: center; cursor: pointer; position: relative; }
+    .cell:hover { border-color: #ffd54a; }
+    .cell img { width: 72px; height: 72px; object-fit: contain; }
+    .cell span { display: block; font-size: 11px; color: #c7b8ef; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cell .san { position: absolute; top: 4px; right: 6px; font-size: 11px; color: #7cff9a; }
+    #picked { display: flex; gap: 6px; min-height: 52px; align-items: center; padding: 4px 8px; background: #0e0622; border-radius: 10px; border: 1px dashed #5c35b0; flex: 1; }
+    #picked img { width: 44px; height: 44px; cursor: pointer; }
+    code { display: block; margin-top: 6px; padding: 8px 10px; background: #0e0622; border-radius: 8px; color: #9fe3ff; user-select: all; word-break: break-all; font-size: 13px; }
+    #toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #2e7d32; padding: 10px 18px; border-radius: 20px; display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🧩 Thư viện hình cho Đuổi hình bắt chữ</h1>
+    <div class="row">
+      <input id="q" placeholder="Tìm bằng tiếng Anh, ví dụ: cat, fish, house, car, flower...">
+      <select id="group"><option value="">Mọi nhóm</option></select>
+      <label class="hint"><input type="checkbox" id="onlyLocal"> Chỉ hình đã có sẵn trong máy</label>
+    </div>
+    <p class="hint">Bấm vào hình để thêm vào câu đố đang soạn. Hình có dấu ✓ đã tải sẵn; hình khác game tự tải từ mạng khi cần (hoặc chạy <b>node tools/tai-hinh-duoi-hinh.mjs</b> để tải về máy).</p>
+    <div class="row" style="margin-top:8px">
+      <div id="picked"><span class="hint">Chưa chọn hình nào</span></div>
+      <input id="answer" placeholder="Đáp án, ví dụ: ĐÀN ÔNG" style="width:220px">
+      <select id="level"><option value="1">Dễ</option><option value="2" selected>Vừa</option><option value="3">Khó</option></select>
+      <button id="clear">Xoá</button>
+    </div>
+    <code id="out">Chọn hình và gõ đáp án, dòng để dán vào "cauDoThem" trong config-duoi-hinh.json sẽ hiện ở đây.</code>
+  </header>
+  <div id="grid" class="grid"></div>
+  <div id="toast"></div>
+  <script type="module">
+    import { CAU_DO, HINH_GIAO_DIEN } from './js/duoi-hinh/cauDo.js';
+    const $ = (s) => document.querySelector(s);
+    const codeOf = (e) => Array.from(e.replace(/️/g, '')).map((c) => c.codePointAt(0).toString(16)).join('-');
+    const local = new Set([...HINH_GIAO_DIEN, ...CAU_DO.flatMap(([h]) => h.split(/\s+/))].map(codeOf));
+    const lib = await fetch('assets/duoi-hinh/thu-vien.json').then((r) => r.json());
+    const groups = [...new Set(lib.hinh.map((x) => x[2]))];
+    for (const g of groups) $('#group').append(new Option(g, g));
+    const src = ([glyph, , , p]) => (local.has(codeOf(glyph)) ? `assets/duoi-hinh/hinh/${codeOf(glyph)}.png` : lib.goc + p.split('/').map(encodeURIComponent).join('/'));
+    const picked = [];
+    function render() {
+      const q = $('#q').value.trim().toLowerCase();
+      const g = $('#group').value;
+      const only = $('#onlyLocal').checked;
+      const list = lib.hinh.filter((x) => (!g || x[2] === g) && (!q || x[1].includes(q) || x[0] === q) && (!only || local.has(codeOf(x[0])))).slice(0, 400);
+      $('#grid').innerHTML = '';
+      for (const x of list) {
+        const d = document.createElement('div');
+        d.className = 'cell';
+        d.title = `${x[0]} ${x[1]}`;
+        d.innerHTML = `${local.has(codeOf(x[0])) ? '<b class="san">✓</b>' : ''}<img loading="lazy" alt=""><span></span>`;
+        d.querySelector('img').src = src(x);
+        d.querySelector('span').textContent = x[1];
+        d.onclick = () => { picked.push(x); out(); };
+        $('#grid').append(d);
+      }
+    }
+    function out() {
+      const box = $('#picked');
+      box.innerHTML = picked.length ? '' : '<span class="hint">Chưa chọn hình nào</span>';
+      picked.forEach((x, i) => {
+        const im = document.createElement('img');
+        im.src = src(x);
+        im.title = 'Bấm để bỏ hình này';
+        im.onclick = () => { picked.splice(i, 1); out(); };
+        box.append(im);
+      });
+      const ans = $('#answer').value.trim().toUpperCase();
+      if (picked.length && ans) {
+        $('#out').textContent = JSON.stringify({ hinh: picked.map((x) => x[0]), dapAn: ans, doKho: Number($('#level').value) }) + ',';
+      }
+    }
+    $('#q').oninput = render;
+    $('#group').onchange = render;
+    $('#onlyLocal').onchange = render;
+    $('#answer').oninput = out;
+    $('#level').onchange = out;
+    $('#clear').onclick = () => { picked.length = 0; $('#answer').value = ''; out(); };
+    $('#out').onclick = async () => {
+      try { await navigator.clipboard.writeText($('#out').textContent); const t = $('#toast'); t.textContent = 'Đã chép, dán vào cauDoThem'; t.style.display = 'block'; setTimeout(() => (t.style.display = 'none'), 1500); } catch {}
+    };
+    render();
+  </script>
+</body>
+</html>

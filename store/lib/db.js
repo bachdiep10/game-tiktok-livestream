@@ -125,6 +125,18 @@ export const GUIDE_DAM_CUOI = `1. Cài Node.js bản LTS tại nodejs.org (chỉ
 10. Bấm đúp mo-cua-so-dam-cuoi.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_DUOI_HINH = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DuoiHinh. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-duoi-hinh.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm "Trả lời đúng", "Thả tim", "Quà"... để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối. Ô "Đáp án câu đang chơi" chỉ bạn thấy, giúp bạn dẫn chương trình.
+6. Mỗi câu ghép 2–4 hình thành một từ tiếng Việt, có 40 giây. Người xem gõ đáp án vào bình luận, gõ không dấu cũng được. Ai đúng trước được nhiều điểm hơn, có người đúng thì còn 10 giây cho người khác. Mỗi vòng 10 câu từ dễ đến khó, hết vòng vinh danh Top 3.
+7. Thả tim: đủ 30 tim mở 1 chữ gợi ý; đủ mục tiêu tim (1.000) thì câu sau nhân đôi điểm. Quà nhỏ mở 1 chữ, quà từ 10 xu mở chữ và cộng 5 điểm, quà từ 100 xu mở một nửa số chữ và nhân đôi điểm. Theo dõi +3 điểm, chia sẻ +2 điểm.
+8. Có sẵn 265 câu đố, không lặp lại cho tới khi chơi hết. Thêm câu đố riêng: mở trang thu-vien-hinh.html (có ở Bảng điều khiển) để chọn trong 1.600 hình, gõ đáp án, chép dòng hiện ra vào "cauDoThem" trong config-duoi-hinh.json rồi bấm F5. Ảnh riêng: chép vào public\\assets\\duoi-hinh\\tu-them. Nhạc riêng: chép MP3 vào public\\assets\\nhac-duoi-hinh.
+9. Bấm đúp mo-cua-so-duoi-hinh.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Hình emoji 3D: Microsoft Fluent Emoji, giấy phép MIT (xem public\\assets\\duoi-hinh\\BAN-QUYEN-HINH.txt).
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 const DEFAULT_GAMES = [
   {
     id: 'chanh-dien', name: 'Chánh Điện Lễ Phật',
@@ -202,6 +214,16 @@ const DEFAULT_GAMES = [
     guide: GUIDE_DAM_CUOI, guideVideo: '', rev: 2,
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 8, isNew: true,
+  },
+  {
+    id: 'duoi-hinh', name: 'Đuổi Hình Bắt Chữ',
+    tagline: 'Gameshow đoán chữ qua hình: người xem gõ đáp án, đua Top 5 Thánh soi hình',
+    description: 'Mỗi câu ghép 2–4 hình emoji 3D thành một từ tiếng Việt (đàn + ong = đàn ông). Người xem gõ đáp án vào bình luận, ai đúng trước được nhiều điểm hơn, bảng xếp hạng Top 5 luôn hiện trên màn hình. Thả tim để mở chữ gợi ý, đủ mục tiêu tim thì nhân đôi điểm, quà lớn mở siêu gợi ý. Có sẵn 265 câu từ dễ đến khó và thư viện 1.600 hình để tự soạn thêm câu.',
+    features: ['265 câu đố tiếng Việt có sẵn, 3 mức dễ / vừa / khó', 'Đồng hồ 40 giây, ô chữ gợi ý, MC đọc tên người đúng', 'Top 5 Thánh soi hình + tổng kết mỗi vòng', 'Thả tim mở chữ, quà = gợi ý và nhân đôi điểm', 'Thư viện 1.600 hình 3D để tự soạn câu đố'],
+    image: '/media/duoi-hinh.jpg', video: '/media/duoi-hinh.mp4', download: '', version: '2.4.0',
+    guide: GUIDE_DUOI_HINH, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 9, isNew: true,
   },
 ];
 
