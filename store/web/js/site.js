@@ -126,17 +126,24 @@ async function openBuy(planId, gameId) {
   $('#pickWrap').style.display = p.allGames ? 'none' : '';
   $('#pickLabel').textContent = need === 1 ? 'Chọn 1 game' : `Chọn ${need} game`;
   const type = need === 1 ? 'radio' : 'checkbox';
+  // gói nhiều game: hiện dạng lưới ô nhỏ cho đỡ phải cuộn
+  $('#pick').classList.toggle('grid', need > 1);
   $('#pick').innerHTML = C.games.map((g, i) => {
     const checked = need === 1 ? (gameId ? g.id === gameId : i === 0) : (need >= C.games.length || g.id === gameId);
     return `<label><input type="${type}" name="game" value="${esc(g.id)}" ${checked ? 'checked' : ''}><img src="${esc(g.image)}" alt=""><span>${esc(g.name)}</span></label>`;
   }).join('');
+  const count = () => {
+    $('#pickCount').textContent = p.allGames || need <= 1 ? '' : `Đã chọn ${$$('#pick input:checked').length}/${need} game`;
+  };
   if (type === 'checkbox') {
     $$('#pick input').forEach(i => i.addEventListener('change', () => {
       const on = $$('#pick input:checked');
       if (on.length > need) { i.checked = false; $('#buyErr').textContent = `Chỉ được chọn ${need} game.`; }
       else $('#buyErr').textContent = '';
+      count();
     }));
   }
+  count();
   openModal('#buyModal');
   track('InitiateCheckout', { value: p.price, content_ids: [p.id], content_name: p.name, content_type: 'product', num_items: p.allGames ? C.games.length : need });
 }
