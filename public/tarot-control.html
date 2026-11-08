@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Bói bài Tarot</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #160a26; color: #ede7f6; }
+    .panel { background: #22113a; border-color: #5e3a8c; }
+    h1, h2 { color: #ffd54f; }
+    .status { background: #2c1648; }
+    input, code, .log { background: #12081f; border-color: #5e3a8c; }
+    button { background: #36205a; border-color: #6d4a9c; }
+    button:hover { background: #45296f; }
+    button.primary { background: #7b3fbf; border-color: #b388ff; }
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>🔮 Bói bài Tarot LIVE</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button data-sim="join">👋 Người xem vào</button>
+        <button data-cmd="1">1 · Công việc</button>
+        <button data-cmd="2">2 · Tiền tài</button>
+        <button data-cmd="3">3 · Tình duyên</button>
+        <button data-cmd="4">4 · Học vấn</button>
+        <button data-cmd="xem bói cho mình với">💬 "xem bói"</button>
+        <button data-sim="chat">💬 Bình luận thường</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="follow">⭐ Theo dõi</button>
+        <button data-sim="share">📣 Chia sẻ</button>
+        <button data-sim="gift1">🌹 Quà 1 xu</button>
+        <button data-sim="gift20">🍩 Quà 30 xu</button>
+        <button data-sim="gift100">💎 Quà 299 xu (VIP)</button>
+        <button data-sim="voiceTest">🔊 Thử giọng</button>
+        <button data-sim="nextPhase">⏭ Sang bước tiếp</button>
+        <button data-sim="fullTest">🔮 Một người tặng quà + chọn chủ đề</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử...">
+        <button id="btnChat">Gửi</button>
+      </div>
+      <p class="hint">Cách chơi: người xem <b>tặng quà bất kỳ</b> để vào hàng chờ, quà càng lớn càng được xem sớm (quà từ 100 xu là VIP). Gõ <b>1 Công việc · 2 Tiền tài · 3 Tình duyên · 4 Học vấn</b> để chọn chủ đề. Mỗi lượt khoảng 45 giây: xào bài, trải 3 lá <b>Gốc rễ · Hiện tại · Thời gian tới</b>, giải từng lá rồi lý giải chung. Gõ chủ đề mà không tặng quà vẫn được xếp hàng (tối đa 3 người miễn phí, sửa freeQueue trong config-tarot.json). Vắng người thì cô Nguyệt bốc 1 lá cho cả phòng.</p>
+
+      <h2>3. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="15">+15 người vào</button>
+        <button id="btnGiftStorm">Mưa quà (8 quà)</button>
+        <button id="btnLikeStorm">Bão tim (150 tim)</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hàng chờ</button>
+      </div>
+
+      <h2>4. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-tarot.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+      <p class="hint">Ảnh tự thiết kế (không bắt buộc): chép vào <b>public\assets\tarot</b> với tên nen.jpg (nền), nhan-vat.png (thầy bói, nền trong suốt), mat-sau.png, la-00.png ... la-21.png (lá bài). Xem file DAT-ANH-VAO-DAY.txt trong thư mục đó.</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/tarot/tarotControl.js"></script>
+</body>
+</html>
