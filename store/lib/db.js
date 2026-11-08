@@ -149,6 +149,19 @@ export const GUIDE_LEO_NUI = `1. Cài Node.js bản LTS tại nodejs.org (chỉ 
 10. Bấm đúp mo-cua-so-leo-nui.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_GIEO_QUE = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\GieoQue. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-gieo-que.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm các nút Giả lập (bình luận xin xăm, chia sẻ, quà 1 / 30 / 299 xu...) để thử, nút "Tự chạy demo" để xem nhiều lượt liên tục. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối.
+6. Người xem bình luận "xin xăm" và chia sẻ LIVE ít nhất 1 lần thì vào danh sách chờ. Tặng quà là vào ngay. Bảng 10 người chờ xếp theo điểm: 1 xu = 10 điểm, 1 chia sẻ = 5 điểm, 50 tim = 1 điểm. Muốn vượt lên thì chia sẻ, thả tim hoặc tặng quà thêm.
+7. Tới lượt, người chơi có 10 giây gõ điều muốn xin (công danh, tài lộc, tình duyên, gia đạo, sức khỏe, thi cử, xuất hành). Ông Từ khấn, lắc ống xăm (thả tim cho lắc nhanh), rút quẻ, rồi gieo keo xin keo Thánh. Cả phòng đoán keo bằng bình luận "thánh", "âm", "dương".
+8. Quẻ lấy theo bộ Quan Âm linh xăm 100 quẻ, có thơ, ý quẻ, lời giải theo đúng điều người chơi xin. Gặp Hạ quẻ, cả phòng có 15 giây tặng quà giải hạn: 10 xu lên 1 bậc, 100 xu lên Cát quẻ. Người tặng quà trong lượt của mình được lượt VIP màu vàng.
+9. Đổi điểm, thời gian đếm ngược, mức quà, giọng đọc: sửa config-gieo-que.json rồi bấm F5. Ảnh riêng (nền, Ông Từ, ống xăm, tờ quẻ, keo): chép vào public\\assets\\gieo-que (xem DAT-ANH-VAO-DAY.txt). Nhạc riêng: chép MP3 vào public\\assets\\nhac-gieo-que.
+10. Bấm đúp mo-cua-so-gieo-que.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Lưu ý: nội dung quẻ chỉ mang tính giải trí.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 export const GUIDE_DUOI_HINH = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
 2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\DuoiHinh. Không chạy trực tiếp bên trong file ZIP.
 3. Bấm đúp run-duoi-hinh.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
@@ -268,6 +281,16 @@ const DEFAULT_GAMES = [
     guide: GUIDE_LEO_NUI, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 11, isNew: true,
+  },
+  {
+    id: 'gieo-que', name: 'Gieo Quẻ Xin Xăm',
+    tagline: 'Ông Từ rút quẻ Quan Âm 100 quẻ cho người xem, chia sẻ LIVE để được xin xăm',
+    description: 'Ông Từ ngồi giữa sân đình rút quẻ cho từng người xem. Bình luận "xin xăm" và chia sẻ LIVE để vào bảng 10 người chờ, ai chia sẻ, thả tim, tặng quà nhiều hơn được xin trước. Tới lượt, người chơi gõ điều muốn xin, Ông Từ lắc ống xăm, gieo keo xin keo Thánh rồi đọc quẻ theo bộ Quan Âm linh xăm 100 quẻ, có lời giải đúng chủ đề người xin. Gặp Hạ quẻ, cả phòng tặng quà giải hạn.',
+    features: ['100 quẻ Quan Âm linh xăm có thơ và lời giải', 'Bảng 10 người chờ xếp theo chia sẻ, tim, quà', 'Lời giải theo điều người chơi xin trong bình luận', 'Gieo keo Thánh / Âm / Dương, cả phòng cùng đoán', 'Giải hạn bằng quà, lượt VIP vàng, Bảng Phúc Đức'],
+    image: '/media/gieo-que.jpg', video: '/media/gieo-que.mp4', download: '', version: '2.6.0',
+    guide: GUIDE_GIEO_QUE, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 12, isNew: true,
   },
 ];
 

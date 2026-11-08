@@ -1,0 +1,16 @@
+Anh cho game Gieo Que (da co san bo anh cua Sep). Muon thay anh nao thi chep de len dung ten file roi bam F5 o cua so game.
+Anh PNG nen xanh la dac #00FF00 se duoc game tu xoa nen.
+
+  nen.jpg           1080 x 1920, san mieu ban dem
+  nen-vip.jpg       1080 x 1920, chinh dien vang (luot Dai Que)
+  nen-giai-han.jpg  1080 x 1920, san mieu troi bao (luc giai han)
+  ong-tu.png        Ong Tu nua nguoi, mieng ngam
+  ong-tu-noi.png    giong ong-tu.png nhung mieng mo (dang noi)
+  ong-xam.png       ong xam do
+  ong-xam-vang.png  ong xam vang (Dai Que)
+  que-xam.png       mot que xam dung doc
+  keo.png           mot dong keo (game tu lat de ra mat sap / mat ngua)
+  to-que.png        to giay do cuon hai dau
+  lu-huong.png      lu huong dong
+  bua.png           la bua binh an
+  the-ten.png       tam the go ngang hien ten nguoi xin

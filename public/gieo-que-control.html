@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Gieo Quẻ</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #1e0a06; color: #fbe9e7; }
+    .panel { background: #2e120a; border-color: #8a4a1a; }
+    h1, h2 { color: #ffd54f; }
+    .status { background: #3a160c; }
+    input, code, .log { background: #160604; border-color: #8a4a1a; }
+    button { background: #4a1c0c; border-color: #9a5a2a; }
+    button:hover { background: #5e2410; }
+    button.primary { background: #b3361e; border-color: #ffb74d; }
+    .grid { grid-template-columns: repeat(3, 1fr); }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>🎋 Gieo Quẻ · Xin Xăm LIVE</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Giả lập (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid">
+        <button data-sim="join">👋 Người xem vào</button>
+        <button data-cmd="xin xăm tình duyên năm nay">💬 "xin xăm tình duyên"</button>
+        <button data-cmd="xin quẻ công việc">💬 "xin quẻ công việc"</button>
+        <button data-sim="share">📣 Chia sẻ live</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="follow">⭐ Theo dõi</button>
+        <button data-sim="gift1">🌹 Quà 1 xu</button>
+        <button data-sim="gift20">🍩 Quà 30 xu</button>
+        <button data-sim="gift100">💎 Quà 299 xu (Đại Quẻ)</button>
+        <button data-sim="wish">🙏 Người tới lượt gõ lời xin</button>
+        <button data-sim="guess">🎲 Cả phòng đoán keo</button>
+        <button data-sim="giaiHan">🛡 Tặng quà giải hạn (20 xu)</button>
+        <button data-sim="fullTest">🎋 Một người xin + chia sẻ</button>
+        <button data-sim="voiceTest">🔊 Thử giọng</button>
+        <button data-sim="nextPhase">⏭ Sang bước tiếp</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ bình luận thử...">
+        <button id="btnChat">Gửi</button>
+      </div>
+      <p class="hint">Cách chơi: người xem <b>bình luận "xin xăm"</b> (kèm điều muốn hỏi) và <b>chia sẻ live</b> để có tên trong danh sách chờ, hoặc <b>tặng quà bất kỳ</b> là vào ngay. Bảng hiện 10 người, xếp theo điểm: mỗi xu quà 10 điểm, mỗi lần chia sẻ 5 điểm, 50 tim 1 điểm. Tới lượt: 10 giây gõ lời xin, cả phòng thả tim lắc ống xăm, đoán keo, gieo keo (Thánh keo mới được, tối đa 3 lần), Ông Từ đọc thơ và giải quẻ theo bộ Quan Âm 100 quẻ. Ra Hạ quẻ thì cả phòng có 15 giây tặng quà giải hạn (10 xu lên 1 bậc, 100 xu lên Cát quẻ). Quà từ 100 xu là Đại Quẻ: ống xăm vàng, chính điện vàng, bùa bình an. Vắng người thì Ông Từ gieo quẻ chung cho cả phòng. Sửa mức điểm, số giây trong config-gieo-que.json.</p>
+
+      <h2>3. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="15">+15 người vào</button>
+        <button id="btnShareStorm">Mưa chia sẻ (8 người xin)</button>
+        <button id="btnGiftStorm">Mưa quà (8 quà)</button>
+        <button id="btnLikeStorm">Bão tim (150 tim)</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+        <button id="btnReset" class="danger">Xoá hàng chờ</button>
+      </div>
+
+      <h2>4. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-gieo-que.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+      <p class="hint">Ảnh của game nằm trong <b>public\assets\gieo-que</b> (nền, Ông Từ, ống xăm, que, keo, tờ quẻ...). Muốn thay thì chép ảnh mới đè lên đúng tên file, xem DAT-ANH-VAO-DAY.txt. Ảnh PNG nền xanh lá #00FF00 được tự xoá nền.</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Bấm chuột vào khung xem trước một lần để trình duyệt cho phát tiếng.<br>
+      Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/gieo-que/gqControl.js"></script>
+</body>
+</html>
