@@ -1617,12 +1617,26 @@ async function boot() {
   sfx.setPreferredVoice(config.ttsVoice);
   rebuildScene();
   loadBuddhaImage();
+  // nhạc nền: config.musicFile, nếu trống thì lấy bài đầu trong thư mục public/assets/nhac-chanh-dien
+  let musicFile = config.musicFile || '';
+  let musicReady = !!musicFile;
   const startMusic = () => {
+    if (!musicReady) return;
     if (config.music !== false && config.sound !== false) {
-      sfx.startMusic({ file: config.musicFile, volume: Number(config.musicVolume) || 0.25 });
+      sfx.startMusic({ file: musicFile, volume: Number(config.musicVolume) || 0.25 });
     }
   };
-  startMusic();
+  if (musicFile) startMusic();
+  else {
+    fetch('/chanh-dien-music.json', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : []))
+      .catch(() => [])
+      .then((list) => {
+        musicFile = list[0] || '';
+        musicReady = true;
+        startMusic();
+      });
+  }
   window.addEventListener('pointerdown', () => {
     sfx.unlockAudio();
     startMusic();

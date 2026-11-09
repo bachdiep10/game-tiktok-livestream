@@ -20,7 +20,7 @@ const SERVER = opt('server', 'https://netxioviet.com').replace(/\/$/, '');
 const only = args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--')));
 const VERSION = (fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8').match(/const VERSION = '([^']+)'/) || [])[1] || '1.0';
 
-const COMMON = ['server.js', 'package.json', 'package-lock.json', 'config.json', 'public/css', 'public/js/audio.js', 'public/js/fake.js',
+const COMMON = ['server.js', 'package.json', 'package-lock.json', 'config.json', 'public/css', 'public/js/audio.js', 'public/js/fake.js', 'public/js/amLuong.js', 'public/js/amLuongControl.js',
   'license/gate.js', 'license/license-client.js', 'license/kich-hoat.html'];
 
 const PRODUCTS = {
@@ -28,59 +28,59 @@ const PRODUCTS = {
     name: 'Chánh Điện Lễ Phật', folder: 'ChanhDien', control: '/control.html', guide: GUIDE_CHANH_DIEN,
     files: ['run.bat', 'mo-cua-so-game.bat', 'public/game.html', 'public/control.html',
       'public/js/game.js', 'public/js/scene.js', 'public/js/buddha.js', 'public/js/characterArt.js', 'public/js/control.js',
-      'public/assets/chanh-dien.jpg', 'public/assets/README.txt'],
+      'public/assets/chanh-dien.jpg', 'public/assets/README.txt', 'public/assets/nhac-chanh-dien'],
     patch: { 'public/control.html': [/ <a href="bar-control.html"[^>]*>[^<]*<\/a>/, ''] },
   },
   'quan-bar': {
     name: 'Quán Bar Sôi Động', folder: 'QuanBar', control: '/bar-control.html', guide: GUIDE_QUAN_BAR,
     files: ['run-bar.bat', 'mo-cua-so-bar.bat', 'config-bar.json', 'public/bar.html', 'public/bar-control.html', 'public/js/bar',
-      'public/assets/nhac-bar/DAT-NHAC-VAO-DAY.txt', 'public/assets/anh-led/DAT-ANH-VAO-DAY.txt'],
+      'public/assets/nhac-bar', 'public/assets/anh-led/DAT-ANH-VAO-DAY.txt'],
     patch: { 'public/bar-control.html': [/ <a href="control.html"[^>]*>[^<]*<\/a>/, ''] },
   },
   'tra-da': {
     name: 'Trà Đá Vỉa Hè', folder: 'TraDa', control: '/tra-da-control.html', guide: GUIDE_TRA_DA,
     files: ['run-tra-da.bat', 'mo-cua-so-tra-da.bat', 'config-tra-da.json', 'public/tra-da.html', 'public/tra-da-control.html', 'public/js/tra-da',
-      'public/assets/nhac-tra-da/DAT-NHAC-VAO-DAY.txt'],
+      'public/assets/nhac-tra-da'],
   },
   'cau-ca': {
     name: 'Bến Câu Sinh Tồn', folder: 'CauCa', control: '/cau-ca-control.html', guide: GUIDE_CAU_CA,
     files: ['run-cau-ca.bat', 'mo-cua-so-cau-ca.bat', 'config-cau-ca.json', 'public/cau-ca.html', 'public/cau-ca-control.html', 'public/js/cau-ca',
-      'public/assets/nhac-cau-ca/DAT-NHAC-VAO-DAY.txt'],
+      'public/assets/nhac-cau-ca'],
   },
   'rong-ran': {
     name: 'Rồng Rắn Lên Mây', folder: 'RongRan', control: '/rong-ran-control.html', guide: GUIDE_RONG_RAN,
     files: ['run-rong-ran.bat', 'mo-cua-so-rong-ran.bat', 'config-rong-ran.json', 'public/rong-ran.html', 'public/rong-ran-control.html', 'public/js/rong-ran',
-      'public/assets/nhac-rong-ran/DAT-NHAC-VAO-DAY.txt'],
+      'public/assets/nhac-rong-ran'],
   },
   'dai-chien': {
     name: 'Sơn Tinh Thủy Tinh Đại Chiến', folder: 'DaiChien', control: '/dai-chien-control.html', guide: GUIDE_DAI_CHIEN,
     files: ['run-dai-chien.bat', 'mo-cua-so-dai-chien.bat', 'config-dai-chien.json', 'public/dai-chien.html', 'public/dai-chien-control.html', 'public/js/dai-chien',
-      'public/assets/nhac-dai-chien/DAT-NHAC-VAO-DAY.txt'],
+      'public/assets/nhac-dai-chien'],
   },
   'bia-hoi': {
     name: 'Bia Hơi Vỉa Hè', folder: 'BiaHoi', control: '/bia-hoi-control.html', guide: GUIDE_BIA_HOI,
     files: ['run-bia-hoi.bat', 'mo-cua-so-bia-hoi.bat', 'config-bia-hoi.json', 'public/bia-hoi.html', 'public/bia-hoi-control.html', 'public/js/bia-hoi',
-      'public/assets/nhac-bia-hoi/DAT-NHAC-VAO-DAY.txt'],
+      'public/assets/nhac-bia-hoi'],
   },
   'dam-cuoi': {
     name: 'Ăn Cỗ Đám Cưới', folder: 'DamCuoi', control: '/dam-cuoi-control.html', guide: GUIDE_DAM_CUOI,
     files: ['run-dam-cuoi.bat', 'mo-cua-so-dam-cuoi.bat', 'config-dam-cuoi.json', 'public/dam-cuoi.html', 'public/dam-cuoi-control.html', 'public/js/dam-cuoi',
-      'public/assets/nhac-dam-cuoi/DAT-NHAC-VAO-DAY.txt'],
+      'public/assets/nhac-dam-cuoi'],
   },
   tarot: {
     name: 'Bói Bài Tarot', folder: 'BoiTarot', control: '/tarot-control.html', guide: GUIDE_TAROT,
     files: ['run-tarot.bat', 'mo-cua-so-tarot.bat', 'config-tarot.json', 'public/tarot.html', 'public/tarot-control.html', 'public/js/tarot',
-      'public/assets/tarot', 'public/assets/nhac-tarot/DAT-NHAC-VAO-DAY.txt'],
+      'public/assets/tarot', 'public/assets/nhac-tarot'],
   },
   'duoi-hinh': {
     name: 'Đuổi Hình Bắt Chữ', folder: 'DuoiHinh', control: '/duoi-hinh-control.html', guide: GUIDE_DUOI_HINH,
     files: ['run-duoi-hinh.bat', 'mo-cua-so-duoi-hinh.bat', 'config-duoi-hinh.json', 'public/duoi-hinh.html', 'public/duoi-hinh-control.html', 'public/thu-vien-hinh.html',
-      'public/js/duoi-hinh', 'public/assets/duoi-hinh', 'public/assets/nhac-duoi-hinh/DAT-NHAC-VAO-DAY.txt', 'tools/tai-hinh-duoi-hinh.mjs'],
+      'public/js/duoi-hinh', 'public/assets/duoi-hinh', 'public/assets/nhac-duoi-hinh', 'tools/tai-hinh-duoi-hinh.mjs'],
   },
   'leo-nui': {
     name: 'Leo Núi Everest', folder: 'LeoNui', control: '/leo-nui-control.html', guide: GUIDE_LEO_NUI,
     files: ['run-leo-nui.bat', 'mo-cua-so-leo-nui.bat', 'config-leo-nui.json', 'public/leo-nui.html', 'public/leo-nui-control.html', 'public/js/leo-nui',
-      'public/assets/leo-nui', 'public/assets/nhac-leo-nui/DAT-NHAC-VAO-DAY.txt'],
+      'public/assets/leo-nui', 'public/assets/nhac-leo-nui'],
   },
   'gieo-que': {
     name: 'Gieo Quẻ Xin Xăm', folder: 'GieoQue', control: '/gieo-que-control.html', guide: GUIDE_GIEO_QUE,

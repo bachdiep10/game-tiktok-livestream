@@ -1,2 +1,3 @@
-Chép file nhạc MP3 của bạn vào thư mục này (nhạc bạn có quyền sử dụng).
-Game phát lần lượt theo tên file rồi lặp lại. Để trống thì game dùng nhạc sáo trúc + trống hội tự tạo.
+Nhạc nền mặc định: dong-dao-vui.mp3 (nhạc tự soạn bằng máy, không vướng bản quyền, dùng thoải mái trên TikTok LIVE).
+Muốn dùng nhạc riêng: chép file MP3 (nhạc bạn có quyền sử dụng) vào thư mục này. Game phát lần lượt theo tên file rồi lặp lại.
+Không muốn nghe dong-dao-vui.mp3 thì xoá nó đi. Thư mục trống thì game dùng nhạc tự tạo bằng máy.

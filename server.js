@@ -70,7 +70,7 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(loadConfig()));
     return;
   }
-  const MUSIC_FOLDERS = { '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca', '/dai-chien-music.json': 'nhac-dai-chien', '/bia-hoi-music.json': 'nhac-bia-hoi', '/dam-cuoi-music.json': 'nhac-dam-cuoi', '/tarot-music.json': 'nhac-tarot', '/duoi-hinh-music.json': 'nhac-duoi-hinh', '/leo-nui-music.json': 'nhac-leo-nui', '/gieo-que-music.json': 'nhac-gieo-que' };
+  const MUSIC_FOLDERS = { '/chanh-dien-music.json': 'nhac-chanh-dien', '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca', '/dai-chien-music.json': 'nhac-dai-chien', '/bia-hoi-music.json': 'nhac-bia-hoi', '/dam-cuoi-music.json': 'nhac-dam-cuoi', '/tarot-music.json': 'nhac-tarot', '/duoi-hinh-music.json': 'nhac-duoi-hinh', '/leo-nui-music.json': 'nhac-leo-nui', '/gieo-que-music.json': 'nhac-gieo-que' };
   if (MUSIC_FOLDERS[pathname]) {
     // danh sách bài hát trong thư mục nhạc của game (public/assets/nhac-bar, nhac-tra-da, nhac-rong-ran, nhac-cau-ca, nhac-dai-chien), xếp theo tên file
     const folder = MUSIC_FOLDERS[pathname];
@@ -328,7 +328,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '2.6.0';
+const VERSION = '2.8.0';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 const gate = createGate({
   rootDir: __dirname,
@@ -361,8 +361,18 @@ function emit(event) {
   }
 }
 
+// Âm lượng chỉnh ở bảng điều khiển (nhạc / hiệu ứng / giọng / tiếng tương tác), lưu lại cho lần sau
+const AUDIO_FILE = path.join(__dirname, 'am-luong.json');
+let audioSettings = null;
+try { audioSettings = JSON.parse(fs.readFileSync(AUDIO_FILE, 'utf8')); } catch { /* chưa chỉnh lần nào */ }
+function cleanAudio(a) {
+  const n = (v, d) => Math.max(0, Math.min(150, Number.isFinite(Number(v)) ? Math.round(Number(v)) : d));
+  return { music: n(a.music, 100), sfx: n(a.sfx, 100), voice: n(a.voice, 100), cues: n(a.cues, 70), mute: !!a.mute };
+}
+
 wss.on('connection', (ws) => {
   ws.send(JSON.stringify({ type: 'status', status }));
+  if (audioSettings) ws.send(JSON.stringify({ type: 'audio', settings: audioSettings }));
   ws.on('message', async (raw) => {
     let msg;
     try {
@@ -388,6 +398,12 @@ wss.on('connection', (ws) => {
       broadcast({ type: 'gameState', state: msg.state });
     } else if (msg.cmd === 'askState') {
       broadcast({ type: 'askState' });
+    } else if (msg.cmd === 'audio' && msg.settings && typeof msg.settings === 'object') {
+      audioSettings = cleanAudio(msg.settings);
+      try { fs.writeFileSync(AUDIO_FILE, JSON.stringify(audioSettings)); } catch { /* bỏ qua */ }
+      broadcast({ type: 'audio', settings: audioSettings });
+    } else if (msg.cmd === 'audioTest') {
+      broadcast({ type: 'audioTest' });
     }
   });
 });
