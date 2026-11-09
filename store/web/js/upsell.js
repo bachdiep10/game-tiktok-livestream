@@ -2,8 +2,14 @@
 import { $, $$, api, esc, money, moneyFull } from '/js/common.js';
 
 const css = `
-.upx .box{width:min(480px,100%)}
-.upx .hero{font-size:44px;line-height:1;margin-bottom:6px}
+.upx .box{width:min(480px,100%);padding-top:34px;overflow:hidden}
+.upx .box:before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:linear-gradient(90deg,#ff3d7f,#ff7a59,#ffb547)}
+.upx .hero{width:68px;height:68px;border-radius:22px;display:grid;place-items:center;font-size:34px;line-height:1;margin-bottom:14px;background:linear-gradient(135deg,#fff0f4,#fff6e8);box-shadow:inset 0 0 0 1px rgba(255,61,127,.15)}
+.upx h3{font-size:23px;letter-spacing:-.02em}
+.upx .deal:hover{border-color:rgba(255,79,109,.5)}
+.upx .deal{transition:.15s}
+.upx .timer{animation:upPulse 2s ease-in-out infinite}
+@keyframes upPulse{50%{box-shadow:0 0 0 4px rgba(245,158,11,.15)}}
 .upx ul{margin:12px 0 18px;padding:0;list-style:none}
 .upx li{padding:7px 0 7px 30px;position:relative;font-size:15px}
 .upx li:before{content:"✓";position:absolute;left:4px;color:#16a34a;font-weight:800}
