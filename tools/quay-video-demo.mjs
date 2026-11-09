@@ -66,18 +66,23 @@ const TAP = () => {
 
 const server = spawn(process.execPath, ['server.js'], { env: { ...process.env, GAME_DEV: '1', PORT: String(PORT) }, stdio: 'ignore' });
 await new Promise((r) => setTimeout(r, 2500));
-const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required'] });
+const browser = await chromium.launch({ args: ['--autoplay-policy=no-user-gesture-required', ...(process.env.REC_ARGS ? process.env.REC_ARGS.split(' ') : [])] });
 try {
   for (const id of list) {
     const g = GAMES[id];
-    const ctx = await browser.newContext({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 0.5 });
-    const control = await ctx.newPage();
+    // hình: Playwright tự quay màn hình trang game (mượt ~25 hình/giây); tiếng: ghi riêng trong trang rồi ghép
+    const vidDir = fs.mkdtempSync(path.join(outDir, 'tmp-'));
+    const ctx = await browser.newContext({ viewport: { width: 540, height: 960 }, recordVideo: { dir: vidDir, size: { width: 540, height: 960 } } });
+    // trang điều khiển ở ngữ cảnh riêng -> chạy ở tiến trình riêng, không giành máy với trang game
+    const ctxC = await browser.newContext({ viewport: { width: 900, height: 900 } });
     const game = await ctx.newPage();
+    const t0 = Date.now();
     await game.addInitScript(TAP);
     await game.goto(`${BASE}/${g.page}`);
     await game.waitForTimeout(2500);
-    await game.mouse.click(540, 960);
-    // không cho khung xem trước của trang điều khiển chạy thêm một bản game (tốn máy, tụt khung hình)
+    await game.mouse.click(270, 480);
+    const control = await ctxC.newPage();
+    // không cho khung xem trước của trang điều khiển chạy thêm một bản game
     await control.route(`${BASE}/${g.page}*`, (r) => r.fulfill({ body: '', contentType: 'text/html' }));
     await control.goto(`${BASE}/${g.control}`);
     await control.waitForTimeout(1000);
@@ -87,43 +92,36 @@ try {
     if (await bulk.count()) await bulk.click();
     await control.locator('#btnAuto').click();
     await game.waitForTimeout(6000);
-    await game.bringToFront();
-    const b64 = await game.evaluate(async (sec) => {
-      const src = document.querySelector('canvas');
-      // thu nhỏ còn 540x960 trước khi mã hoá cho nhẹ máy
-      const canvas = document.createElement('canvas');
-      canvas.width = 540;
-      canvas.height = 960;
-      const c2 = canvas.getContext('2d');
-      let on = true;
-      const copy = () => { if (!on) return; c2.drawImage(src, 0, 0, 540, 960); requestAnimationFrame(copy); };
-      copy();
-      const stream = new MediaStream([...canvas.captureStream(30).getVideoTracks(), ...window.__recAudio.getAudioTracks()]);
-      const rec = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 8e6 });
+    const { b64, start } = await game.evaluate(async (sec) => {
+      const rec = new MediaRecorder(window.__recAudio, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 192000 });
       const chunks = [];
       rec.ondataavailable = (e) => chunks.push(e.data);
       const done = new Promise((r) => (rec.onstop = r));
       rec.start(1000);
+      const start = Date.now();
       await new Promise((r) => setTimeout(r, sec * 1000));
       rec.stop();
-      on = false;
       await done;
       const buf = await new Blob(chunks).arrayBuffer();
       let s = '';
       const u = new Uint8Array(buf);
       for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000));
-      return btoa(s);
+      return { b64: btoa(s), start };
     }, g.sec);
     await control.locator('#btnAuto').click().catch(() => {});
-    const webm = path.join(outDir, `${id}.webm`);
-    fs.writeFileSync(webm, Buffer.from(b64, 'base64'));
+    const vid = await game.video().path();
+    await ctx.close();
+    await ctxC.close();
+    const audio = path.join(outDir, `${id}.webm`);
+    fs.writeFileSync(audio, Buffer.from(b64, 'base64'));
+    const offset = Math.max(0, (start - t0) / 1000);
     const mp4 = path.join(outDir, `${id}.mp4`);
-    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-i', webm,
-      '-vf', 'scale=540:960:flags=lanczos,fps=25', '-c:v', 'libx264', '-preset', 'slow', '-crf', '23', '-pix_fmt', 'yuv420p',
+    execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', offset.toFixed(3), '-i', vid, '-i', audio, '-map', '0:v', '-map', '1:a', '-t', String(g.sec),
+      '-vf', 'fps=25', '-c:v', 'libx264', '-preset', 'slow', '-crf', '21', '-pix_fmt', 'yuv420p',
       '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-movflags', '+faststart', mp4]);
+    fs.rmSync(vidDir, { recursive: true, force: true });
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', '8', '-i', mp4, '-frames:v', '1', '-q:v', '3', path.join(outDir, `${id}.jpg`)]);
     console.log('xong', id);
-    await ctx.close();
   }
 } finally {
   await browser.close();
