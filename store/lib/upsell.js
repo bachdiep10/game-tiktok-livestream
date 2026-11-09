@@ -145,7 +145,7 @@ export function normalizeUpsell(u) {
   };
 }
 
-export const EVENT_KEYS = ['checkout_shown', 'checkout_accept', 'checkout_decline', 'account_shown', 'account_click', 'account_close', 'first_shown', 'first_click', 'first_close'];
+export const EVENT_KEYS = ['checkout_shown', 'checkout_accept', 'checkout_decline', 'account_shown', 'account_click', 'account_close', 'first_shown', 'first_click', 'first_close', 'bell_click'];
 export function countEvent(up, k, n = 1) {
   if (!EVENT_KEYS.includes(k) && !/^email_/.test(k)) return;
   const day = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10); // ngày giờ Việt Nam

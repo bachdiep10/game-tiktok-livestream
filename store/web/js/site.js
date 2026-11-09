@@ -198,7 +198,11 @@ $('#buyForm').addEventListener('submit', async e => {
     if (d.user && applyFirst(C, d.firstOffer)) { renderGames(); renderPlans(); }
     const m = location.hash.match(/^#mua-([^~]+)(?:~(.+))?$/);
     if (m) { history.replaceState(null, '', '/#bang-gia'); openBuy(m[1], m[2]); }
-    else if (d.user && !firstOfferPopup(d, C, (id, src) => openBuy(id, '', false, src))) autoOfferPopup(d, C);
+    window.addEventListener('hashchange', () => {
+      const h = location.hash.match(/^#mua-([^~]+)(?:~(.+))?$/);
+      if (h) { history.replaceState(null, '', '/#bang-gia'); openBuy(h[1], h[2], false, sessionStorage.getItem('lg_src') || ''); }
+    });
+    if (!m && d.user && !firstOfferPopup(d, C, (id, src) => openBuy(id, '', false, src))) autoOfferPopup(d, C);
   } catch (e) {
     document.querySelector('main').innerHTML = `<div class="wrap page"><div class="panel">Không tải được dữ liệu: ${esc(e.message)}</div></div>`;
   }

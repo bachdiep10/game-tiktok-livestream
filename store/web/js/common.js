@@ -57,10 +57,27 @@ export async function applyBrand() {
   mobileMenu();
   me().then(r => {
     $$('[data-account]').forEach(el => { el.textContent = r.user ? `👤 ${r.user.name.split(' ').slice(-1)[0]}` : 'Đăng nhập'; });
+    if (r.user && !location.pathname.startsWith('/admin')) offerBell(r, c);
   }).catch(() => {});
   $$('footer .wrap').forEach(el => { if (!el.querySelector('.foot-links')) el.insertAdjacentHTML('beforeend', footerHtml(s)); });
   if (!document.title.includes(s.brandName)) document.title = `${document.title} · ${s.brandName}`;
   return c;
+}
+
+// Chuông ưu đãi trên thanh menu: khách bấm để mở lại popup ưu đãi đã nhận
+function offerBell(d, c) {
+  const o = d.offers || {};
+  const live = (u) => u && u > Date.now();
+  const n = (live(d.firstOffer?.until) ? 1 : 0) + (o.newGames || []).filter(g => live(g.until)).length
+    + (o.licenses || []).filter(l => live(l.combo?.until) || live(l.all?.until)).length;
+  const any = n || (o.licenses || []).length;
+  const acc = $('[data-account]');
+  if (!any || !acc || $('[data-bell]')) return;
+  acc.insertAdjacentHTML('beforebegin', `<button type="button" class="bell" data-bell aria-label="Ưu đãi của bạn" title="Ưu đãi của bạn"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 22a2.5 2.5 0 0 0 2.45-2h-4.9A2.5 2.5 0 0 0 12 22Zm7-6V11a7 7 0 0 0-5.5-6.84V3.5a1.5 1.5 0 0 0-3 0v.66A7 7 0 0 0 5 11v5l-1.6 1.6A.8.8 0 0 0 4 19h16a.8.8 0 0 0 .6-1.4Z"/></svg>${n ? `<i>${n}</i>` : ''}</button>`);
+  $('[data-bell]').onclick = async () => {
+    const up = await import('/js/upsell.js');
+    up.showOffers(d, c);
+  };
 }
 
 // Nút menu ☰ trên điện thoại: mở danh sách đủ các mục như bản máy tính

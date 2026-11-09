@@ -158,15 +158,15 @@ async function createOrder(el, body) {
 }
 
 // 3) Popup tự hiện cho khách đã mua (trang chủ, trang tài khoản): tối đa 1 lần/ngày cho mỗi ưu đãi
-export function autoOfferPopup(d, C) {
+export function autoOfferPopup(d, C, force) {
   const o = d.offers;
-  if (!d.upsell?.account || !o) return;
+  if ((!d.upsell?.account && !force) || !o) return false;
   const ng = (o.newGames || [])[0];
   const lic = (o.licenses || [])[0];
-  if (!ng && !lic) return;
+  if (!ng && !lic) return false;
   const id = ng ? `ng_${ng.id}` : `up_${lic.key}_${lic.all?.until || lic.combo?.until || 0}`;
   const seen = JSON.parse(localStorage.getItem('lg_up_seen') || '{}');
-  if (seen[id] && Date.now() - seen[id] < 86400000) return;
+  if (!force && seen[id] && Date.now() - seen[id] < 86400000) return false;
   seen[id] = Date.now();
   localStorage.setItem('lg_up_seen', JSON.stringify(seen));
   upEvent('account_shown');
@@ -195,6 +195,7 @@ export function autoOfferPopup(d, C) {
     const a = b.dataset.a;
     upgradeDialog(d, C, a === 'addgame' ? { target: 'addgame', gameId: ng.id, src: source('popup:game-moi') } : { key: lic.key, target: a, src: source('popup:nang-cap') });
   });
+  return true;
 }
 
 // 4) Ô nâng cấp luôn hiện trong trang tài khoản
@@ -237,11 +238,11 @@ function firstDeals(C, fo) {
 }
 
 // Popup tự hiện (trang chủ, trang tài khoản), tối đa 1 lần/ngày. onPick(planId, src) để mua ngay
-export function firstOfferPopup(d, C, onPick) {
+export function firstOfferPopup(d, C, onPick, force) {
   const fo = d.firstOffer;
-  if (!d.upsell?.first || !fo || fo.until <= Date.now()) return false;
+  if ((!d.upsell?.first && !force) || !fo || fo.until <= Date.now()) return false;
   const seen = Number(localStorage.getItem('lg_first_seen') || 0);
-  if (Date.now() - seen < 86400000) return false;
+  if (!force && Date.now() - seen < 86400000) return false;
   localStorage.setItem('lg_first_seen', Date.now());
   upEvent('first_shown');
   const { el, close } = modal(`
@@ -269,4 +270,13 @@ export function firstCard(d, C) {
 }
 export function bindFirstCard() {
   $$('[data-first]').forEach(a => a.addEventListener('click', () => { sessionStorage.setItem('lg_src', 'account:don-dau'); upEvent('first_click'); }));
+}
+
+// Bấm chuông trên menu: mở lại ưu đãi đang có (đơn đầu, game mới, nâng cấp)
+export function showOffers(d, C) {
+  upEvent('bell_click');
+  const onPick = location.pathname === '/' ? (id, src) => { sessionStorage.setItem('lg_src', src); location.hash = `mua-${id}`; } : null;
+  if (firstOfferPopup(d, C, onPick, true)) return;
+  if (autoOfferPopup(d, C, true) !== false) return;
+  location.href = '/tai-khoan.html';
 }

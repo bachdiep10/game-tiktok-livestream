@@ -55,6 +55,11 @@ img, video { max-width: 100%; display: block; }
 .nav .btn { color: #fff; }
 @media (max-width: 760px) { .nav a:not(.btn):not(.acc) { display: none; } .nav { gap: 14px; } }
 .nav a.acc { color: var(--text); font-weight: 600; }
+.bell { position: relative; width: 40px; height: 40px; flex: 0 0 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--text); cursor: pointer; padding: 0; }
+.bell:hover { color: #e8283a; border-color: rgba(255,79,109,.45); }
+.bell i { position: absolute; top: -6px; right: -6px; min-width: 19px; height: 19px; padding: 0 5px; border-radius: 99px; background: #ff3d6e; color: #fff; font: 700 11px/19px inherit; font-style: normal; text-align: center; box-shadow: 0 0 0 2px #fff; }
+.bell:has(i) svg { animation: bellRing 2.4s ease-in-out infinite; transform-origin: 50% 10%; }
+@keyframes bellRing { 0%, 70%, 100% { transform: rotate(0); } 75% { transform: rotate(14deg); } 80% { transform: rotate(-12deg); } 85% { transform: rotate(8deg); } 90% { transform: rotate(-5deg); } }
 
 /* buttons */
 .btn {
