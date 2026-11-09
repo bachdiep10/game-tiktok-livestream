@@ -4,7 +4,7 @@ import { $, $$, api, esc, money, moneyFull } from '/js/common.js';
 const css = `
 .upx .box{width:min(480px,100%);padding-top:34px;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px)}
 .upx .box:before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:linear-gradient(90deg,#ff3d7f,#ff7a59,#ffb547)}
-.upx .hero{width:68px;height:68px;border-radius:22px;display:grid;place-items:center;font-size:34px;line-height:1;margin-bottom:14px;background:linear-gradient(135deg,#fff0f4,#fff6e8);box-shadow:inset 0 0 0 1px rgba(255,61,127,.15)}
+.upx .uphero{flex:none;padding:0;width:68px;height:68px;border-radius:22px;display:grid;place-items:center;font-size:34px;line-height:1;margin-bottom:14px;background:linear-gradient(135deg,#fff0f4,#fff6e8);box-shadow:inset 0 0 0 1px rgba(255,61,127,.15)}
 .upx h3{font-size:23px;letter-spacing:-.02em}
 .upx .deal:hover{border-color:rgba(255,79,109,.5)}
 .upx .deal{transition:.15s}
@@ -66,7 +66,7 @@ export function checkoutUpsell(C, single, gameId) {
   upEvent('checkout_shown');
   return new Promise(resolve => {
     const { el, close } = modal(`
-      <div class="hero">🎁</div>
+      <div class="uphero">🎁</div>
       <h3>Chỉ thêm ${money(extra)} là có ${n} game!</h3>
       <p class="msub">${g ? `Bạn đang chọn <b>${esc(g.name)}</b>. ` : ''}Lên <b>${esc(combo.name)}</b> để có thêm ${n - 1} game nữa, đổi game theo ngày cho người xem không nhàm.</p>
       <ul>
@@ -91,7 +91,7 @@ export async function upgradeDialog(d, C, { key, target, gameId, src } = {}) {
     if (!ng) return alert('Ưu đãi game mới đã hết hạn hoặc bạn đã có game này.');
     const single = C.plans.find(p => !p.allGames && p.slots === 1);
     const { el } = modal(`
-      <div class="hero">🎉</div>
+      <div class="uphero">🎉</div>
       <h3>Thêm ${esc(ng.name)} vào key</h3>
       <p class="msub">Giá riêng cho khách cũ, còn <b>${left(ng.until)}</b>.</p>
       <div class="deal on"><span><b>${esc(ng.name)}</b><small>Thêm vào key đang dùng, không cần key mới</small></span><span class="p">${single ? `<s>${money(single.price)}</s>` : ''}<strong>${money(ng.price)}</strong></span></div>
@@ -107,7 +107,7 @@ export async function upgradeDialog(d, C, { key, target, gameId, src } = {}) {
   const owned = new Set(lic.games);
   const until = opts.find(x => x.until)?.until;
   const { el } = modal(`
-    <div class="hero">⬆️</div>
+    <div class="uphero">⬆️</div>
     <h3>Nâng cấp key</h3>
     <p class="msub">Đang dùng: <b>${esc(lic.planName)}</b>. Chỉ trả phần chênh lệch, key giữ nguyên, không cần cài lại.</p>
     ${until ? `<div class="timer">⏰ Giá ưu đãi còn ${left(until)}</div>` : ''}
@@ -154,7 +154,7 @@ export function autoOfferPopup(d, C) {
   upEvent('account_shown');
   let html;
   if (ng) {
-    html = `<div class="hero">🎉</div><h3>Game mới: ${esc(ng.name)}</h3>
+    html = `<div class="uphero">🎉</div><h3>Game mới: ${esc(ng.name)}</h3>
       ${ng.image ? `<img src="${esc(ng.image)}" alt="" style="width:100%;border-radius:14px;max-height:220px;object-fit:cover;margin:6px 0 10px">` : ''}
       <p class="msub">Khách cũ được thêm vào key với giá riêng <b>${money(ng.price)}</b>, còn ${left(ng.until)}.</p>
       <div class="row2"><button class="btn block" data-a="addgame">Thêm vào key · ${money(ng.price)}</button>
@@ -162,7 +162,7 @@ export function autoOfferPopup(d, C) {
   } else {
     const best = lic.all || lic.combo;
     const timed = [lic.combo, lic.all].find(x => x && x.until);
-    html = `<div class="hero">${timed ? '⏰' : '⬆️'}</div><h3>${timed ? 'Ưu đãi nâng cấp dành riêng cho bạn' : 'Thêm game cho phòng LIVE đỡ nhàm'}</h3>
+    html = `<div class="uphero">${timed ? '⏰' : '⬆️'}</div><h3>${timed ? 'Ưu đãi nâng cấp dành riêng cho bạn' : 'Thêm game cho phòng LIVE đỡ nhàm'}</h3>
       <p class="msub">Bạn đang dùng <b>${esc(lic.planName)}</b>. Nâng cấp chỉ trả phần chênh lệch, key giữ nguyên.</p>
       ${timed ? `<div class="timer">Còn ${left(timed.until)}</div>` : ''}
       ${lic.combo ? `<div class="deal" data-a="combo"><span><b>${esc(lic.combo.planName)}</b><small>${lic.combo.slots} game, đổi game theo ngày</small></span><span class="p">${lic.combo.off ? `<s>${money(lic.combo.full)}</s>` : ''}<strong>+${money(lic.combo.price)}</strong></span></div>` : ''}
@@ -226,7 +226,7 @@ export function firstOfferPopup(d, C, onPick) {
   localStorage.setItem('lg_first_seen', Date.now());
   upEvent('first_shown');
   const { el, close } = modal(`
-    <div class="hero">🎁</div>
+    <div class="uphero">🎁</div>
     <h3>Quà cho đơn đầu tiên của bạn</h3>
     <p class="msub">Cảm ơn bạn đã đăng ký. Giá dưới đây chỉ dành cho đơn đầu tiên, tự áp khi bạn mua, không cần mã.</p>
     <div class="timer" data-left>⏰ Còn ${left(fo.until)}</div>
