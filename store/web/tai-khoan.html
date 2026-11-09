@@ -49,6 +49,7 @@
   <script type="module">
     import { $, $$, api, esc, moneyFull, copy, toast, applyBrand, me, catalog, zaloLink, gameList, supportLink } from '/js/common.js';
     import { track, trackOnce } from '/js/track.js';
+    import { autoOfferPopup, offerCards, bindOfferCards, upgradeDialog, source, firstCard, bindFirstCard, firstOfferPopup } from '/js/upsell.js';
     const q = new URLSearchParams(location.search);
     const next = q.get('next');
     const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' }) : '—';
@@ -136,6 +137,8 @@
 
         <div class="panel wrap-panel">
           <h2 class="h2">🔑 Key & game của tôi</h2>
+          ${offerCards(d)}
+          <div id="firstSlot"></div>
           <p class="note" style="margin:0">Mỗi key chạy trên 1 máy tính. Đổi máy thì bấm "Chuyển key sang máy khác".${d.guideUrl ? ` <a href="${esc(d.guideUrl)}" target="_blank" rel="noopener">Xem hướng dẫn cài đặt</a>` : ''}</p>
           ${d.licenses.length ? d.licenses.map(licCard).join('') : `<div class="lic" style="text-align:center"><p style="margin:0 0 12px">Bạn chưa có key nào.</p><a class="btn" href="/#bang-gia">Xem bảng giá</a></div>`}
         </div>
@@ -172,6 +175,14 @@
         </div>`;
 
       $('#logout').onclick = async () => { await api('/api/account/logout', {}); location.href = '/'; };
+      catalog().then(C => {
+        bindOfferCards(d, C);
+        const fs = $('#firstSlot'); if (fs) { fs.innerHTML = firstCard(d, C); bindFirstCard(); }
+        // link trong email: ?nang-cap=1 hoặc ?them-game=<id> mở thẳng hộp nâng cấp
+        const ng = q.get('them-game'), nc = q.get('nang-cap');
+        if (ng || nc) { source(''); history.replaceState(null, '', '/tai-khoan.html'); upgradeDialog(d, C, ng ? { target: 'addgame', gameId: ng } : {}); }
+        else if (!firstOfferPopup(d, C)) autoOfferPopup(d, C);
+      }).catch(() => {});
       $$('[data-move]').forEach(b => b.onclick = async () => {
         if (!confirm('Gỡ key khỏi máy hiện tại? Game trên máy cũ sẽ ngừng chạy, sau đó bạn nhập key trên máy mới.')) return;
         try { const r = await api('/api/account/move', { key: b.dataset.move }); toast(r.message); load(); } catch (e) { alert(e.message); }
