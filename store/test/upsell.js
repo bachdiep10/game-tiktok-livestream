@@ -196,18 +196,18 @@ try {
   let fresh = mails.slice(n0).map(decode);
   const wBa = fresh.find(x => x.to === 'ba@x.vn');
   assert.ok(wBa, 'email ưu đãi đơn đầu'); assert.match(wBa.subject, /giảm đến 100K/);
-  assert.match(wBa.text, /79K/); assert.match(wBa.text, /199K/); assert.match(wBa.text, /549K/); assert.match(wBa.text, /thường 229K/);
+  assert.doesNotMatch(wBa.text, /Gói Lẻ/); assert.match(wBa.text, /199K/); assert.match(wBa.text, /549K/); assert.match(wBa.text, /thường 229K/);
   const aBon = fresh.filter(x => x.to === 'bon@x.vn');
   assert.equal(aBon.length, 1); assert.match(aBon[0].subject, new RegExp(`#${o4.code}`));
   assert.match(decodeURIComponent(aBon[0].html), new RegExp(`don-hang\\.html\\?code=${o4.code}&t=${o4.token}`));
   n0 = mails.length;
   r = await j('POST', '/api/admin/upsell/run', {});
   assert.equal(mails.length, n0, 'không gửi dồn email ngay sau email nhắc đơn');
-  step('đăng ký 1 ngày chưa mua: email ưu đãi đơn đầu (79K / 199K / 549K); tạo đơn chưa trả: email nhắc kèm link đơn, không gửi dồn');
+  step('đăng ký 1 ngày chưa mua: email ưu đãi đơn đầu (Gói Lẻ giữ 89K; Combo 199K, Trọn Bộ 549K); tạo đơn chưa trả: email nhắc kèm link đơn, không gửi dồn');
 
   as('u3');
   const me3 = await j('GET', '/api/account/me');
-  assert.equal(me3.firstOffer.prices.le.price, 79000); assert.equal(me3.firstOffer.prices.combo.price, 199000); assert.ok(me3.upsell.first);
+  assert.equal(me3.firstOffer.prices.le.price, 89000); assert.equal(me3.firstOffer.prices.combo.price, 199000); assert.ok(me3.upsell.first);
   assert.ok(me3.firstOffer.until > Date.now() + 70 * 3600000);
   const o3 = await j('POST', '/api/orders', { planId: 'combo', games: (await j('GET', '/api/catalog')).games.slice(0, 3).map(g => g.id), source: 'popup:don-dau' });
   const ov3 = (await j('GET', `/api/orders/${o3.code}?t=${o3.token}`)).order;

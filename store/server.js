@@ -552,9 +552,11 @@ function firstVars(fo) {
   const by = (fn) => D.plans.find(fn);
   const le = by(p => !p.allGames && p.slots === 1), co = by(p => !p.allGames && p.slots > 1), al = by(p => p.allGames);
   const offs = Object.values(fo.prices).map(x => x.off);
+  // gói không giảm: để trống biến, dòng đó tự ẩn trong email
+  const dau = (p) => (p && fo.prices[p.id]?.off > 0 ? fmtMoney(fo.prices[p.id].price) : '');
   return {
     han_dau: fmtTime(fo.until), giam_max: fmtMoney(Math.max(...offs)),
-    gia_dau_le: le ? fmtMoney(fo.prices[le.id].price) : '', gia_dau_combo: co ? fmtMoney(fo.prices[co.id].price) : '', gia_dau_tronbo: al ? fmtMoney(fo.prices[al.id].price) : '',
+    gia_dau_le: dau(le), gia_dau_combo: dau(co), gia_dau_tronbo: dau(al),
   };
 }
 

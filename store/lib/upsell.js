@@ -125,7 +125,7 @@ export const DEFAULT_UPSELL = {
   newGamePrice: 69000, newGameDays: 3,
   // khách đã đăng ký nhưng chưa mua
   popupFirst: 1, emailWelcome: 1, emailWelcomeReminder: 1, emailAbandoned: 1,
-  firstAfterHours: 24, firstHours: 72, firstOffLe: 10000, firstOffCombo: 30000, firstOffAll: 100000, abandonedAfterHours: 2,
+  firstAfterHours: 24, firstHours: 72, firstOffLe: 0, firstOffCombo: 30000, firstOffAll: 100000, abandonedAfterHours: 2,
   smtpHost: 'smtp.gmail.com', smtpPort: 465, smtpUser: '', smtpPass: '', fromName: '', replyTo: '',
   maxPerRun: 20,
 };
