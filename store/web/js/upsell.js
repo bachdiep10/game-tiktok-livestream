@@ -2,7 +2,7 @@
 import { $, $$, api, esc, money, moneyFull } from '/js/common.js';
 
 const css = `
-.upx .box{width:min(480px,100%);padding-top:34px;overflow:hidden}
+.upx .box{width:min(480px,100%);padding-top:34px;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px)}
 .upx .box:before{content:"";position:absolute;inset:0 0 auto 0;height:6px;background:linear-gradient(90deg,#ff3d7f,#ff7a59,#ffb547)}
 .upx .hero{width:68px;height:68px;border-radius:22px;display:grid;place-items:center;font-size:34px;line-height:1;margin-bottom:14px;background:linear-gradient(135deg,#fff0f4,#fff6e8);box-shadow:inset 0 0 0 1px rgba(255,61,127,.15)}
 .upx h3{font-size:23px;letter-spacing:-.02em}
