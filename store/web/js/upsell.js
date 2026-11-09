@@ -22,6 +22,9 @@ const css = `
 .upx .timer{background:#fff3e0;color:#b45309;border-radius:12px;padding:8px 12px;font-weight:700;font-size:14px;margin:6px 0 4px;text-align:center}
 .upx .pick{max-height:240px}
 .upx .skip{background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;font:inherit;font-size:14px;margin-top:10px;width:100%}
+.cd{margin:8px 0 14px;text-align:center}.cd .t{font-size:13px;font-weight:700;color:#b45309;margin-bottom:8px}
+.cd .u{display:flex;justify-content:center;gap:8px}.cd .u div{min-width:62px;padding:8px 4px 6px;border-radius:12px;background:linear-gradient(180deg,#2a2148,#16132b);color:#fff;box-shadow:0 6px 14px rgba(22,19,43,.2)}
+.cd .u b{display:block;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}.cd .u small{font-size:11px;opacity:.75}
 .up-card{border:2px dashed rgba(255,79,109,.45);border-radius:16px;padding:16px;margin-top:14px;background:linear-gradient(135deg,#fff7f8,#fffaf0)}
 .up-card h4{margin:0 0 4px;font-size:17px}.up-card p{margin:0 0 10px;color:var(--muted);font-size:14px}
 .up-card .btns{display:flex;gap:8px;flex-wrap:wrap}
@@ -44,12 +47,26 @@ export function left(until) {
   return h >= 24 ? `${Math.floor(h / 24)} ngày ${h % 24} giờ` : `${h} giờ ${m} phút`;
 }
 
+// Bộ đếm ngược ngày / giờ / phút / giây, tự chạy từng giây
+export function countdown(until, label = 'Ưu đãi kết thúc sau') {
+  return `<div class="cd" data-cd="${until}"><div class="t">⏰ ${esc(label)}</div><div class="u"><div><b>0</b><small>ngày</small></div><div><b>00</b><small>giờ</small></div><div><b>00</b><small>phút</small></div><div><b>00</b><small>giây</small></div></div></div>`;
+}
+function tickCountdowns() {
+  for (const el of $$('[data-cd]')) {
+    const ms = Math.max(0, Number(el.dataset.cd) - Date.now());
+    const v = [Math.floor(ms / 86400000), Math.floor(ms / 3600000) % 24, Math.floor(ms / 60000) % 60, Math.floor(ms / 1000) % 60];
+    $$('b', el).forEach((b, i) => { b.textContent = i ? String(v[i]).padStart(2, '0') : v[i]; });
+  }
+}
+setInterval(tickCountdowns, 1000);
+
 function modal(html) {
   const m = document.createElement('div');
   m.className = 'modal upx open';
   m.innerHTML = `<div class="box"><button class="x" data-close>×</button>${html}</div>`;
   document.body.appendChild(m);
   document.body.style.overflow = 'hidden';
+  tickCountdowns();
   const close = () => { m.remove(); if (!$('.modal.open')) document.body.style.overflow = ''; };
   m.addEventListener('click', e => { if (e.target === m || e.target.closest('[data-close]')) { close(); m.dispatchEvent(new Event('closed')); } });
   return { el: m, close };
@@ -93,7 +110,8 @@ export async function upgradeDialog(d, C, { key, target, gameId, src } = {}) {
     const { el } = modal(`
       <div class="uphero">🎉</div>
       <h3>Thêm ${esc(ng.name)} vào key</h3>
-      <p class="msub">Giá riêng cho khách cũ, còn <b>${left(ng.until)}</b>.</p>
+      <p class="msub">Khách cũ được thêm vào key với giá ưu đãi chỉ <b>${money(ng.price)}</b>.</p>
+      ${countdown(ng.until)}
       <div class="deal on"><span><b>${esc(ng.name)}</b><small>Thêm vào key đang dùng, không cần key mới</small></span><span class="p">${single ? `<s>${money(single.price)}</s>` : ''}<strong>${money(ng.price)}</strong></span></div>
       <div class="err" id="upErr"></div>
       <button class="btn block" id="upGo">Thanh toán ${moneyFull(ng.price)}</button>`);
@@ -110,7 +128,7 @@ export async function upgradeDialog(d, C, { key, target, gameId, src } = {}) {
     <div class="uphero">⬆️</div>
     <h3>Nâng cấp key</h3>
     <p class="msub">Đang dùng: <b>${esc(lic.planName)}</b>. Chỉ trả phần chênh lệch, key giữ nguyên, không cần cài lại.</p>
-    ${until ? `<div class="timer">⏰ Giá ưu đãi còn ${left(until)}</div>` : ''}
+    ${until ? countdown(until, 'Giá ưu đãi kết thúc sau') : ''}
     ${opts.map((x, i) => `<div class="deal" data-i="${i}"><span><b>${esc(x.planName)}</b><small>${x.allGames ? `Tất cả ${C.games.length} game + mọi game mới` : `${x.slots} game, chọn thêm ${x.need} game`}</small></span>
       <span class="p">${x.off ? `<s>${money(x.full)}</s>` : ''}<strong>+${money(x.price)}</strong></span></div>`).join('')}
     <div class="field" id="upPickWrap"><label id="upPickLabel"></label><div class="pick grid" id="upPick"></div></div>
@@ -156,7 +174,8 @@ export function autoOfferPopup(d, C) {
   if (ng) {
     html = `<div class="uphero">🎉</div><h3>Game mới: ${esc(ng.name)}</h3>
       ${ng.image ? `<img src="${esc(ng.image)}" alt="" style="width:100%;border-radius:14px;max-height:220px;object-fit:cover;margin:6px 0 10px">` : ''}
-      <p class="msub">Khách cũ được thêm vào key với giá riêng <b>${money(ng.price)}</b>, còn ${left(ng.until)}.</p>
+      <p class="msub">Khách cũ được thêm vào key với giá ưu đãi chỉ <b>${money(ng.price)}</b>.</p>
+      ${countdown(ng.until)}
       <div class="row2"><button class="btn block" data-a="addgame">Thêm vào key · ${money(ng.price)}</button>
       <a class="btn ghost block" href="/game/${esc(ng.id)}">Xem game chạy thử</a></div>`;
   } else {
@@ -164,7 +183,7 @@ export function autoOfferPopup(d, C) {
     const timed = [lic.combo, lic.all].find(x => x && x.until);
     html = `<div class="uphero">${timed ? '⏰' : '⬆️'}</div><h3>${timed ? 'Ưu đãi nâng cấp dành riêng cho bạn' : 'Thêm game cho phòng LIVE đỡ nhàm'}</h3>
       <p class="msub">Bạn đang dùng <b>${esc(lic.planName)}</b>. Nâng cấp chỉ trả phần chênh lệch, key giữ nguyên.</p>
-      ${timed ? `<div class="timer">Còn ${left(timed.until)}</div>` : ''}
+      ${timed ? countdown(timed.until) : ''}
       ${lic.combo ? `<div class="deal" data-a="combo"><span><b>${esc(lic.combo.planName)}</b><small>${lic.combo.slots} game, đổi game theo ngày</small></span><span class="p">${lic.combo.off ? `<s>${money(lic.combo.full)}</s>` : ''}<strong>+${money(lic.combo.price)}</strong></span></div>` : ''}
       ${lic.all ? `<div class="deal ${best === lic.all ? 'on' : ''}" data-a="all"><span><b>${esc(lic.all.planName)}</b><small>Tất cả ${C.games.length} game + mọi game mới</small></span><span class="p">${lic.all.off ? `<s>${money(lic.all.full)}</s>` : ''}<strong>+${money(lic.all.price)}</strong></span></div>` : ''}
       <p class="note" style="font-size:13px;margin:4px 0 0">Bấm vào gói để xem chi tiết và thanh toán.</p>`;
@@ -183,7 +202,7 @@ export function offerCards(d) {
   const o = d.offers;
   if (!o) return '';
   const out = [];
-  for (const ng of o.newGames || []) out.push(`<div class="up-card"><h4>🎉 Game mới: ${esc(ng.name)}</h4><p>Giá riêng cho khách cũ ${money(ng.price)}, còn ${left(ng.until)}.</p>
+  for (const ng of o.newGames || []) out.push(`<div class="up-card"><h4>🎉 Game mới: ${esc(ng.name)}</h4><p>Khách cũ được thêm vào key với giá ưu đãi chỉ <b>${money(ng.price)}</b>, còn ${left(ng.until)}.</p>
     <div class="btns"><button class="btn sm" data-up="addgame" data-game="${esc(ng.id)}">Thêm vào key · ${money(ng.price)}</button><a class="btn ghost sm" href="/game/${esc(ng.id)}">Xem game</a></div></div>`);
   for (const l of o.licenses || []) {
     const timed = [l.combo, l.all].find(x => x && x.until);
@@ -229,10 +248,9 @@ export function firstOfferPopup(d, C, onPick) {
     <div class="uphero">🎁</div>
     <h3>Quà cho đơn đầu tiên của bạn</h3>
     <p class="msub">Cảm ơn bạn đã đăng ký. Giá dưới đây chỉ dành cho đơn đầu tiên, tự áp khi bạn mua, không cần mã.</p>
-    <div class="timer" data-left>⏰ Còn ${left(fo.until)}</div>
+    ${countdown(fo.until)}
     ${firstDeals(C, fo)}
     <p class="note" style="font-size:13px;margin:6px 0 0">Bấm vào gói để chọn game và thanh toán.</p>`);
-  const tick = setInterval(() => { const s = left(fo.until); if (!s || !el.isConnected) return clearInterval(tick); $('[data-left]', el).textContent = `⏰ Còn ${s}`; }, 30000);
   el.addEventListener('closed', () => upEvent('first_close'));
   $$('[data-plan]', el).forEach(b => b.onclick = () => {
     close(); upEvent('first_click');
