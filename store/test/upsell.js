@@ -44,10 +44,13 @@ const smtp = net.createServer(sock => {
 });
 await new Promise(r => smtp.listen(smtpPort, '127.0.0.1', r));
 const decode = (m) => {
-  const subj = (m.match(/^Subject: (.*)$/m) || [])[1] || '';
-  const s = subj.replace(/=\?UTF-8\?B\?([^?]+)\?=/g, (x, b) => Buffer.from(b, 'base64').toString());
+  const head = m.split('\r\n\r\n')[0];
+  assert.ok(m.split('\r\n').every(l => l.length <= 998), 'dòng quá dài');
+  assert.match(head, /^From: "?[^@<>]*"? ?<[^@]+@[^>]+>$|^From: [^\s@]+@\S+$/m, 'From sai cú pháp');
+  const subj = (head.replace(/\r\n[ \t]/g, ' ').match(/^Subject: (.*)$/m) || [])[1] || '';
+  const s = subj.replace(/\?= =\?/g, '?==?').replace(/=\?UTF-8\?B\?([^?]+)\?=/g, (x, b) => Buffer.from(b, 'base64').toString('binary')).replace(/[\s\S]*/, t => Buffer.from(t, 'binary').toString('utf8'));
   const parts = [...m.matchAll(/Content-Transfer-Encoding: base64\r\n\r\n([A-Za-z0-9+/=\r\n]+?)\r\n--/g)].map(x => Buffer.from(x[1].replace(/\s/g, ''), 'base64').toString());
-  return { subject: s, to: (m.match(/^To: <(.*)>$/m) || [])[1], text: parts[0] || '', html: parts[1] || '' };
+  return { subject: s, to: (m.match(/^To: <?([^>\r\n]*)>?$/m) || [])[1], text: parts[0] || '', html: parts[1] || '' };
 };
 
 const srv = spawn(process.execPath, ['server.js'], { cwd: root, env: { ...process.env, PORT: port, DATA_DIR: dataDir }, stdio: 'pipe' });

@@ -513,6 +513,7 @@ app.post('/api/up/event', rateLimit('upev', 60, 600000), (req, res) => {
 });
 
 // ---------- Email tự động ----------
+const shopName = () => D.settings.brandName || 'NetXio Việt';
 const mailSig = (id) => hmac(`mail:${id}`).slice(0, 16);
 const unsubSig = (uid) => hmac(`unsub:${uid}`).slice(0, 20);
 function smtpCfg() {
@@ -525,7 +526,7 @@ function mailVars(user, extra = {}) {
   const s = D.settings;
   const single = D.plans.find(p => !p.allGames && p.slots === 1);
   return {
-    ten: (user?.name || 'bạn').trim().split(/\s+/).slice(-1)[0], shop: s.brandName, so_game: String(visibleGames().length),
+    ten: (user?.name || 'bạn').trim().split(/\s+/).slice(-1)[0], shop: shopName(), so_game: String(visibleGames().length),
     gia_le: single ? fmtMoney(single.price) : '', ...extra,
   };
 }
@@ -555,7 +556,7 @@ function buildMail(type, user, vars, id) {
   const unsubscribe = user ? `${base}/huy-email?u=${user.id}&s=${unsubSig(user.id)}` : `${base}/`;
   const s = D.settings;
   const footer = [s.sellerName, s.sellerAddress].filter(Boolean).join(' · ');
-  const { html, text } = renderEmail({ body, brand: s.brandName, logo: `${base}/media/logo.png`, base, track, unsubscribe, footer });
+  const { html, text } = renderEmail({ body, brand: shopName(), logo: `${base}/media/logo.png`, base, track, unsubscribe, footer });
   return { subject, html, text };
 }
 
@@ -642,7 +643,7 @@ async function runMailsInner() {
   for (const j of jobs) {
     const m = buildMail(j.type, j.user, j.vars, j.id);
     let err = '';
-    try { await smtp.send({ fromName: up().cfg.fromName || D.settings.brandName, to: j.user.email, subject: m.subject, text: m.text, html: m.html, replyTo: up().cfg.replyTo || D.settings.sellerEmail || '' }); }
+    try { await smtp.send({ fromName: up().cfg.fromName || shopName(), to: j.user.email, subject: m.subject, text: m.text, html: m.html, replyTo: up().cfg.replyTo || D.settings.sellerEmail || '' }); }
     catch (e) { err = String(e.message || e).slice(0, 200); }
     results.push({ id: j.id, type: j.type, subject: m.subject, err });
   }
@@ -740,7 +741,7 @@ app.post('/api/admin/upsell/test', async (req, res) => {
   res.locals.release();
   try {
     const smtp = await openSmtp(smtpCfg());
-    await smtp.send({ fromName: up().cfg.fromName || D.settings.brandName, to, subject: `[Thử] ${m.subject}`, text: m.text, html: m.html, replyTo: up().cfg.replyTo || D.settings.sellerEmail || '' });
+    await smtp.send({ fromName: up().cfg.fromName || shopName(), to, subject: `[Thử] ${m.subject}`, text: m.text, html: m.html, replyTo: up().cfg.replyTo || D.settings.sellerEmail || '' });
     await smtp.close();
     res.json({ ok: true });
   } catch (e) { fail(res, 400, e.message); }

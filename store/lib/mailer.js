@@ -5,7 +5,25 @@ import tls from 'node:tls';
 import crypto from 'node:crypto';
 
 const b64 = (s) => Buffer.from(String(s), 'utf8').toString('base64');
-const encWord = (s) => (/^[\x20-\x7e]*$/.test(s) ? s : `=?UTF-8?B?${b64(s)}?=`);
+// Tiêu đề có dấu: chia thành nhiều đoạn =?UTF-8?B?…?= (mỗi đoạn ≤ 75 ký tự, không cắt đôi chữ), xuống dòng gập đúng chuẩn
+function encWord(s) {
+  s = String(s ?? '').replace(/[\r\n]+/g, ' ');
+  if (/^[\x20-\x7e]*$/.test(s) && s.length < 900) return s;
+  const words = [];
+  let cur = '';
+  for (const ch of s) {
+    if (Buffer.byteLength(cur + ch) > 42) { words.push(cur); cur = ''; }
+    cur += ch;
+  }
+  if (cur) words.push(cur);
+  return words.map(w => `=?UTF-8?B?${b64(w)}?=`).join('\r\n ');
+}
+// Tên người gửi: bỏ nếu trống hoặc có @ (tên dạng email làm sai cú pháp From, Gmail không ký DKIM được)
+function displayName(n) {
+  n = String(n ?? '').replace(/[\r\n"\\]+/g, ' ').trim();
+  if (!n || n.includes('@')) return '';
+  return /^[\x20-\x7e]*$/.test(n) ? `"${n}"` : encWord(n);
+}
 const wrap76 = (s) => s.replace(/.{1,76}/g, '$&\r\n');
 
 // Đọc từng phản hồi SMTP (có thể nhiều dòng "250-...", kết thúc bằng "250 ...")
@@ -83,8 +101,8 @@ export async function openSmtp({ host = 'smtp.gmail.com', port = 465, user, pass
     async send({ fromName, to, subject, text, html, replyTo }) {
       const boundary = `b_${crypto.randomBytes(8).toString('hex')}`;
       const headers = [
-        `From: ${encWord(fromName || user)} <${user}>`,
-        `To: <${to}>`,
+        displayName(fromName) ? `From: ${displayName(fromName)} <${user}>` : `From: ${user}`,
+        `To: ${to}`,
         ...(replyTo ? [`Reply-To: <${replyTo}>`] : []),
         `Subject: ${encWord(subject)}`,
         `Date: ${new Date().toUTCString()}`,
