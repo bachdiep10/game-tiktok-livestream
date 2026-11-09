@@ -117,8 +117,8 @@ try {
     const offset = Math.max(0, (start - t0) / 1000);
     const mp4 = path.join(outDir, `${id}.mp4`);
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', offset.toFixed(3), '-i', vid, '-i', audio, '-map', '0:v', '-map', '1:a', '-t', String(g.sec),
-      '-vf', 'fps=25', '-c:v', 'libx264', '-preset', 'slow', '-crf', '21', '-pix_fmt', 'yuv420p',
-      '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-movflags', '+faststart', mp4]);
+      '-vf', 'fps=25', '-c:v', 'libx264', '-preset', 'slow', '-crf', '27', '-maxrate', '800k', '-bufsize', '1600k', '-pix_fmt', 'yuv420p',
+      '-af', 'loudnorm=I=-16:TP=-1.5:LRA=11', '-c:a', 'aac', '-b:a', '96k', '-ar', '44100', '-movflags', '+faststart', mp4]);
     fs.rmSync(vidDir, { recursive: true, force: true });
     execFileSync('ffmpeg', ['-y', '-loglevel', 'error', '-ss', '8', '-i', mp4, '-frames:v', '1', '-q:v', '3', path.join(outDir, `${id}.jpg`)]);
     console.log('xong', id);
