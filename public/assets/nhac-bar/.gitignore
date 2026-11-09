@@ -1,2 +1,8 @@
 *.mp3
+*.m4a
+*.aac
+*.ogg
+*.wav
+*.webm
+*.opus
 !dem-bung-no.mp3
