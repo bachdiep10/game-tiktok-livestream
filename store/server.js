@@ -12,7 +12,7 @@ import { injectTracking } from './lib/tracking.js';
 import * as payos from './lib/payos.js';
 import { parseBankEmail, findOrderCode, fetchNewMails } from './lib/bankmail.js';
 import { openSmtp } from './lib/mailer.js';
-import { DEFAULT_TEMPLATES, offersFor, upgradeQuote, activeLaunches, countEvent, fillTemplate, renderEmail, fmtMoney, fmtTime, offerWindow, EVENT_KEYS } from './lib/upsell.js';
+import { DEFAULT_TEMPLATES, offersFor, upgradeQuote, activeLaunches, countEvent, fillTemplate, renderEmail, fmtMoney, fmtTime, offerWindow, EVENT_KEYS, firstOffer, hasPaid } from './lib/upsell.js';
 import { newKey, normalizeKey, loadKeyPair, signTicket, entitledGames, fillEmptySlots, movesInWindow } from './lib/license.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -221,10 +221,13 @@ app.post('/api/orders', rateLimit('order', 20, 600000), async (req, res) => {
   if (!payos.isConfigured(D.settings) && !(D.settings.bankCode && D.settings.bankAccount)) {
     return fail(res, 503, 'Cửa hàng chưa cài phương thức thanh toán. Vui lòng liên hệ qua Zalo.');
   }
+  // khách chưa mua lần nào và đang trong thời gian ưu đãi đơn đầu: tự giảm giá
+  const fo = firstOffer(D, D.upsell, user, now());
+  const amount = fo ? fo.prices[plan.id].price : plan.price;
   let code;
   do code = Math.floor(now() / 1000) * 100 + crypto.randomInt(100); while (findOrder(code));
   const order = {
-    code, planId: plan.id, games, amount: plan.price,
+    code, planId: plan.id, games, amount, firstOff: fo ? plan.price - amount : 0,
     customer: { name, phone, email }, status: 'pending', createdAt: now(),
     transferContent: `LG${code}`, checkoutUrl: '', licenseKey: '', userId: user.id,
     source: cleanSource(req.body.source),
@@ -234,7 +237,7 @@ app.post('/api/orders', rateLimit('order', 20, 600000), async (req, res) => {
     try {
       const back = `${baseUrl(req)}/don-hang.html?code=${code}&t=${token}`;
       const link = await payos.createPaymentLink(D.settings, {
-        orderCode: code, amount: plan.price, description: `LG${code}`.slice(0, 25),
+        orderCode: code, amount, description: `LG${code}`.slice(0, 25),
         returnUrl: back, cancelUrl: back, buyerName: name, buyerPhone: phone, buyerEmail: email,
       });
       order.checkoutUrl = link.checkoutUrl;
@@ -400,10 +403,11 @@ app.get('/api/account/me', (req, res) => {
     claimedAt: o.claimedAt || null, licenseKey: o.licenseKey || '', link: `/don-hang.html?code=${o.code}&t=${orderToken(o.code)}`,
   }));
   const licenses = D.licenses.filter(l => l.userId === u.id).sort((a, b) => b.createdAt - a.createdAt).map(l => licenseView(l, { withDownloads: true }));
-  const started = D.licenses.filter(l => l.offerStart).length;
+  const started = D.licenses.filter(l => l.offerStart).length + (u.firstStart ? 1 : 0);
   const offers = offersFor(D, D.upsell, u, now(), { start: true });
-  if (D.licenses.filter(l => l.offerStart).length !== started) db.save();
-  res.json({ ok: true, user: userPublic(u), orders, licenses, guideUrl: D.settings.guideUrl, offers, upsell: { account: Boolean(D.upsell.cfg.popupAccount) } });
+  const first = D.upsell.cfg.popupFirst || D.upsell.cfg.emailsOn ? firstOffer(D, D.upsell, u, now(), { start: Boolean(D.upsell.cfg.popupFirst) }) : null;
+  if (D.licenses.filter(l => l.offerStart).length + (u.firstStart ? 1 : 0) !== started) db.save();
+  res.json({ ok: true, user: userPublic(u), orders, licenses, guideUrl: D.settings.guideUrl, offers, firstOffer: first, upsell: { account: Boolean(D.upsell.cfg.popupAccount), first: Boolean(D.upsell.cfg.popupFirst) } });
 });
 
 // Thêm key mua trước đó (hoặc người bán gửi qua Zalo) vào tài khoản: cần key + SĐT lúc mua
@@ -527,7 +531,8 @@ function mailVars(user, extra = {}) {
   const single = D.plans.find(p => !p.allGames && p.slots === 1);
   return {
     ten: (user?.name || 'bạn').trim().split(/\s+/).slice(-1)[0], shop: shopName(), so_game: String(visibleGames().length),
-    gia_le: single ? fmtMoney(single.price) : '', ...extra,
+    gia_le: single ? fmtMoney(single.price) : '',
+    gia_combo_goc: fmtMoney(D.plans.find(p => !p.allGames && p.slots > 1)?.price || 0), gia_tronbo_goc: fmtMoney(D.plans.find(p => p.allGames)?.price || 0), ...extra,
   };
 }
 // Biến cho email nâng cấp của 1 key
@@ -539,6 +544,17 @@ function upgradeVars(lic) {
     goi: findPlan(lic.planId)?.name || lic.planId, key: lic.key,
     game: lic.allGames ? 'tất cả game' : lic.games.map(id => D.games.find(g => g.id === id)?.name || id).join(', '),
     gia_combo: c ? fmtMoney(c.price) : '', gia_tronbo: a ? fmtMoney(a.price) : '', han: w.until ? fmtTime(w.until) : '',
+  };
+}
+
+// Biến cho email ưu đãi đơn đầu
+function firstVars(fo) {
+  const by = (fn) => D.plans.find(fn);
+  const le = by(p => !p.allGames && p.slots === 1), co = by(p => !p.allGames && p.slots > 1), al = by(p => p.allGames);
+  const offs = Object.values(fo.prices).map(x => x.off);
+  return {
+    han_dau: fmtTime(fo.until), giam_max: fmtMoney(Math.max(...offs)),
+    gia_dau_le: le ? fmtMoney(fo.prices[le.id].price) : '', gia_dau_combo: co ? fmtMoney(fo.prices[co.id].price) : '', gia_dau_tronbo: al ? fmtMoney(fo.prices[al.id].price) : '',
   };
 }
 
@@ -596,6 +612,35 @@ function planMails(limit) {
       const w = offerWindow(U, lic, t);
       if (w.active && w.until - t <= 12 * 3600000 && (c.allOff > 0 || c.comboOff > 0)) push('reminder', user, upgradeVars(lic), () => { lic.mailedReminder = t; });
       else if (!w.active) lic.mailedReminder = t; // đã hết hạn: không nhắc nữa
+    }
+  }
+  // Khách đăng ký nhưng chưa mua
+  for (const user of D.users) {
+    if (out.length >= limit) break;
+    if (!user.email || hasPaid(D, user)) continue;
+    if (c.emailAbandoned) {
+      const o = D.orders.filter(x => x.userId === user.id && x.status === 'pending' && x.kind !== 'upgrade' && !x.mailedAbandoned
+        && t - x.createdAt >= c.abandonedAfterHours * 3600000 && t - x.createdAt < 7 * 86400000).sort((a, b) => b.createdAt - a.createdAt)[0];
+      if (o) {
+        const vars = { ma_don: String(o.code), token_don: orderToken(o.code), goi_don: findPlan(o.planId)?.name || o.planId, game_don: o.games.map(id => D.games.find(g => g.id === id)?.name || id).join(', ') || 'tất cả game' };
+        if (!push('abandoned', user, vars, () => { for (const x of D.orders) if (x.userId === user.id && x.status === 'pending') x.mailedAbandoned = t; }) && out.length < limit) o.mailedAbandoned = t;
+        continue; // đơn dở dang: chưa gửi thêm email ưu đãi lần này
+      }
+    }
+    // đang mua dở, hoặc vừa nhận email nhắc đơn trong 24 giờ: chưa gửi thêm
+    if (D.orders.some(x => x.userId === user.id && ((x.status === 'pending' && t - x.createdAt < c.abandonedAfterHours * 3600000) || (x.mailedAbandoned && t - x.mailedAbandoned < 86400000)))) continue;
+    if (c.emailWelcome && !user.mailedWelcome && t >= (user.createdAt || 0) + c.firstAfterHours * 3600000) {
+      const ok = push('welcome', user, null, () => { user.mailedWelcome = t; firstOffer(D, U, user, t, { start: true }); });
+      const fo = firstOffer(D, U, user, t);
+      if (ok && fo) out[out.length - 1].vars = firstVars(fo);
+      else if (ok) out.pop(); // không có ưu đãi (giảm = 0): bỏ email
+      else if (out.length < limit) user.mailedWelcome = t;
+      continue;
+    }
+    if (c.emailWelcomeReminder && user.firstStart && !user.mailedWelcomeRem) {
+      const fo = firstOffer(D, U, user, t);
+      if (fo && fo.until - t <= 12 * 3600000) push('welcomeReminder', user, firstVars(fo), () => { user.mailedWelcomeRem = t; });
+      else if (!fo) user.mailedWelcomeRem = t;
     }
   }
   if (c.emailNewGame) {
@@ -693,7 +738,16 @@ function upsellReport() {
     const dayOrders = ups.filter(o => new Date(o.paidAt + 7 * 3600000).toISOString().slice(0, 10) === d);
     days.push({ day: d, ...(U.events[d] || {}), upgrades: dayOrders.length, upgradeRevenue: dayOrders.reduce((s, o) => s + o.amount, 0) });
   }
+  const firstPaid = paid.filter(o => o.firstOff > 0);
+  const nonBuyers = D.users.filter(u => !hasPaid(D, u));
+  const first = {
+    nonBuyers: nonBuyers.length, withEmail: nonBuyers.filter(u => u.email && !u.emailOptOut).length,
+    offered: D.users.filter(u => u.firstStart).length, orders: firstPaid.length, revenue: firstPaid.reduce((s, o) => s + o.amount, 0),
+    abandoned: D.orders.filter(o => o.status === 'pending' && o.kind !== 'upgrade' && now() - o.createdAt < 7 * 86400000).length,
+    recovered: paid.filter(o => o.mailedAbandoned).length,
+  };
   return {
+    first,
     upgrades: { orders: ups.length, revenue: ups.reduce((s, o) => s + o.amount, 0), customers: upgraded.size, buyers: buyers.size },
     pending: D.orders.filter(o => o.kind === 'upgrade' && o.status === 'pending').length,
     byPlan, events: ev, emails: types, bySource, days,
@@ -729,6 +783,12 @@ app.put('/api/admin/upsell', (req, res) => {
 });
 
 // Gửi thử 1 mẫu email tới địa chỉ bất kỳ (dùng dữ liệu mẫu)
+function sampleFirst() {
+  const t = now();
+  const fo = firstOffer(D, up(), { id: '_', createdAt: 0, firstStart: t }, t);
+  return { ...(fo ? firstVars(fo) : {}), ma_don: '179420620597', token_don: 'mau', goi_don: 'Gói Combo', game_don: 'Trà Đá Vỉa Hè, Bia Hơi, Sơn Tinh Thủy Tinh' };
+}
+
 app.post('/api/admin/upsell/test', async (req, res) => {
   const to = clean(req.body.to, 120);
   const type = String(req.body.type || 'offer');
@@ -736,7 +796,7 @@ app.post('/api/admin/upsell/test', async (req, res) => {
   if (!up().templates[type]) return fail(res, 400, 'Mẫu không có.');
   const g = visibleGames()[0] || { id: 'game', name: 'Game mới' };
   const vars = { goi: 'Gói Lẻ', key: 'LG-ABCD-EFGH-JKLM-NPQR', game: g.name, gia_combo: fmtMoney(140000), gia_tronbo: fmtMoney(449000), han: fmtTime(now() + 48 * 3600000),
-    game_moi: g.name, id_game_moi: g.id, gia_game_moi: fmtMoney(up().cfg.newGamePrice), han_game_moi: fmtTime(now() + 3 * 86400000) };
+    game_moi: g.name, id_game_moi: g.id, gia_game_moi: fmtMoney(up().cfg.newGamePrice), han_game_moi: fmtTime(now() + 3 * 86400000), ...sampleFirst() };
   const m = buildMail(type, { id: 'thu', name: 'Khách Thử', email: to }, vars, 0);
   res.locals.release();
   try {
@@ -754,7 +814,7 @@ app.post('/api/admin/upsell/preview', (req, res) => {
   const saved = up().templates[type];
   if (tpl) up().templates[type] = { ...saved, subject: String(tpl.subject || ''), body: String(tpl.body || '') };
   const g = visibleGames()[0] || { id: 'game', name: 'Game mới' };
-  const m = buildMail(type, { id: 'thu', name: 'Nguyễn Văn An' }, { goi: 'Gói Lẻ', key: 'LG-ABCD-EFGH-JKLM-NPQR', game: g.name, gia_combo: fmtMoney(140000), gia_tronbo: fmtMoney(449000), han: fmtTime(now() + 48 * 3600000), game_moi: g.name, id_game_moi: g.id, gia_game_moi: fmtMoney(up().cfg.newGamePrice), han_game_moi: fmtTime(now() + 3 * 86400000) }, 0);
+  const m = buildMail(type, { id: 'thu', name: 'Nguyễn Văn An' }, { goi: 'Gói Lẻ', key: 'LG-ABCD-EFGH-JKLM-NPQR', game: g.name, gia_combo: fmtMoney(140000), gia_tronbo: fmtMoney(449000), han: fmtTime(now() + 48 * 3600000), game_moi: g.name, id_game_moi: g.id, gia_game_moi: fmtMoney(up().cfg.newGamePrice), han_game_moi: fmtTime(now() + 3 * 86400000), ...sampleFirst() }, 0);
   up().templates[type] = saved;
   res.json({ ok: true, subject: m.subject, html: m.html });
 });

@@ -59,6 +59,51 @@ Là khách cũ, bạn được thêm game này vào key đang dùng với giá c
 
 Mẹo: Gói Trọn Bộ được nhận mọi game mới miễn phí. Bạn chỉ cần bù thêm {gia_tronbo}.`,
   },
+  abandoned: {
+    name: 'Khách tạo đơn nhưng chưa thanh toán',
+    subject: '{ten} ơi, đơn #{ma_don} của bạn chưa hoàn tất',
+    body: `Chào {ten},
+
+Bạn đã chọn {goi_don} ({game_don}) nhưng đơn chưa được thanh toán.
+
+Chỉ cần quét mã QR, hệ thống tự gửi key và link tải sau 1–3 phút.
+
+[Thanh toán đơn #{ma_don}](/don-hang.html?code={ma_don}&t={token_don})
+
+Gặp khó khăn khi chuyển khoản? Bạn trả lời email này hoặc nhắn fanpage, mình hỗ trợ ngay.`,
+  },
+  welcome: {
+    name: 'Đăng ký chưa mua: ưu đãi đơn đầu tiên',
+    subject: '🎁 {ten} ơi, quà cho đơn đầu tiên: giảm đến {giam_max} (hết hạn {han_dau})',
+    body: `Chào {ten},
+
+Cảm ơn bạn đã đăng ký tài khoản tại {shop}. Bạn chưa chọn game nào, nên mình gửi bạn ưu đãi riêng cho đơn đầu tiên, chỉ đến {han_dau}:
+
+• Gói Lẻ 1 game: {gia_dau_le} (thường {gia_le})
+• Gói Combo 3 game: {gia_dau_combo} (thường {gia_combo_goc})
+• Gói Trọn Bộ {so_game} game + mọi game mới: {gia_dau_tronbo} (thường {gia_tronbo_goc})
+
+Người xem thả tim, chia sẻ, bình luận là nhân vật chạy ngay trên màn hình, giữ chân người xem ở lại phòng LIVE lâu hơn.
+
+[Chọn game với giá ưu đãi](/#bang-gia)
+[Xem {so_game} game chạy thử](/#game)
+
+Giá ưu đãi tự áp khi bạn đăng nhập và mua, không cần mã.`,
+  },
+  welcomeReminder: {
+    name: 'Đăng ký chưa mua: nhắc ưu đãi sắp hết',
+    subject: '⏰ Ưu đãi đơn đầu của bạn hết hạn lúc {han_dau}',
+    body: `Chào {ten},
+
+Ưu đãi đơn đầu tiên của bạn sắp hết hạn ({han_dau}):
+• Gói Lẻ: {gia_dau_le}
+• Gói Combo 3 game: {gia_dau_combo}
+• Gói Trọn Bộ: {gia_dau_tronbo}
+
+Sau thời gian này giá trở về bình thường.
+
+[Mua ngay trước khi hết hạn](/#bang-gia)`,
+  },
   newgameOwned: {
     name: 'Game mới: báo khách đã có sẵn trong key',
     subject: '🎉 {game_moi} đã có sẵn trong key của bạn',
@@ -78,6 +123,9 @@ export const DEFAULT_UPSELL = {
   emailReceipt: 1, emailOffer: 1, emailReminder: 1, emailNewGame: 1,
   offerAfterDays: 3, offerHours: 48, comboOff: 0, allOff: 111000,
   newGamePrice: 69000, newGameDays: 3,
+  // khách đã đăng ký nhưng chưa mua
+  popupFirst: 1, emailWelcome: 1, emailWelcomeReminder: 1, emailAbandoned: 1,
+  firstAfterHours: 24, firstHours: 72, firstOffLe: 10000, firstOffCombo: 30000, firstOffAll: 100000, abandonedAfterHours: 2,
   smtpHost: 'smtp.gmail.com', smtpPort: 465, smtpUser: '', smtpPass: '', fromName: '', replyTo: '',
   maxPerRun: 20,
 };
@@ -97,7 +145,7 @@ export function normalizeUpsell(u) {
   };
 }
 
-export const EVENT_KEYS = ['checkout_shown', 'checkout_accept', 'checkout_decline', 'account_shown', 'account_click', 'account_close'];
+export const EVENT_KEYS = ['checkout_shown', 'checkout_accept', 'checkout_decline', 'account_shown', 'account_click', 'account_close', 'first_shown', 'first_click', 'first_close'];
 export function countEvent(up, k, n = 1) {
   if (!EVENT_KEYS.includes(k) && !/^email_/.test(k)) return;
   const day = new Date(Date.now() + 7 * 3600000).toISOString().slice(0, 10); // ngày giờ Việt Nam
@@ -182,6 +230,26 @@ export function offersFor(D, up, user, t = Date.now(), { start = false } = {}) {
 }
 const pub = (q) => ({ planId: q.plan.id, planName: q.plan.name, price: q.price, full: q.full, off: q.off, until: q.until, need: q.need, slots: q.plan.slots, allGames: Boolean(q.plan.allGames) });
 
+// Ưu đãi đơn đầu tiên cho khách đã đăng ký nhưng chưa mua: giá giảm theo gói, có hạn
+export function hasPaid(D, user) {
+  return D.orders.some(o => o.userId === user.id && o.status === 'paid') || D.licenses.some(l => l.userId === user.id);
+}
+export function firstOffer(D, up, user, t = Date.now(), { start = false } = {}) {
+  if (!user || hasPaid(D, user)) return null;
+  const c = up.cfg;
+  if (!user.firstStart && start && t >= (user.createdAt || 0) + c.firstAfterHours * 3600000) user.firstStart = t;
+  if (!user.firstStart) return null;
+  const until = user.firstStart + c.firstHours * 3600000;
+  if (t >= until) return null;
+  const prices = {};
+  for (const p of D.plans) {
+    const off = p.allGames ? c.firstOffAll : p.slots > 1 ? c.firstOffCombo : c.firstOffLe;
+    prices[p.id] = { full: p.price, price: Math.max(10000, p.price - Math.min(off, p.price)), off: Math.min(off, p.price) };
+  }
+  if (!Object.values(prices).some(x => x.off > 0)) return null;
+  return { until, prices };
+}
+
 // ---------- email ----------
 const escHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
@@ -219,7 +287,7 @@ export function renderEmail({ body, brand, logo, base, track, unsubscribe, foote
 <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06)">
 <div style="padding:18px 24px;border-bottom:1px solid #eef0f4">${logo ? `<img src="${escHtml(logo)}" alt="${escHtml(brand)}" height="40" style="height:40px">` : `<b style="font-size:20px">${escHtml(brand)}</b>`}</div>
 <div style="padding:22px 24px">${html}</div></div>
-<p style="font-size:12px;color:#8a93a6;text-align:center;margin:16px 0 0;line-height:1.5">${footer ? `${escHtml(footer)}<br>` : ''}Bạn nhận email này vì đã mua game tại ${escHtml(brand)}. <a href="${escHtml(unsubscribe)}" style="color:#8a93a6">Không nhận email giới thiệu nữa</a></p>
+<p style="font-size:12px;color:#8a93a6;text-align:center;margin:16px 0 0;line-height:1.5">${footer ? `${escHtml(footer)}<br>` : ''}Bạn nhận email này vì có tài khoản tại ${escHtml(brand)}. <a href="${escHtml(unsubscribe)}" style="color:#8a93a6">Không nhận email giới thiệu nữa</a></p>
 </div>${track.pixel ? `<img src="${escHtml(track.pixel)}" width="1" height="1" alt="" style="display:block">` : ''}</body></html>`;
   text += `\n—\nKhông nhận email giới thiệu nữa: ${unsubscribe}\n`;
   return { html: page, text };

@@ -4,12 +4,13 @@ import { $, $$, esc, money, moneyFull, toast } from '/js/common.js';
 const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '—';
 const rate = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 const pct = (a, b) => (b ? `${rate(a, b)}%` : '—');
-const TYPE_LABEL = { receipt: 'Gửi key', offer: 'Mời nâng cấp', reminder: 'Nhắc hết hạn', newgame: 'Game mới (mời mua)', newgameOwned: 'Game mới (đã có)' };
-const TYPE_ICON = { receipt: '🔑', offer: '⬆️', reminder: '⏰', newgame: '🎉', newgameOwned: '🎁' };
+const TYPE_LABEL = { receipt: 'Gửi key', offer: 'Mời nâng cấp', reminder: 'Nhắc hết hạn', newgame: 'Game mới (mời mua)', newgameOwned: 'Game mới (đã có)', welcome: 'Ưu đãi đơn đầu', welcomeReminder: 'Nhắc ưu đãi đơn đầu', abandoned: 'Nhắc đơn chưa trả' };
+const TYPE_ICON = { receipt: '🔑', offer: '⬆️', reminder: '⏰', newgame: '🎉', newgameOwned: '🎁', welcome: '👋', welcomeReminder: '⌛', abandoned: '🧾' };
 const typeOf = (k) => Object.keys(TYPE_LABEL).find(x => x.toLowerCase() === k) || k;
 const SRC_LABEL = (s) => ({
   'web:mua': '🛒 Mua trực tiếp trên web', 'popup:checkout': '🎁 Popup lúc mua Gói Lẻ', 'popup:nang-cap': '⬆️ Popup nâng cấp',
   'popup:game-moi': '🎉 Popup game mới', 'account:nang-cap': '👤 Nút nâng cấp trong tài khoản', 'account:them-game': '👤 Nút thêm game trong tài khoản',
+  'popup:don-dau': '👋 Popup ưu đãi đơn đầu', 'account:don-dau': '👋 Ô ưu đãi đơn đầu trong tài khoản',
 }[s] || (s.startsWith('email:') ? `✉️ Email: ${TYPE_LABEL[typeOf(s.slice(6))] || s.slice(6)}` : s));
 
 const CSS = `
@@ -69,6 +70,8 @@ const CSS = `
 .ux .chip.ok{background:#e7f8ef;color:#0f7a4b}.ux .chip.bad{background:#fde8eb;color:#c42a3c}.ux .chip.v{background:#efeaff;color:#5b3fd8}.ux .chip.o{background:#fff3e0;color:#b45309}
 .ux .savebar{position:sticky;bottom:0;z-index:5;display:flex;justify-content:flex-end;gap:10px;align-items:center;padding:14px 0;background:linear-gradient(180deg,rgba(246,246,251,0),var(--bg) 40%)}
 .ux .sec{margin-bottom:14px}
+.ux .flow.f3{grid-template-columns:repeat(3,1fr)}@media(max-width:1000px){.ux .flow.f3{grid-template-columns:1fr}}
+.ux .step.alt .num{background:linear-gradient(135deg,#6a4cf5,#4aa8ff);box-shadow:0 6px 16px rgba(106,76,245,.25)}
 .ux .empty2{color:var(--muted);text-align:center;padding:22px;font-size:14px}
 `;
 
@@ -86,11 +89,14 @@ export async function renderUpsell(view, call, games, plans) {
   const maxDay = Math.max(1, ...r.days.map(x => x.upgradeRevenue));
   const srcs = Object.entries(r.bySource).sort((a, b) => b[1].revenue - a[1].revenue);
   const maxSrc = Math.max(1, ...srcs.map(([, v]) => v.revenue));
+  const f = r.first || {};
+  const offs = plans.map(p => [p, p.allGames ? c.firstOffAll : p.slots > 1 ? c.firstOffCombo : c.firstOffLe]);
+  const offTxt = offs.filter(([, o]) => o > 0).map(([p, o]) => `${esc(p.name)} ${money(Math.max(10000, p.price - Math.min(o, p.price)))}`).join(' · ');
   const funnel = (label, a, b, cls = '') => `<div class="r"><span>${label}</span><div class="track ${cls}"><i style="width:${b ? Math.max(2, rate(a, b)) : 0}%"></i></div><span class="n">${a}/${b}</span></div>`;
 
   view.innerHTML = `<style>${CSS}</style><div class="ux">
     <div class="head">
-      <div><h1>📈 Bán thêm cho khách cũ</h1><p>Popup và email tự động mời khách nâng cấp (chỉ trả tiền chênh lệch, giữ nguyên key) và báo game mới cho khách đã mua.</p></div>
+      <div><h1>📈 Bán thêm & kéo khách mua</h1><p>Popup và email tự động: mời khách cũ nâng cấp (chỉ trả tiền chênh lệch, giữ nguyên key), báo game mới, tặng ưu đãi đơn đầu cho khách đăng ký chưa mua.</p></div>
       <div class="state"><span class="dot ${c.emailsOn ? 'on' : ''}"></span>Email tự động: ${c.emailsOn ? 'Đang bật' : 'Đang tắt'}</div>
     </div>
 
@@ -101,11 +107,21 @@ export async function renderUpsell(view, call, games, plans) {
       <div class="kpi" style="--c:linear-gradient(90deg,#ff9f43,#ffd23f);--bgc:#fff3e0"><div class="ic">🛒</div><span>Đơn mới theo gói</span><div class="kplans">${plans.map(p => `<div><span>${esc(p.name)}</span><b>${r.byPlan[p.id] || 0}</b></div>`).join('')}</div></div>
     </div>
 
+    <div class="card sec" style="background:linear-gradient(120deg,#f5f1ff,#fff7fb)"><h2>👋 Khách đã đăng ký nhưng chưa mua</h2><p class="sub">Ưu đãi đơn đầu tiên có hạn + email nhắc đơn chưa thanh toán</p>
+      <div class="kpis" style="margin:0">
+        <div class="kpi" style="--c:linear-gradient(90deg,#6a4cf5,#4aa8ff);--bgc:#efeaff"><div class="ic">🧑‍💻</div><span>Chưa mua lần nào</span><b>${f.nonBuyers || 0}</b><small>${f.withEmail || 0} khách có email nhận được</small></div>
+        <div class="kpi" style="--c:linear-gradient(90deg,#ff9f43,#ffd23f);--bgc:#fff3e0"><div class="ic">🎁</div><span>Đã nhận ưu đãi đơn đầu</span><b>${f.offered || 0}</b><small>Popup: hiện ${ev.first_shown || 0} · bấm ${ev.first_click || 0}</small></div>
+        <div class="kpi" style="--c:linear-gradient(90deg,#10b981,#34d399);--bgc:#e7f8ef"><div class="ic">💰</div><span>Mua nhờ ưu đãi đơn đầu</span><b>${f.orders || 0}</b><small>${moneyFull(f.revenue || 0)}</small></div>
+        <div class="kpi"><div class="ic">🧾</div><span>Đơn chưa thanh toán (7 ngày)</span><b>${f.abandoned || 0}</b><small>${f.recovered || 0} đơn trả tiền sau email nhắc</small></div>
+      </div></div>
+
     <div class="funnels">
       <div class="card"><h2>🎁 Popup lúc mua Gói Lẻ</h2><p class="sub">Khách bấm Gói Lẻ → được mời lên ${esc(combo?.name || 'Combo')}</p>
         <div class="fun">${funnel('Hiện popup', ev.checkout_shown || 0, ev.checkout_shown || 0)}${funnel('Lấy Combo', ev.checkout_accept || 0, ev.checkout_shown || 0, 'g')}${funnel('Vẫn mua lẻ', ev.checkout_decline || 0, ev.checkout_shown || 0, 'b')}</div></div>
       <div class="card"><h2>⬆️ Popup cho khách đã mua</h2><p class="sub">Hiện ở trang chủ và Tài khoản, tối đa 1 lần/ngày</p>
         <div class="fun">${funnel('Hiện popup', ev.account_shown || 0, ev.account_shown || 0)}${funnel('Bấm xem gói', ev.account_click || 0, ev.account_shown || 0, 'g')}${funnel('Đóng', ev.account_close || 0, ev.account_shown || 0, 'b')}</div></div>
+      <div class="card"><h2>👋 Popup ưu đãi đơn đầu</h2><p class="sub">Khách đăng ký chưa mua, tối đa 1 lần/ngày</p>
+        <div class="fun">${funnel('Hiện popup', ev.first_shown || 0, ev.first_shown || 0)}${funnel('Bấm chọn gói', ev.first_click || 0, ev.first_shown || 0, 'g')}${funnel('Đóng', ev.first_close || 0, ev.first_shown || 0, 'b')}</div></div>
     </div>
 
     <div class="grid2">
@@ -126,7 +142,7 @@ export async function renderUpsell(view, call, games, plans) {
 
     <form id="upf">
       <div class="master">
-        <div><b style="font-size:17px">📧 Gửi email tự động</b><p>Bật sau khi "Gửi thử" thấy email về. Lúc bật, khách mua từ ${c.offerAfterDays} ngày trước trở lên nhận ngay email mời nâng cấp; email gửi key chỉ áp dụng cho đơn mới.</p></div>
+        <div><b style="font-size:17px">📧 Gửi email tự động</b><p>Bật sau khi "Gửi thử" thấy email về. Lúc bật, khách mua từ ${c.offerAfterDays} ngày trước trở lên nhận ngay email mời nâng cấp${c.emailWelcome ? `, ${f.withEmail || 0} khách đăng ký chưa mua nhận email ưu đãi đơn đầu` : ''}; email gửi key chỉ áp dụng cho đơn mới.</p></div>
         ${sw('emailsOn', c.emailsOn ? 'Đang bật' : 'Đang tắt')}
       </div>
 
@@ -137,6 +153,18 @@ export async function renderUpsell(view, call, games, plans) {
           <div class="step"><div class="num">3</div><b>Sau ${c.offerAfterDays} ngày</b><p>Mời nâng cấp, giảm thêm ${money(c.comboOff)} Combo / ${money(c.allOff)} Trọn Bộ trong ${c.offerHours} giờ.</p>${sw('emailOffer', 'Email')} &nbsp; ${sw('popupAccount', 'Popup')}</div>
           <div class="step"><div class="num">4</div><b>Còn 12 giờ</b><p>Email nhắc ưu đãi sắp hết hạn.</p>${sw('emailReminder', 'Email')}</div>
           <div class="step"><div class="num">5</div><b>Bật "Hiện" game mới</b><p>Khách cũ thêm game vào key giá ${money(c.newGamePrice)} trong ${c.newGameDays} ngày. Khách Trọn Bộ nhận "đã có sẵn".</p>${sw('emailNewGame', 'Email')}</div>
+        </div>
+      </div>
+
+      <div class="card sec"><h2>👋 Kịch bản cho khách đăng ký chưa mua</h2><p class="sub">Ưu đãi chỉ áp cho đơn đầu tiên, tự giảm giá khi khách đăng nhập và mua, không cần mã. Hiện tại: ${offTxt || 'chưa đặt mức giảm'}.</p>
+        <div class="flow f3">
+          <div class="step alt"><div class="num">1</div><b>Tạo đơn mà chưa trả tiền</b><p>Sau ${c.abandonedAfterHours} giờ: email nhắc kèm nút mở lại đúng đơn để quét QR.</p>${sw('emailAbandoned', 'Email')}</div>
+          <div class="step alt"><div class="num">2</div><b>Đăng ký ${c.firstAfterHours} giờ chưa mua</b><p>Email + popup tặng giá đơn đầu, hạn ${c.firstHours} giờ tính từ lúc khách nhận.</p>${sw('emailWelcome', 'Email')} &nbsp; ${sw('popupFirst', 'Popup')}</div>
+          <div class="step alt"><div class="num">3</div><b>Ưu đãi còn 12 giờ</b><p>Email nhắc sắp hết hạn, sau đó giá trở về bình thường.</p>${sw('emailWelcomeReminder', 'Email')}</div>
+        </div>
+        <div class="fg" style="margin-top:14px">
+          ${num('firstOffLe', 'Đơn đầu: giảm Gói Lẻ', '', 'đ')}${num('firstOffCombo', 'Đơn đầu: giảm Gói Combo', '', 'đ')}${num('firstOffAll', 'Đơn đầu: giảm Trọn Bộ', '0 = không giảm gói đó', 'đ')}
+          ${num('firstAfterHours', 'Tặng ưu đãi sau khi đăng ký', '', 'giờ')}${num('firstHours', 'Ưu đãi đơn đầu kéo dài', '', 'giờ')}${num('abandonedAfterHours', 'Nhắc đơn chưa trả sau', '', 'giờ')}
         </div>
       </div>
 
@@ -154,7 +182,7 @@ export async function renderUpsell(view, call, games, plans) {
       </div>
 
       <div class="card sec"><h2>📝 Nội dung email</h2>
-        <p class="sub chips">Biến: ${['ten', 'shop', 'goi', 'key', 'game', 'so_game', 'gia_le', 'gia_combo', 'gia_tronbo', 'han', 'game_moi', 'gia_game_moi', 'han_game_moi', 'id_game_moi'].map(v => `<code>{${v}}</code>`).join('')}<br>Dòng <code>[Chữ trên nút](/duong-dan)</code> thành nút bấm. Dòng có biến trống tự ẩn (VD khách đã là Combo thì dòng {gia_combo} không hiện).</p>
+        <p class="sub chips">Biến: ${['ten', 'shop', 'goi', 'key', 'game', 'so_game', 'gia_le', 'gia_combo', 'gia_tronbo', 'han', 'game_moi', 'gia_game_moi', 'han_game_moi', 'id_game_moi', 'han_dau', 'giam_max', 'gia_dau_le', 'gia_dau_combo', 'gia_dau_tronbo', 'gia_combo_goc', 'gia_tronbo_goc', 'ma_don', 'goi_don', 'game_don'].map(v => `<code>{${v}}</code>`).join('')}<br>Dòng <code>[Chữ trên nút](/duong-dan)</code> thành nút bấm. Dòng có biến trống tự ẩn (VD khách đã là Combo thì dòng {gia_combo} không hiện).</p>
         ${Object.entries(d.templates).map(([k, t]) => `<details class="tpl" data-tpl="${k}"><summary><span>${TYPE_ICON[k] || '✉️'}</span>${esc(t.name)}</summary><div class="in">
           <div class="field"><label>Tiêu đề</label><input data-f="subject" value="${esc(t.subject)}"></div>
           <div class="field"><label>Nội dung</label><textarea data-f="body">${esc(t.body)}</textarea></div>

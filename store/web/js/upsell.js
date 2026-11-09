@@ -196,3 +196,59 @@ export function offerCards(d) {
 export function bindOfferCards(d, C) {
   $$('[data-up]').forEach(b => b.onclick = () => upgradeDialog(d, C, { key: b.dataset.key, target: b.dataset.up, gameId: b.dataset.game }));
 }
+
+// 5) Ưu đãi đơn đầu tiên cho khách đã đăng ký nhưng chưa mua: giá giảm tự áp, có hạn
+export function applyFirst(C, fo) {
+  if (!fo) return false;
+  for (const p of C.plans) {
+    const x = fo.prices[p.id];
+    if (!x) continue;
+    p.full = x.full; p.price = x.price;
+  }
+  C.firstUntil = fo.until;
+  return true;
+}
+
+function firstDeals(C, fo) {
+  return C.plans.filter(p => fo.prices[p.id]?.off > 0).map(p => {
+    const x = fo.prices[p.id];
+    const sub = p.allGames ? `Tất cả ${C.games.length} game + mọi game mới` : p.slots > 1 ? `${p.slots} game tự chọn` : '1 game tự chọn';
+    return `<div class="deal ${p.highlight ? 'on' : ''}" data-plan="${esc(p.id)}"><span><b>${esc(p.name)}</b><small>${sub} · giảm ${money(x.off)}</small></span><span class="p"><s>${money(x.full)}</s><strong>${money(x.price)}</strong></span></div>`;
+  }).join('');
+}
+
+// Popup tự hiện (trang chủ, trang tài khoản), tối đa 1 lần/ngày. onPick(planId, src) để mua ngay
+export function firstOfferPopup(d, C, onPick) {
+  const fo = d.firstOffer;
+  if (!d.upsell?.first || !fo || fo.until <= Date.now()) return false;
+  const seen = Number(localStorage.getItem('lg_first_seen') || 0);
+  if (Date.now() - seen < 86400000) return false;
+  localStorage.setItem('lg_first_seen', Date.now());
+  upEvent('first_shown');
+  const { el, close } = modal(`
+    <div class="hero">🎁</div>
+    <h3>Quà cho đơn đầu tiên của bạn</h3>
+    <p class="msub">Cảm ơn bạn đã đăng ký. Giá dưới đây chỉ dành cho đơn đầu tiên, tự áp khi bạn mua, không cần mã.</p>
+    <div class="timer" data-left>⏰ Còn ${left(fo.until)}</div>
+    ${firstDeals(C, fo)}
+    <p class="note" style="font-size:13px;margin:6px 0 0">Bấm vào gói để chọn game và thanh toán.</p>`);
+  const tick = setInterval(() => { const s = left(fo.until); if (!s || !el.isConnected) return clearInterval(tick); $('[data-left]', el).textContent = `⏰ Còn ${s}`; }, 30000);
+  el.addEventListener('closed', () => upEvent('first_close'));
+  $$('[data-plan]', el).forEach(b => b.onclick = () => {
+    close(); upEvent('first_click');
+    if (onPick) onPick(b.dataset.plan, 'popup:don-dau');
+    else { sessionStorage.setItem('lg_src', 'popup:don-dau'); location.href = `/#mua-${b.dataset.plan}`; }
+  });
+  return true;
+}
+
+// Ô ưu đãi đơn đầu trong trang tài khoản
+export function firstCard(d, C) {
+  const fo = d.firstOffer;
+  if (!fo || fo.until <= Date.now() || !C) return '';
+  const btns = C.plans.filter(p => fo.prices[p.id]?.off > 0).map(p => `<a class="btn sm ${p.allGames ? '' : 'ghost'}" href="/#mua-${esc(p.id)}" data-first>${esc(p.name)} · <s style="opacity:.6">${money(fo.prices[p.id].full)}</s> ${money(fo.prices[p.id].price)}</a>`).join('');
+  return `<div class="up-card" style="margin-bottom:14px"><h4>🎁 Ưu đãi đơn đầu tiên của bạn</h4><p>Giá giảm tự áp khi mua, không cần mã. <b style="color:#b45309">Còn ${left(fo.until)}.</b></p><div class="btns">${btns}</div></div>`;
+}
+export function bindFirstCard() {
+  $$('[data-first]').forEach(a => a.addEventListener('click', () => { sessionStorage.setItem('lg_src', 'account:don-dau'); upEvent('first_click'); }));
+}

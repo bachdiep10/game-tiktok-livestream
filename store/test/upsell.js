@@ -180,6 +180,71 @@ try {
   assert.equal(rep.bySource['email:offer'].revenue, 449000); assert.equal(rep.bySource['popup:checkout'].orders, 2);
   step('báo cáo: doanh thu nâng cấp, nguồn đơn, popup, email gửi/mở/bấm');
 
+  // ----- khách đăng ký nhưng chưa mua -----
+  as('u3'); await j('POST', '/api/account/register', { name: 'Phạm Ba', phone: '0901000003', email: 'ba@x.vn', password: 'abcdef' });
+  assert.equal((await j('GET', '/api/account/me')).firstOffer, null); // mới đăng ký: chưa có ưu đãi
+  as('u4'); await j('POST', '/api/account/register', { name: 'Võ Bốn', phone: '0901000004', email: 'bon@x.vn', password: 'abcdef' });
+  const o4 = await j('POST', '/api/orders', { planId: 'combo', games: (await j('GET', '/api/catalog')).games.slice(0, 3).map(g => g.id) });
+  assert.equal((await j('GET', `/api/orders/${o4.code}?t=${o4.token}`)).order.amount, 229000);
+  editDb(d => {
+    for (const u of d.users) if (u.email === 'ba@x.vn' || u.email === 'bon@x.vn') u.createdAt -= 25 * 3600000;
+    d.orders.find(o => o.code === o4.code).createdAt -= 3 * 3600000;
+  });
+  as('admin');
+  let n0 = mails.length;
+  r = await j('POST', '/api/admin/upsell/run', {});
+  let fresh = mails.slice(n0).map(decode);
+  const wBa = fresh.find(x => x.to === 'ba@x.vn');
+  assert.ok(wBa, 'email ưu đãi đơn đầu'); assert.match(wBa.subject, /giảm đến 100K/);
+  assert.match(wBa.text, /79K/); assert.match(wBa.text, /199K/); assert.match(wBa.text, /549K/); assert.match(wBa.text, /thường 229K/);
+  const aBon = fresh.filter(x => x.to === 'bon@x.vn');
+  assert.equal(aBon.length, 1); assert.match(aBon[0].subject, new RegExp(`#${o4.code}`));
+  assert.match(decodeURIComponent(aBon[0].html), new RegExp(`don-hang\\.html\\?code=${o4.code}&t=${o4.token}`));
+  n0 = mails.length;
+  r = await j('POST', '/api/admin/upsell/run', {});
+  assert.equal(mails.length, n0, 'không gửi dồn email ngay sau email nhắc đơn');
+  step('đăng ký 1 ngày chưa mua: email ưu đãi đơn đầu (79K / 199K / 549K); tạo đơn chưa trả: email nhắc kèm link đơn, không gửi dồn');
+
+  as('u3');
+  const me3 = await j('GET', '/api/account/me');
+  assert.equal(me3.firstOffer.prices.le.price, 79000); assert.equal(me3.firstOffer.prices.combo.price, 199000); assert.ok(me3.upsell.first);
+  assert.ok(me3.firstOffer.until > Date.now() + 70 * 3600000);
+  const o3 = await j('POST', '/api/orders', { planId: 'combo', games: (await j('GET', '/api/catalog')).games.slice(0, 3).map(g => g.id), source: 'popup:don-dau' });
+  const ov3 = (await j('GET', `/api/orders/${o3.code}?t=${o3.token}`)).order;
+  assert.equal(ov3.amount, 199000); assert.ok(ov3.bank.qr.includes('amount=199000'));
+  as('admin'); await j('POST', `/api/admin/orders/${o3.code}/mark-paid`, {});
+  as('u3');
+  const me3b = await j('GET', '/api/account/me');
+  assert.equal(me3b.firstOffer, null); assert.equal(me3b.licenses.length, 1);
+  step('khách mua với giá đơn đầu: đơn Combo 199K (QR đúng số tiền); mua xong hết ưu đãi');
+
+  // khách 4: ưu đãi còn 7 giờ → email nhắc; ưu đãi hết hạn thì giá trở lại bình thường
+  editDb(d => {
+    const u = d.users.find(x => x.email === 'bon@x.vn');
+    u.mailedWelcome = Date.now() - 65 * 3600000; u.firstStart = Date.now() - 65 * 3600000;
+    for (const o of d.orders) if (o.mailedAbandoned) o.mailedAbandoned -= 25 * 3600000;
+  });
+  as('admin');
+  n0 = mails.length;
+  await j('POST', '/api/admin/upsell/run', {});
+  fresh = mails.slice(n0).map(decode).filter(x => x.to === 'bon@x.vn');
+  assert.equal(fresh.length, 1, JSON.stringify(fresh.map(x => x.subject))); assert.match(fresh[0].subject, /hết hạn/); assert.match(fresh[0].text, /199K/);
+  editDb(d => { d.users.find(x => x.email === 'bon@x.vn').firstStart -= 8 * 3600000; });
+  as('u4');
+  assert.equal((await j('GET', '/api/account/me')).firstOffer, null);
+  const o4b = await j('POST', '/api/orders', { planId: 'le', games: ['chanh-dien'] });
+  assert.equal((await j('GET', `/api/orders/${o4b.code}?t=${o4b.token}`)).order.amount, 89000);
+  step('ưu đãi còn 7 giờ: email nhắc sắp hết hạn; hết hạn thì giá về bình thường');
+
+  as('admin');
+  const rep2 = (await j('GET', '/api/admin/upsell')).report;
+  assert.equal(rep2.first.orders, 1); assert.equal(rep2.first.revenue, 199000); assert.equal(rep2.first.nonBuyers, 1); assert.equal(rep2.first.offered, 2);
+  assert.equal(rep2.bySource['popup:don-dau'].revenue, 199000);
+  assert.equal(rep2.emails.find(e => e.type === 'welcome').sent, 1); assert.equal(rep2.emails.find(e => e.type === 'abandoned').sent, 1);
+  const prev2 = await j('POST', '/api/admin/upsell/preview', { type: 'welcome' });
+  assert.match(prev2.subject, /giảm đến 100K/); assert.doesNotMatch(prev2.html, /\{gia_dau/);
+  step('báo cáo khách chưa mua: đơn nhờ ưu đãi, doanh thu, nguồn popup:don-dau; xem trước email ưu đãi đơn đầu');
+
   // huỷ nhận email
   const unsub = decode(mails[0]).text.match(/huy-email\?u=(\w+)&s=(\w+)/);
   const ur = await fetch(`${base}/huy-email?u=${unsub[1]}&s=${unsub[2]}`);

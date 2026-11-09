@@ -1,6 +1,6 @@
 import { $, $$, api, esc, money, moneyFull, applyBrand, zaloLink, me } from './common.js';
 import { track } from './track.js';
-import { checkoutUpsell, autoOfferPopup, source } from './upsell.js';
+import { checkoutUpsell, autoOfferPopup, source, applyFirst, firstOfferPopup, left } from './upsell.js';
 
 let C; // catalog
 let currentPlan = null;
@@ -51,7 +51,7 @@ function renderGames() {
         <ul>${(g.features || []).slice(0, 4).map(f => `<li>${esc(f)}</li>`).join('')}</ul>
         <a class="more" href="/game/${esc(g.id)}">Xem chi tiết & cách chơi →</a>
         <div class="foot">
-          <span class="price">${single ? money(single.price) : ''} <small>trọn đời</small></span>
+          <span class="price">${single?.full > single?.price ? `<s style="opacity:.55;font-size:.75em">${money(single.full)}</s> ` : ''}${single ? money(single.price) : ''} <small>trọn đời</small></span>
           ${single ? `<button class="btn sm" data-buy="${esc(single.id)}" data-game="${esc(g.id)}">Mua</button>` : ''}
         </div>
       </div>
@@ -70,7 +70,7 @@ function renderPlans() {
     let save = '';
     if (single && p.id !== single.id) {
       const n = p.allGames ? C.games.length : p.slots;
-      const full = single.price * n;
+      const full = (single.full || single.price) * n;
       if (!p.allGames && full > p.price) save = `Tiết kiệm ${money(full - p.price)} so với mua lẻ`;
       if (p.allGames) save = 'Gồm cả game ra mắt sau này';
     }
@@ -79,12 +79,14 @@ function renderPlans() {
       ${p.badge ? `<span class="badge">${esc(p.badge)}</span>` : ''}
       <h3>${esc(p.name)}</h3>
       <div class="psub">${esc(p.subtitle)}</div>
-      <div class="amount">${money(p.price)} <small>/ trọn đời</small></div>
+      ${p.full > p.price ? `<div class="first-tag" style="display:inline-block;background:#fff0f4;color:#d6224a;font-weight:700;font-size:13px;border-radius:999px;padding:3px 10px;margin:6px 0 2px">🎁 Đơn đầu giảm ${money(p.full - p.price)}</div><div class="amount"><s style="opacity:.5;font-size:.55em;font-weight:600">${money(p.full)}</s> ${money(p.price)} <small>/ trọn đời</small></div>` : `<div class="amount">${money(p.price)} <small>/ trọn đời</small></div>`}
       <div class="save">${esc(save)}</div>
       <ul>${p.features.map(f => `<li>${esc(f)}</li>`).join('')}</ul>
       <button class="btn ${p.highlight ? '' : 'ghost'} block" data-buy="${esc(p.id)}">Chọn ${esc(p.name)}</button>
     </div>`;
   }).join('');
+  const until = C.firstUntil && left(C.firstUntil);
+  if (until && !$('#firstBar')) $('#plans').insertAdjacentHTML('beforebegin', `<div id="firstBar" style="max-width:760px;margin:0 auto 18px;background:linear-gradient(90deg,#fff0f4,#fff6e8);border:1px solid rgba(255,61,127,.25);border-radius:14px;padding:12px 16px;text-align:center;font-weight:700;color:#b4233c">🎁 Giá ưu đãi cho đơn đầu tiên của bạn đã được áp dụng, còn ${esc(until)}</div>`);
 }
 
 function renderFaq() {
@@ -105,7 +107,7 @@ function renderSupport() {
 }
 
 // ---------- mua hàng ----------
-async function openBuy(planId, gameId, fromPopup) {
+async function openBuy(planId, gameId, fromPopup, src) {
   currentPlan = C.plans.find(p => p.id === planId);
   if (!currentPlan) return;
   const { user } = await me();
@@ -114,12 +116,12 @@ async function openBuy(planId, gameId, fromPopup) {
     location.href = `/tai-khoan.html?next=${encodeURIComponent(next)}&ly-do=mua`;
     return;
   }
-  buySource = fromPopup ? 'popup:checkout' : '';
+  buySource = src || (fromPopup ? (buySource === 'popup:don-dau' ? buySource : 'popup:checkout') : '');
   // Chọn Gói Lẻ: mời lên Combo trước (mỗi lần mở web hỏi 1 lần)
   if (!fromPopup && currentPlan.slots === 1 && !currentPlan.allGames) {
     const r = await checkoutUpsell(C, currentPlan, gameId);
     if (!r) return;
-    if (r !== 'single') return openBuy(r, gameId, true);
+    if (r !== 'single') return openBuy(r, gameId, true, buySource === 'popup:don-dau' ? buySource : '');
   }
   $('#buyAs').innerHTML = `Mua bằng tài khoản <b>${esc(user.name)}</b> · ${esc(user.phone)} <a href="/tai-khoan.html">Đổi</a><br><small>Key và link tải sẽ nằm trong mục <b>Tài khoản của tôi</b>.</small>`;
   const p = currentPlan;
@@ -130,7 +132,7 @@ async function openBuy(planId, gameId, fromPopup) {
     : need < p.slots
       ? `Hiện có ${C.games.length} game, bạn nhận tất cả. ${p.slots - need} suất còn lại tự nhận game mới khi ra mắt.`
       : `Chọn ${need} game bạn muốn dùng.`;
-  $('#buyTotal').textContent = moneyFull(p.price);
+  $('#buyTotal').innerHTML = p.full > p.price ? `<s style="opacity:.5;font-weight:500;font-size:.8em">${moneyFull(p.full)}</s> ${moneyFull(p.price)}` : moneyFull(p.price);
   $('#buyErr').textContent = '';
   $('#pickWrap').style.display = p.allGames ? 'none' : '';
   $('#pickLabel').textContent = need === 1 ? 'Chọn 1 game' : `Chọn ${need} game`;
@@ -191,9 +193,12 @@ $('#buyForm').addEventListener('submit', async e => {
   try {
     C = await applyBrand();
     renderHero(); renderGames(); renderPlans(); renderFaq(); renderSupport();
+    const d = await me().catch(() => ({}));
+    // khách chưa mua lần nào đang có ưu đãi đơn đầu: hiện giá đã giảm
+    if (d.user && applyFirst(C, d.firstOffer)) { renderGames(); renderPlans(); }
     const m = location.hash.match(/^#mua-([^~]+)(?:~(.+))?$/);
     if (m) { history.replaceState(null, '', '/#bang-gia'); openBuy(m[1], m[2]); }
-    else me().then(d => { if (d.user) autoOfferPopup(d, C); }).catch(() => {});
+    else if (d.user && !firstOfferPopup(d, C, (id, src) => openBuy(id, '', false, src))) autoOfferPopup(d, C);
   } catch (e) {
     document.querySelector('main').innerHTML = `<div class="wrap page"><div class="panel">Không tải được dữ liệu: ${esc(e.message)}</div></div>`;
   }
