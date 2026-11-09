@@ -1,5 +1,6 @@
 import { $, $$, api, esc, money, moneyFull, copy, toast } from '/js/common.js';
 import { renderMarkdown } from '/js/markdown.js';
+import { renderUpsell } from '/admin/upsell-admin.js';
 
 const S = { tab: 'overview', orders: [], licenses: [], games: [], config: null, filter: {} };
 const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: '2-digit' }) : '—';
@@ -67,6 +68,7 @@ async function refresh(silent) {
   if (t === 'users') { S.users = (await call('/api/admin/users')).users; renderUsers(); }
   if (t === 'plans') { await loadGamesConfig(); renderPlans(); }
   if (t === 'settings') { await loadGamesConfig(); renderSettings(); }
+  if (t === 'upsell' && !silent) { await loadGamesConfig(); await renderUpsell(view('upsell'), call, S.games, S.config.plans); }
 }
 
 async function loadGamesConfig() {

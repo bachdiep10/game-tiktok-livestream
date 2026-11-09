@@ -2,6 +2,7 @@
 // Đủ cho vài nghìn đơn hàng. Muốn lớn hơn thì thay bằng MySQL/Postgres, giữ nguyên các hàm bên dưới.
 import fs from 'node:fs';
 import path from 'node:path';
+import { normalizeUpsell } from './upsell.js';
 
 const DEFAULT_PLANS = [
   {
@@ -384,6 +385,7 @@ function normalize(data) {
     users: data.users || [],
     bankTxns: data.bankTxns || [],
     posts: data.posts || [],
+    upsell: normalizeUpsell(data.upsell),
     bank: data.bank || { state: {}, lastRun: 0, lastError: '' },
     admin: data.admin || { passwordHash: '', salt: '' },
     secret: data.secret || '',

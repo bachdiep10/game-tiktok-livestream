@@ -1,8 +1,10 @@
 import { $, $$, api, esc, money, moneyFull, applyBrand, zaloLink, me } from './common.js';
 import { track } from './track.js';
+import { checkoutUpsell, autoOfferPopup, source } from './upsell.js';
 
 let C; // catalog
 let currentPlan = null;
+let buySource = '';
 
 function openModal(id) { $(id).classList.add('open'); document.body.style.overflow = 'hidden'; }
 function closeModal(m) {
@@ -103,7 +105,7 @@ function renderSupport() {
 }
 
 // ---------- mua hàng ----------
-async function openBuy(planId, gameId) {
+async function openBuy(planId, gameId, fromPopup) {
   currentPlan = C.plans.find(p => p.id === planId);
   if (!currentPlan) return;
   const { user } = await me();
@@ -111,6 +113,13 @@ async function openBuy(planId, gameId) {
     const next = `/#mua-${planId}${gameId ? `~${gameId}` : ''}`;
     location.href = `/tai-khoan.html?next=${encodeURIComponent(next)}&ly-do=mua`;
     return;
+  }
+  buySource = fromPopup ? 'popup:checkout' : '';
+  // Chọn Gói Lẻ: mời lên Combo trước (mỗi lần mở web hỏi 1 lần)
+  if (!fromPopup && currentPlan.slots === 1 && !currentPlan.allGames) {
+    const r = await checkoutUpsell(C, currentPlan, gameId);
+    if (!r) return;
+    if (r !== 'single') return openBuy(r, gameId, true);
   }
   $('#buyAs').innerHTML = `Mua bằng tài khoản <b>${esc(user.name)}</b> · ${esc(user.phone)} <a href="/tai-khoan.html">Đổi</a><br><small>Key và link tải sẽ nằm trong mục <b>Tài khoản của tôi</b>.</small>`;
   const p = currentPlan;
@@ -159,6 +168,7 @@ $('#buyForm').addEventListener('submit', async e => {
   const body = {
     planId: currentPlan.id,
     games: $$('#pick input:checked').map(i => i.value),
+    source: buySource || source(''),
   };
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang tạo đơn…';
   $('#buyErr').textContent = '';
@@ -183,6 +193,7 @@ $('#buyForm').addEventListener('submit', async e => {
     renderHero(); renderGames(); renderPlans(); renderFaq(); renderSupport();
     const m = location.hash.match(/^#mua-([^~]+)(?:~(.+))?$/);
     if (m) { history.replaceState(null, '', '/#bang-gia'); openBuy(m[1], m[2]); }
+    else me().then(d => { if (d.user) autoOfferPopup(d, C); }).catch(() => {});
   } catch (e) {
     document.querySelector('main').innerHTML = `<div class="wrap page"><div class="panel">Không tải được dữ liệu: ${esc(e.message)}</div></div>`;
   }
