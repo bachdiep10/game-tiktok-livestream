@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH, GUIDE_LEO_NUI, GUIDE_GIEO_QUE } from '../store/lib/db.js';
+import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH, GUIDE_LEO_NUI, GUIDE_GIEO_QUE, GUIDE_LOP_HOC } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -20,7 +20,7 @@ const SERVER = opt('server', 'https://netxioviet.com').replace(/\/$/, '');
 const only = args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--')));
 const VERSION = (fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8').match(/const VERSION = '([^']+)'/) || [])[1] || '1.0';
 
-const COMMON = ['server.js', 'package.json', 'package-lock.json', 'config.json', 'public/css', 'public/js/audio.js', 'public/js/fake.js', 'public/js/amLuong.js', 'public/js/amLuongControl.js',
+const COMMON = ['server.js', 'package.json', 'package-lock.json', 'config.json', 'public/css', 'public/js/audio.js', 'public/js/fake.js', 'public/js/amLuong.js', 'public/js/amLuongControl.js', 'public/js/guongGame.js', 'public/js/guongXemTruoc.js',
   'license/gate.js', 'license/license-client.js', 'license/kich-hoat.html'];
 
 const PRODUCTS = {
@@ -86,6 +86,11 @@ const PRODUCTS = {
     name: 'Gieo Quẻ Xin Xăm', folder: 'GieoQue', control: '/gieo-que-control.html', guide: GUIDE_GIEO_QUE,
     files: ['run-gieo-que.bat', 'mo-cua-so-gieo-que.bat', 'config-gieo-que.json', 'public/gieo-que.html', 'public/gieo-que-control.html', 'public/js/gieo-que',
       'public/assets/gieo-que', 'public/assets/nhac-gieo-que'],
+  },
+  'lop-hoc': {
+    name: 'Bạn Có Giỏi Hơn Học Sinh Lớp 5', folder: 'LopHoc', control: '/lop-hoc-control.html', guide: GUIDE_LOP_HOC,
+    files: ['run-lop-hoc.bat', 'mo-cua-so-lop-hoc.bat', 'config-lop-hoc.json', 'HUONG-DAN-TUY-CHINH.txt', 'public/lop-hoc.html', 'public/lop-hoc-control.html', 'public/lop-hoc-de-thi.html',
+      'public/js/lop-hoc', 'public/assets/lop-hoc', 'public/assets/nhac-lop-hoc'],
   },
 };
 
