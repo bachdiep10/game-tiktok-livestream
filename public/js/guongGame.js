@@ -1,5 +1,47 @@
 // Gửi hình màn hình game (thu nhỏ) cho bảng điều khiển, để khung xem trước hiện Y HỆT cửa sổ game đang lên LIVE.
 // Chỉ gửi khi có bảng điều khiển đang mở (bảng điều khiển hỏi "mirrorWant" mỗi 2 giây).
+// Giữ game chạy khi cửa sổ game bị che / thu nhỏ / chuyển sang cửa sổ khác:
+// trình duyệt dừng requestAnimationFrame khi cửa sổ bị ẩn, nên lúc đó game được "lên dây cót" bằng một Worker (~30 khung/giây).
+(() => {
+  if (window.top !== window.self) return;
+  const nativeRaf = window.requestAnimationFrame.bind(window);
+  const nativeCancel = window.cancelAnimationFrame.bind(window);
+  const waiting = new Map(); // id -> callback
+  let worker = null;
+  try {
+    worker = new Worker(URL.createObjectURL(new Blob(['setInterval(() => postMessage(0), 33);'], { type: 'text/javascript' })));
+  } catch {
+    return;
+  }
+  worker.onmessage = () => {
+    if (!document.hidden || !waiting.size) return;
+    const list = [...waiting.entries()];
+    waiting.clear();
+    const t = performance.now();
+    for (const [id, cb] of list) {
+      nativeCancel(id);
+      try {
+        cb(t);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+  window.requestAnimationFrame = (cb) => {
+    const id = nativeRaf((t) => {
+      if (!waiting.has(id)) return;
+      waiting.delete(id);
+      cb(t);
+    });
+    waiting.set(id, cb);
+    return id;
+  };
+  window.cancelAnimationFrame = (id) => {
+    waiting.delete(id);
+    nativeCancel(id);
+  };
+})();
+
 (() => {
   if (window.top !== window.self) return; // khung xem trước trong bảng điều khiển: không gửi
   const qs = new URLSearchParams(location.search);
