@@ -244,6 +244,7 @@ const doctor = { x: DOCTOR_HOME.x, y: DOCTOR_HOME.y, state: 'home', walk: 0, bub
 // pha của ván chơi: walk (dạo + hát) → ask (hỏi thầy thuốc) → chase (đuổi) → result → walk
 const phase = { name: 'walk', t0: performance.now(), until: performance.now() + 20000, step: 0, nextStep: 0, caught: 0, out: false };
 let fly = null; // { t0, until }
+let landing = false; // vừa bay xong: đầu rồng đang hạ cánh về sân, chưa ép vào sân
 let speedUntil = 0;
 let wiggleUntil = 0;
 const likeLog = [];
@@ -627,6 +628,9 @@ function startFly(leader) {
 
 function endFly() {
   fly = null;
+  // hạ cánh từ từ về giữa sân (không giật đầu rồng vào sân, nếu không cả đàn kẹt trên mái đình)
+  landing = true;
+  head.wander = null;
   head.target = { x: 540, y: 1150 };
   sfx.drum(3);
   for (let i = 0; i < 5; i++) puffs(rand(200, 880), rand(900, 1300), 3);
@@ -851,6 +855,7 @@ function handleEvent(ev) {
       leaving.length = 0;
       particles.length = 0;
       fly = null;
+      landing = false;
       hype = 0;
       round = 0;
       caughtTotal = 0;
@@ -950,7 +955,8 @@ function steerHead(dt) {
   const sc = scaleAtY(head.y) / 0.7;
   head.x += Math.cos(head.dir) * speed * dt * sc;
   head.y += Math.sin(head.dir) * speed * dt * sc;
-  if (!fly) {
+  if (landing && head.x > YARD.x0 - 40 && head.x < YARD.x1 + 40 && head.y > YARD.y0 - 40 && head.y < YARD.y1 + 40) landing = false;
+  if (!fly && !landing) {
     head.x = clamp(head.x, YARD.x0 - 40, YARD.x1 + 40);
     head.y = clamp(head.y, phase.name === 'ask' ? 860 : YARD.y0 - 40, YARD.y1 + 40);
   }
@@ -962,7 +968,9 @@ function gapAt(y) {
 }
 
 function updateTrail() {
-  if (Math.hypot(head.x - trail[0].x, head.y - trail[0].y) >= 3) trail.unshift({ x: head.x, y: head.y });
+  // so với điểm đã ghi trước đó (trail[1]); nếu so với trail[0] thì khi đi chậm (<3px/khung hình) vết không bao giờ dài thêm,
+  // cả đàn đứng nguyên một đường thẳng nối về chỗ cũ (vd. đuôi rồng kẹt trên mái đình sau khi bay lên mây)
+  if (trail.length < 2 || Math.hypot(head.x - trail[1].x, head.y - trail[1].y) >= 3) trail.unshift({ x: head.x, y: head.y });
   else {
     trail[0].x = head.x;
     trail[0].y = head.y;
@@ -1044,10 +1052,15 @@ function update(dt) {
 
   if (dragon.length) {
     steerHead(dt);
-    if (dragon[0].state === 'line' && dist(dragon[0], head) > 200 && !fly) {
+    if (dragon[0].state === 'line' && dist(dragon[0], head) > 200 && !fly && !landing) {
       // đầu rồng mới: kéo đầu về chỗ người đó
       head.x = dragon[0].x;
       head.y = dragon[0].y;
+      // người đó đang ở ngoài sân (vd. còn trên mái đình): cho đầu rồng tự đi về sân, đừng ép giật lại
+      if (head.y < YARD.y0 - 40 || head.y > YARD.y1 + 40 || head.x < YARD.x0 - 40 || head.x > YARD.x1 + 40) {
+        landing = true;
+        if (!head.target) head.target = { x: 540, y: 1150 };
+      }
     }
   }
   updateTrail();
