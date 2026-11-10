@@ -491,7 +491,7 @@ function pickAvatar(user) {
 
 // Ảnh đại diện TikTok được tải qua máy chủ game (cùng địa chỉ 127.0.0.1) để khung xem trước ở bảng điều khiển
 // chiếu lại được màn hình game (trình duyệt chặn chụp canvas có ảnh từ trang khác).
-const AVATAR_HOST = /(tiktokcdn|ibyteimg|byteimg|muscdn|tiktokv)/i;
+const AVATAR_HOST = /(^|\.)(tiktokcdn(-[a-z]+)?\.com|ibyteimg\.com|byteimg\.com|muscdn\.com|tiktokv\.com)$/i;
 const avatarCache = new Map();
 function proxyAvatar(u) {
   try {
