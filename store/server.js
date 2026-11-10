@@ -674,21 +674,41 @@ function planMails(limit) {
       else if (!w.active) lic.mailedReminder = t; // đã hết hạn: không nhắc nữa
     }
   }
+  const ownsAll = (user, o) => {
+    const lics = D.licenses.filter(l => l.userId === user.id && l.status === 'active');
+    if (lics.some(l => l.allGames)) return true;
+    if (findPlan(o.planId)?.allGames || !o.games.length) return false;
+    return o.games.every(g => lics.some(l => (l.games || []).includes(g)));
+  };
+  // Đơn chưa thanh toán (cả khách mới lẫn khách đã từng mua): nhắc lần 1 sau vài giờ, nhắc lại lần 2 sau 1 ngày
+  if (c.emailAbandoned) {
+    for (const user of D.users) {
+      if (out.length >= limit) break;
+      if (!user.email) continue;
+      const mine = D.orders.filter(x => x.userId === user.id && x.kind !== 'upgrade');
+      const pend = mine.filter(x => x.status === 'pending' && !x.claimedAt && t - x.createdAt < 7 * 86400000
+        && !ownsAll(user, x)) // đã có đủ các game của đơn này (mua đơn khác sau đó): thôi nhắc
+        .sort((a, b) => b.createdAt - a.createdAt);
+      const vars = (o) => ({ ma_don: String(o.code), token_don: orderToken(o.code), goi_don: findPlan(o.planId)?.name || o.planId, game_don: o.games.map(id => D.games.find(g => g.id === id)?.name || id).join(', ') || 'tất cả game' });
+      const markAll = (k) => () => { for (const x of mine) if (x.status === 'pending' && !x[k]) x[k] = t; };
+      const first = pend.find(x => !x.mailedAbandoned && t - x.createdAt >= c.abandonedAfterHours * 3600000);
+      if (first) {
+        if (!push('abandoned', user, vars(first), markAll('mailedAbandoned')) && out.length < limit) first.mailedAbandoned = t;
+        continue;
+      }
+      const again = c.emailAbandonedAgain && pend.find(x => x.mailedAbandoned && !x.mailedAbandoned2 && t - x.mailedAbandoned >= c.abandonedAgainHours * 3600000);
+      if (again) {
+        if (!push('abandonedAgain', user, vars(again), markAll('mailedAbandoned2')) && out.length < limit) again.mailedAbandoned2 = t;
+      }
+    }
+  }
   // Khách đăng ký nhưng chưa mua
   for (const user of D.users) {
     if (out.length >= limit) break;
     if (!user.email || hasPaid(D, user)) continue;
-    if (c.emailAbandoned) {
-      const o = D.orders.filter(x => x.userId === user.id && x.status === 'pending' && x.kind !== 'upgrade' && !x.mailedAbandoned
-        && t - x.createdAt >= c.abandonedAfterHours * 3600000 && t - x.createdAt < 7 * 86400000).sort((a, b) => b.createdAt - a.createdAt)[0];
-      if (o) {
-        const vars = { ma_don: String(o.code), token_don: orderToken(o.code), goi_don: findPlan(o.planId)?.name || o.planId, game_don: o.games.map(id => D.games.find(g => g.id === id)?.name || id).join(', ') || 'tất cả game' };
-        if (!push('abandoned', user, vars, () => { for (const x of D.orders) if (x.userId === user.id && x.status === 'pending') x.mailedAbandoned = t; }) && out.length < limit) o.mailedAbandoned = t;
-        continue; // đơn dở dang: chưa gửi thêm email ưu đãi lần này
-      }
-    }
+    if (out.some(x => x.user === user)) continue; // vừa có email nhắc đơn trong lượt này
     // đang mua dở, hoặc vừa nhận email nhắc đơn trong 24 giờ: chưa gửi thêm
-    if (D.orders.some(x => x.userId === user.id && ((x.status === 'pending' && t - x.createdAt < c.abandonedAfterHours * 3600000) || (x.mailedAbandoned && t - x.mailedAbandoned < 86400000)))) continue;
+    if (D.orders.some(x => x.userId === user.id && ((x.status === 'pending' && t - x.createdAt < c.abandonedAfterHours * 3600000) || (x.mailedAbandoned && t - x.mailedAbandoned < 86400000) || (x.mailedAbandoned2 && t - x.mailedAbandoned2 < 86400000)))) continue;
     if (c.emailWelcome && !user.mailedWelcome && t >= (user.createdAt || 0) + c.firstAfterHours * 3600000) {
       const ok = push('welcome', user, null, () => { user.mailedWelcome = t; firstOffer(D, U, user, t, { start: true }); });
       const fo = firstOffer(D, U, user, t);
@@ -804,7 +824,7 @@ function upsellReport() {
     nonBuyers: nonBuyers.length, withEmail: nonBuyers.filter(u => u.email && !u.emailOptOut).length,
     offered: D.users.filter(u => u.firstStart).length, orders: firstPaid.length, revenue: firstPaid.reduce((s, o) => s + o.amount, 0),
     abandoned: D.orders.filter(o => o.status === 'pending' && o.kind !== 'upgrade' && now() - o.createdAt < 7 * 86400000).length,
-    recovered: paid.filter(o => o.mailedAbandoned).length,
+    recovered: paid.filter(o => o.mailedAbandoned).length, recoveredAgain: paid.filter(o => o.mailedAbandoned2).length,
   };
   return {
     first,
