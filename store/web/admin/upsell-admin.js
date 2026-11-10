@@ -83,7 +83,7 @@ export async function renderUpsell(view, call, games, plans) {
   const clickAll = r.emails.reduce((s, e) => s + e.clicked, 0);
   const sw = (k, label) => `<label class="sw"><input type="checkbox" name="${k}" ${c[k] ? 'checked' : ''}><i></i>${label}</label>`;
   const num = (k, label, hint = '', unit = '') => `<div class="field"><label>${label}${unit ? ` <span style="color:var(--muted);font-weight:500">(${unit})</span>` : ''}</label><input name="${k}" type="number" min="0" value="${esc(c[k])}">${hint ? `<small>${hint}</small>` : ''}</div>`;
-  const txt = (k, label, hint = '', type = 'text') => `<div class="field"><label>${label}</label><input name="${k}" type="${type}" value="${type === 'password' ? '' : esc(c[k])}" ${type === 'password' ? `placeholder="${d.smtpPassSet ? '•••••••• (đã lưu)' : (d.usesBankMail ? 'Để trống = dùng mật khẩu Gmail ngân hàng' : '16 ký tự')}"` : ''}>${hint ? `<small>${hint}</small>` : ''}</div>`;
+  const txt = (k, label, hint = '', type = 'text') => `<div class="field"><label>${label}</label><input name="${k}" type="${type}" value="${type === 'password' ? '' : esc(c[k])}" ${type === 'password' ? `placeholder="${d.smtpPassSet ? '•••••••• (đã lưu)' : (d.usesBankMail ? 'Để trống = dùng mật khẩu Gmail ngân hàng' : 'Nhập mật khẩu')}"` : ''}>${hint ? `<small>${hint}</small>` : ''}</div>`;
   const single = plans.find(p => !p.allGames && p.slots === 1);
   const combo = plans.filter(p => !p.allGames && p.slots > 1).sort((a, b) => b.slots - a.slots)[0];
   const maxDay = Math.max(1, ...r.days.map(x => x.upgradeRevenue));
@@ -174,11 +174,15 @@ export async function renderUpsell(view, call, games, plans) {
         ${num('newGamePrice', 'Giá game mới cho khách cũ', '', 'đ')}${num('newGameDays', 'Giá riêng game mới trong', '', 'ngày')}
       </div></div>
 
-      <div class="card sec"><h2>📮 Gmail gửi đi</h2><p class="sub">Gmail + mật khẩu ứng dụng 16 ký tự. Để trống thì dùng luôn Gmail ngân hàng${d.bankMail ? ` (<b>${esc(d.bankMail)}</b>)` : ''}. Web gửi tối đa ${c.maxPerRun} email mỗi 2 phút.</p><div class="fg">
-          ${txt('smtpUser', 'Gmail gửi', 'VD: netxioviet@gmail.com')}${txt('smtpPass', 'Mật khẩu ứng dụng', '', 'password')}
-          ${txt('fromName', 'Tên người gửi', 'Để trống = tên thương hiệu')}${txt('replyTo', 'Khách trả lời về email', 'Để trống = email người bán')}
+      <div class="card sec"><h2>📮 Máy chủ gửi email</h2><p class="sub">Dùng <b>Gmail</b> (mật khẩu ứng dụng 16 ký tự) hoặc <b>Amazon SES</b> (ít vào spam hơn, rẻ). Để trống tên đăng nhập thì dùng luôn Gmail ngân hàng${d.bankMail ? ` (<b>${esc(d.bankMail)}</b>)` : ''}. Web gửi tối đa ${c.maxPerRun} email mỗi 2 phút.</p>
+        <p style="margin:0 0 8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-preset="gmail">Điền sẵn Gmail</button><button type="button" class="btn ghost sm" data-preset="ses">Điền sẵn Amazon SES (Singapore)</button></p>
+        <div class="fg">
+          ${txt('smtpHost', 'Máy chủ SMTP', 'Gmail: smtp.gmail.com · SES: email-smtp.ap-southeast-1.amazonaws.com')}${num('smtpPort', 'Cổng', '465 (hoặc 587)')}
+          ${txt('smtpUser', 'Tên đăng nhập SMTP', 'Gmail: địa chỉ Gmail · SES: mã AKIA… trong SMTP credentials')}${txt('smtpPass', 'Mật khẩu SMTP', 'Gmail: mật khẩu ứng dụng · SES: SMTP password', 'password')}
+          ${txt('fromEmail', 'Email người gửi', 'Bắt buộc với SES, VD hotro@netxioviet.com. Để trống = tên đăng nhập (Gmail)')}${txt('fromName', 'Tên người gửi', 'Để trống = tên thương hiệu')}
+          ${txt('replyTo', 'Khách trả lời về email', 'Để trống = email người bán')}
         </div>
-        <p style="margin:6px 0 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${r.smtpReady ? '<span class="chip ok">✓ Đã có Gmail gửi</span>' : '<span class="chip bad">Chưa có Gmail gửi</span>'}<span class="chip">Lần chạy gần nhất: ${fmt(r.lastRun)}</span>${r.lastError ? `<span class="chip bad" title="${esc(r.lastError)}">Lỗi: ${esc(r.lastError.slice(0, 90))}</span>` : ''}</p>
+        <p style="margin:6px 0 0;display:flex;gap:8px;flex-wrap:wrap;align-items:center">${r.smtpReady ? '<span class="chip ok">✓ Đã có tài khoản gửi</span>' : '<span class="chip bad">Chưa có tài khoản gửi</span>'}<span class="chip">Lần chạy gần nhất: ${fmt(r.lastRun)}</span>${r.lastError ? `<span class="chip bad" title="${esc(r.lastError)}">Lỗi: ${esc(r.lastError.slice(0, 90))}</span>` : ''}</p>
       </div>
 
       <div class="card sec"><h2>📝 Nội dung email</h2>
@@ -207,6 +211,11 @@ export async function renderUpsell(view, call, games, plans) {
   $$('.sw input[name=emailsOn]', view).forEach(i => i.addEventListener('change', () => { i.parentElement.lastChild.textContent = i.checked ? 'Đang bật' : 'Đang tắt'; }));
 
   const form = $('#upf', view);
+  const PRESETS = { gmail: { smtpHost: 'smtp.gmail.com', smtpPort: 465, fromEmail: '' }, ses: { smtpHost: 'email-smtp.ap-southeast-1.amazonaws.com', smtpPort: 465 } };
+  $$('[data-preset]', view).forEach(b => b.onclick = () => {
+    for (const [k, v] of Object.entries(PRESETS[b.dataset.preset])) if (form.elements[k]) form.elements[k].value = v;
+    toast(b.dataset.preset === 'ses' ? 'Đã điền máy chủ SES. Nhập tên đăng nhập, mật khẩu SMTP, email người gửi rồi bấm Lưu.' : 'Đã điền Gmail. Bấm Lưu.');
+  });
   const templatesBody = () => Object.fromEntries($$('[data-tpl]', view).map(el => [el.dataset.tpl, { subject: $('[data-f=subject]', el).value, body: $('[data-f=body]', el).value }]));
   const cfgBody = () => {
     const out = {};

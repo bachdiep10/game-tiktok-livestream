@@ -536,7 +536,7 @@ const mailSig = (id) => hmac(`mail:${id}`).slice(0, 16);
 const unsubSig = (uid) => hmac(`unsub:${uid}`).slice(0, 20);
 function smtpCfg() {
   const c = up().cfg;
-  return { host: c.smtpHost || 'smtp.gmail.com', port: c.smtpPort || 465, user: c.smtpUser || D.settings.imapUser, pass: c.smtpPass || D.settings.imapPass };
+  return { host: c.smtpHost || 'smtp.gmail.com', port: c.smtpPort || 465, user: c.smtpUser || D.settings.imapUser, pass: c.smtpPass || D.settings.imapPass, from: c.fromEmail || '' };
 }
 const smtpReady = () => { const c = smtpCfg(); return Boolean(c.user && c.pass); };
 

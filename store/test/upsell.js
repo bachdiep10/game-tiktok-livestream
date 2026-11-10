@@ -17,6 +17,7 @@ const step = (s) => console.log('  ✓', s);
 
 // --- máy chủ SMTP giả ---
 const mails = [];
+const envFrom = [];
 const smtp = net.createServer(sock => {
   let buf = '', data = false, msg = '', auth = 0;
   sock.write('220 fake\r\n');
@@ -35,7 +36,7 @@ const smtp = net.createServer(sock => {
       if (auth === 2) { auth = 0; sock.write(Buffer.from(line, 'base64').toString() === 'apppass' ? '235 ok\r\n' : '535 bad\r\n'); continue; }
       if (/^EHLO/.test(line)) sock.write('250-fake\r\n250 AUTH LOGIN\r\n');
       else if (line === 'AUTH LOGIN') { auth = 1; sock.write('334 VXNlcm5hbWU6\r\n'); }
-      else if (/^(MAIL|RCPT)/.test(line)) sock.write('250 ok\r\n');
+      else if (/^(MAIL|RCPT)/.test(line)) { if (/^MAIL FROM:/.test(line)) envFrom.push(line.slice(10)); sock.write('250 ok\r\n'); }
       else if (line === 'DATA') { data = true; sock.write('354 go\r\n'); }
       else if (line === 'QUIT') { sock.write('221 bye\r\n'); sock.end(); }
       else sock.write('500 ?\r\n');
@@ -253,6 +254,20 @@ try {
   const prev = await j('POST', '/api/admin/upsell/preview', { type: 'offer', template: { subject: 'Chào {ten}', body: 'Combo {gia_combo}\n[Nút](/tai-khoan)' } });
   assert.equal(prev.subject, 'Chào An'); assert.match(prev.html, /Nút<\/a>/);
   step('huỷ nhận email bằng link; xem trước mẫu email');
+
+  // Amazon SES: tên đăng nhập là mã AKIA…, địa chỉ người gửi nằm ở ô riêng
+  as('admin');
+  await j('PUT', '/api/admin/upsell', { cfg: { smtpUser: 'AKIAFAKEKEY123', fromEmail: '' } });
+  let tr = await j('POST', '/api/admin/upsell/test', { to: 'thu@x.vn', type: 'offer' }, 400);
+  assert.match(tr.error || '', /Email người gửi/);
+  await j('PUT', '/api/admin/upsell', { cfg: { fromEmail: 'hotro@netxioviet.com', fromName: 'NetXio Việt' } });
+  const nMail = mails.length;
+  tr = await j('POST', '/api/admin/upsell/test', { to: 'thu@x.vn', type: 'offer' });
+  assert.ok(tr.ok, JSON.stringify(tr)); assert.equal(mails.length, nMail + 1);
+  assert.match(mails.at(-1), /^From: =\?UTF-8\?B\?[^\r\n]+\?= <hotro@netxioviet\.com>$/m);
+  assert.match(mails.at(-1), /^Message-ID: <[0-9a-f]+@netxioviet\.com>$/m);
+  assert.equal(envFrom.at(-1), '<hotro@netxioviet.com>');
+  step('Amazon SES: thiếu email người gửi thì báo lỗi; có thì From + MAIL FROM dùng hotro@netxioviet.com');
 
   console.log('\nBÁN THÊM: TẤT CẢ ĐỀU QUA ✅');
 } catch (e) {

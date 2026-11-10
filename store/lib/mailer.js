@@ -1,4 +1,5 @@
-// Gửi email qua SMTP (Gmail: smtp.gmail.com, cổng 465, mật khẩu ứng dụng 16 ký tự).
+// Gửi email qua SMTP (Gmail: smtp.gmail.com, cổng 465, mật khẩu ứng dụng 16 ký tự;
+// Amazon SES: email-smtp.<vùng>.amazonaws.com, cổng 465, tên đăng nhập AKIA…, cần ô 'Email người gửi' riêng).
 // Tự viết gọn, không cần cài thêm thư viện: máy chủ Hostinger dùng lại node_modules cũ khi cập nhật.
 import net from 'node:net';
 import tls from 'node:tls';
@@ -68,8 +69,12 @@ function connect(host, port, secure) {
 }
 
 // Mở phiên đã đăng nhập; trả về { send(msg), close() }
-export async function openSmtp({ host = 'smtp.gmail.com', port = 465, user, pass }) {
-  if (!user || !pass) throw new Error('Chưa nhập Gmail và mật khẩu ứng dụng để gửi email.');
+export async function openSmtp({ host = 'smtp.gmail.com', port = 465, user, pass, from }) {
+  if (!user || !pass) throw new Error('Chưa nhập tài khoản và mật khẩu để gửi email.');
+  host = String(host || '').trim() || 'smtp.gmail.com';
+  // Địa chỉ người gửi: ô riêng (bắt buộc với Amazon SES), để trống = chính tên đăng nhập (Gmail)
+  from = String(from || '').trim() || user;
+  if (!/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(from)) throw new Error('Email người gửi không hợp lệ: với Amazon SES phải điền ô "Email người gửi" (VD hotro@netxioviet.com).');
   port = Number(port) || 465;
   let sock = await connect(host, port, port === 465);
   let rd = reader(sock);
@@ -94,19 +99,19 @@ export async function openSmtp({ host = 'smtp.gmail.com', port = 465, user, pass
     }
     await cmd('AUTH LOGIN', [334]);
     await cmd(b64(user), [334], 'tên đăng nhập');
-    await cmd(b64(pass), [235], 'mật khẩu (kiểm tra lại mật khẩu ứng dụng Gmail)');
+    await cmd(b64(pass), [235], 'mật khẩu (kiểm tra lại tên đăng nhập / mật khẩu SMTP)');
   } catch (e) { sock.destroy(); throw e; }
 
   return {
     async send({ fromName, to, subject, text, html, replyTo }) {
       const boundary = `b_${crypto.randomBytes(8).toString('hex')}`;
       const headers = [
-        displayName(fromName) ? `From: ${displayName(fromName)} <${user}>` : `From: ${user}`,
+        displayName(fromName) ? `From: ${displayName(fromName)} <${from}>` : `From: ${from}`,
         `To: ${to}`,
         ...(replyTo ? [`Reply-To: <${replyTo}>`] : []),
         `Subject: ${encWord(subject)}`,
         `Date: ${new Date().toUTCString()}`,
-        `Message-ID: <${crypto.randomBytes(12).toString('hex')}@${user.split('@')[1] || 'mail'}>`,
+        `Message-ID: <${crypto.randomBytes(12).toString('hex')}@${from.split('@')[1] || 'mail'}>`,
         'MIME-Version: 1.0',
         `Content-Type: multipart/alternative; boundary="${boundary}"`,
       ];
@@ -115,7 +120,7 @@ export async function openSmtp({ host = 'smtp.gmail.com', port = 465, user, pass
         `--${boundary}`, 'Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', wrap76(b64(html)),
         `--${boundary}--`, '',
       ];
-      await cmd(`MAIL FROM:<${user}>`, [250]);
+      await cmd(`MAIL FROM:<${from}>`, [250], 'người gửi (với Amazon SES: email/tên miền người gửi phải được xác minh)');
       await cmd(`RCPT TO:<${to}>`, [250, 251], 'người nhận');
       await cmd('DATA', [354]);
       sock.write(`${headers.join('\r\n')}\r\n\r\n${body.join('\r\n')}\r\n.\r\n`);
