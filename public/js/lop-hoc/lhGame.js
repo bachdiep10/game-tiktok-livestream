@@ -125,6 +125,13 @@ function loadImg(key, src) {
 const ready = (k) => IMG[k] && IMG[k].ready;
 for (const k of ['co-giao', 'thay-hieu-truong', 'hs-nam', 'hs-nu', 'ga-trong']) loadImg(k, `assets/lop-hoc/${k}.png`);
 loadImg('giay-khen', 'assets/lop-hoc/giay-khen.jpg');
+// trả lời sai bị "biến hình" thành con vật / đồ vật (hình emoji 3D Fluent, MIT)
+const BIEN = [
+  ['ech', 'con ếch'], ['vit', 'con vịt'], ['heo', 'chú heo'], ['khoai', 'củ khoai'], ['trung', 'quả trứng'],
+  ['khi', 'con khỉ'], ['rua', 'con rùa'], ['oc', 'ốc sên'], ['chuoi', 'quả chuối'], ['da', 'hòn đá'],
+  ['ca', 'con cá'], ['hanh', 'củ hành'], ['catim', 'quả cà tím'], ['ga', 'con gà'], ['tho', 'con thỏ'],
+];
+for (const [k] of BIEN) loadImg(`bien-${k}`, `assets/lop-hoc/bien/${k}.png`);
 
 // ------------------------------------------------------------------ canvas
 const canvas = document.getElementById('game');
@@ -608,7 +615,7 @@ function lockAnswers() {
   say(line('lock'), 1);
 }
 
-const PENALTIES = ['phan', 'sap', 'trung', 'ga', 'set', 'dienThoai', 'mu'];
+const PENALTIES = ['phan', 'sap', 'trung', 'ga', 'set', 'dienThoai', 'mu', 'bienHinh', 'khoc', 'bienHinh', 'khoc'];
 let lastPenalty = '';
 function reveal() {
   setPhase('reveal', (Number(config.revealSeconds) || 10) * 1000);
@@ -648,7 +655,7 @@ function reveal() {
         p.streak = 0;
         p.wrongStreak = (p.wrongStreak || 0) + 1;
         if (!p.npc) p.wrongLesson++;
-        p.react = { kind: 'sad', t0: now, until: now + 7000 };
+        p.react = { kind: 'sad', t0: now, until: now + Math.max(7000, (Number(config.revealSeconds) || 10) * 1000 / SPEED) };
       }
     }
   }
@@ -667,6 +674,23 @@ function reveal() {
   lastPenalty = penalty;
   q.results = { right, wrong, vAns, vRight, fastest: fastest[0] || null, qWinner };
   q.penalty = penalty;
+  if (penalty === 'bienHinh') {
+    const used = new Set();
+    wrong.forEach((p, i) => {
+      if (!p.react || p.react.kind !== 'sad') return;
+      let j = (hashOf(p.id) + q.n * 7 + i) % BIEN.length;
+      for (let k = 0; k < BIEN.length && used.has(j) && used.size < BIEN.length; k++) j = (j + 1) % BIEN.length;
+      used.add(j);
+      p.react.bien = BIEN[j];
+    });
+    const first = wrong.find((p) => !p.npc && p.react && p.react.bien);
+    const ti = npc('ti');
+    if (first && ti) setTimeout(() => bubble(ti, `Ha ha, ${truncate(first.name, 8)} thành ${first.react.bien[1]} rồi!`, 3500), 3600 / SPEED);
+  }
+  if (penalty === 'khoc') {
+    const mai = npc('mai');
+    if (mai && wrong.length) setTimeout(() => bubble(mai, 'Lớp trưởng phát khăn giấy nè!', 3500), 3400 / SPEED);
+  }
   q.penaltyAt = now + 2600 / SPEED;
   q.revealAt = now;
   const L = LETTERS[q.correct];
@@ -748,6 +772,16 @@ function startPenaltySound(kind, n) {
   }
   if (kind === 'dienThoai') sfx.phone(2);
   if (kind === 'mu') for (let i = 0; i < k; i++) setTimeout(() => sfx.boing(), 300 + i * 220);
+  if (kind === 'bienHinh') {
+    sfx.sparkle();
+    for (let i = 0; i < k; i++) setTimeout(() => sfx.poof(), 600 + i * 250);
+    setTimeout(() => sfx.sob(), 900 + k * 250);
+  }
+  if (kind === 'khoc') {
+    sfx.sob();
+    setTimeout(() => sfx.sob(), 1500);
+    setTimeout(() => sfx.rain(2.5), 700);
+  }
   if (kind === 'ga') rooster = { t0: performance.now() };
 }
 
@@ -1013,6 +1047,10 @@ function runPenaltyParticles() {
       }
       if (q.penalty === 'ga') sparks(hp.x, hp.y, 10, '#ffeb3b');
       if (q.penalty === 'sap') dust(hp.x, SEATS[p.seat].y, 12, 'rgba(200,170,130,0.9)');
+      if (q.penalty === 'bienHinh') {
+        sparks(hp.x, hp.y, 6, '#e1bee7');
+      }
+      if (q.penalty === 'khoc') sparks(hp.x, hp.y, 8, '#4fc3f7');
       p.hitAt = now;
     }
   });
@@ -1023,6 +1061,8 @@ function penaltyDelay(kind, i) {
   if (kind === 'set') return 500;
   if (kind === 'sap') return 900;
   if (kind === 'dienThoai') return 400;
+  if (kind === 'bienHinh') return 600 + i * 250;
+  if (kind === 'khoc') return 300 + i * 120;
   return 300 + i * 220 + (kind === 'trung' ? 320 : kind === 'phan' ? 280 : 120);
 }
 
@@ -1423,6 +1463,14 @@ function drawStudent(p) {
     alpha = 0.9;
   }
   if (!sleeping && !react) y += Math.sin(now / 500 + hashOf(p.id)) * 2 * k;
+  if (react && react.kind === 'sad' && react.bien && revealed && q.results && now >= penaltyHitAt(p)) {
+    drawTransformed(p, x, y, h, k);
+    drawStudentExtras(p, x, y, h, k, false);
+    return;
+  }
+  if (react && react.kind === 'sad' && q && q.penalty === 'khoc' && revealed && q.results && now >= penaltyHitAt(p)) {
+    y -= Math.abs(Math.sin(now / 160 + hashOf(p.id))) * 8 * k; // nấc lên nấc xuống
+  }
   ctx.save();
   ctx.globalAlpha = alpha;
   ctx.translate(x, y);
@@ -1463,6 +1511,71 @@ function drawStudent(p) {
     ctx.restore();
   }
   drawStudentExtras(p, x, y, h, k, sleeping);
+}
+
+function penaltyHitAt(p) {
+  const wrong = q.results.wrong;
+  const i = Math.max(0, wrong.findIndex((w) => w.id === p.id));
+  return q.penaltyAt + penaltyDelay(q.penalty, i) / SPEED;
+}
+
+// vẽ con vật thay cho bạn trả lời sai
+function drawTransformed(p, x, y, h, k) {
+  const [key] = p.react.bien;
+  const rec = IMG[`bien-${key}`];
+  const tt = (now - penaltyHitAt(p)) / 1000;
+  const pop = tt < 0.35 ? 0.4 + ease(tt / 0.35) * 0.75 : 1.15 - Math.min(0.15, (tt - 0.35) * 0.6);
+  const size = h * 0.62 * pop;
+  const hop = Math.abs(Math.sin(now / 260 + hashOf(p.id))) * 12 * k;
+  // bóng đổ
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(x, y - 4 * k, size * 0.42, size * 0.1, 0, 0, TAU);
+  ctx.fill();
+  if (rec && rec.ready) ctx.drawImage(rec.img, x - size / 2, y - size - hop - h * 0.12, size, size);
+  if (tt < 0.5) {
+    // làn khói "bụp"
+    const cy = y - h * 0.45;
+    ctx.fillStyle = `rgba(255,255,255,${0.95 - tt * 1.9})`;
+    for (let j = 0; j < 7; j++) {
+      const ang = (j / 7) * TAU;
+      const d = h * 0.18 * (0.4 + tt * 2);
+      ctx.beginPath();
+      ctx.arc(x + Math.cos(ang) * d, cy + Math.sin(ang) * d * 0.7, h * 0.13 * (1 - tt), 0, TAU);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// nước mắt chảy thành 2 dòng như vòi phun + vũng nước dưới chân
+function drawTears(x, eyeY, r, t, big = false, footY = null) {
+  ctx.save();
+  const n = big ? 9 : 6;
+  const spread = r * (big ? 1.6 : 1.1);
+  for (const side of [-1, 1]) {
+    for (let j = 0; j < n; j++) {
+      const f = (t * (big ? 1.6 : 1.2) + j / n) % 1;
+      const dx = side * (r * 0.32 + f * spread);
+      const dy = -Math.sin(f * Math.PI) * r * (big ? 0.6 : 0.35) + f * f * r * (big ? 2.4 : 1.6);
+      const rad = Math.max(1.5, r * (big ? 0.12 : 0.09) * (1 - f * 0.4));
+      ctx.globalAlpha = 0.9 - f * 0.4;
+      ctx.fillStyle = '#4fc3f7';
+      ctx.beginPath();
+      ctx.arc(x + dx, eyeY + dy, rad, 0, TAU);
+      ctx.fill();
+    }
+  }
+  ctx.globalAlpha = 0.85;
+  if (footY != null) {
+    const pw = Math.min(1, t * 0.5) * r * (big ? 3.2 : 2);
+    ctx.fillStyle = 'rgba(79,195,247,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(x, footY, pw, pw * 0.22, 0, 0, TAU);
+    ctx.fill();
+  }
+  ctx.restore();
 }
 
 function drawStudentExtras(p, x, y, h, k, sleeping) {
@@ -1565,7 +1678,31 @@ function drawStudentExtras(p, x, y, h, k, sleeping) {
     if (p.react.kind === 'umbrella' && now > q.penaltyAt - 300) {
       drawUmbrella(x, headY - headR * 1.4, headR * 2.2);
     }
-    if (p.react.kind === 'sad' && now > q.penaltyAt) drawPenaltyOn(p, x, y, h, k, headY, headR);
+    if (p.react.kind === 'sad' && now > q.penaltyAt && !p.react.bien) drawPenaltyOn(p, x, y, h, k, headY, headR);
+    if (p.react.kind === 'sad' && q.results && now > q.penaltyAt) {
+      // ai trả lời sai cũng khóc sau khi bị phạt (biến hình thì con vật khóc)
+      const hit = penaltyHitAt(p);
+      const isKhoc = q.penalty === 'khoc';
+      const cryAt = hit + (isKhoc ? 0 : 900) / SPEED;
+      if (now > cryAt) {
+        const tt = (now - cryAt) / 1000;
+        if (p.react.bien) {
+          const size = h * 0.62;
+          drawTears(x, y - h * 0.12 - size * 0.62, size * 0.3, tt, false, y - 2 * k);
+        } else drawTears(x, headY + headR * 0.1, headR, tt, isKhoc, isKhoc ? y - 2 * k : null);
+        if (isKhoc && Math.floor(tt * 1.5) % 2 === 0) {
+          ctx.save();
+          ctx.font = `900 ${Math.round(16 * k + 8)}px ${FONT}`;
+          ctx.textAlign = 'center';
+          ctx.fillStyle = '#e1f5fe';
+          ctx.strokeStyle = '#01579b';
+          ctx.lineWidth = 4;
+          ctx.strokeText('HU HU', x, headY - headR * 2.1);
+          ctx.fillText('HU HU', x, headY - headR * 2.1);
+          ctx.restore();
+        }
+      }
+    }
     if (p.react.kind === 'sad' && now <= q.penaltyAt) {
       ctx.font = `${Math.round(26 * k + 10)}px ${FONT}`;
       ctx.fillText('😰', x + headR * 1.3, headY - headR);
@@ -1782,7 +1919,7 @@ function drawPenaltyOn(p, x, y, h, k, headY, headR) {
 }
 
 // sân khấu phạt: phóng to ảnh đại diện nhóm sai ở giữa lớp để ai cũng thấy rõ màn phạt
-const PEN_TITLE = { phan: '🧑‍🏫 Cô ném phấn trúng đầu!', sap: '💥 Ô đáp án sập!', trung: '🥚 Điểm trứng ngỗng!', ga: '🐓 Gà trống mổ đầu!', set: '⚡ Sét đánh tóc xù!', mu: '🎓 Đội mũ HỌC LẠI!' };
+const PEN_TITLE = { phan: '🧑‍🏫 Cô ném phấn trúng đầu!', sap: '💥 Ô đáp án sập!', trung: '🥚 Điểm trứng ngỗng!', ga: '🐓 Gà trống mổ đầu!', set: '⚡ Sét đánh tóc xù!', mu: '🎓 Đội mũ HỌC LẠI!', bienHinh: '🪄 Phép thuật: BIẾN HÌNH!', khoc: '😭 Khóc lụt cả lớp!' };
 function drawPenaltyStage() {
   if (phase.name !== 'reveal' || !q || !q.results || q.penalty === 'dienThoai' || now < q.penaltyAt) return;
   const wrong = q.results.wrong;
@@ -1815,9 +1952,41 @@ function drawPenaltyStage() {
     const r = 66;
     const prot = p.react && p.react.kind === 'umbrella';
     const shakeX = !prot && t > 0.3 ? Math.sin(now / 45 + i) * 3 : 0;
-    drawAvatar(cx + shakeX, cy, r, p, prot ? '#80deea' : '#ef5350');
+    const bien = !prot && p.react && p.react.bien;
+    const changed = bien && t > 0.6 + i * 0.25;
+    if (changed) {
+      const rec = IMG[`bien-${bien[0]}`];
+      const ct = t - 0.6 - i * 0.25;
+      const s2 = r * 2.3 * (ct < 0.3 ? 0.5 + ease(ct / 0.3) * 0.6 : 1.1 - Math.min(0.1, (ct - 0.3) * 0.4));
+      const hop = Math.abs(Math.sin(now / 240 + i)) * 10;
+      if (ct < 0.35) {
+        ctx.fillStyle = `rgba(255,255,255,${0.9 - ct * 2.4})`;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r * (1 + ct * 3), 0, TAU);
+        ctx.fill();
+      }
+      if (rec && rec.ready) ctx.drawImage(rec.img, cx - s2 / 2, cy - s2 / 2 - hop, s2, s2);
+      drawAvatar(cx + r * 0.85, cy + r * 0.75, r * 0.36, p, '#ef5350');
+      if (ct > 0.5) drawTears(cx, cy - r * 0.25 - hop, r * 0.55, ct - 0.5);
+      ctx.font = `800 21px ${FONT}`;
+      ctx.fillStyle = '#e1bee7';
+      ctx.fillText(`→ ${bien[1]}`, cx, cy + r + 62);
+    } else drawAvatar(cx + shakeX, cy, r, p, prot ? '#80deea' : '#ef5350');
     if (prot) drawUmbrella(cx, cy - r * 0.9, r * 1.25);
-    else {
+    else if (bien) {
+      if (!changed) {
+        ctx.font = `52px ${FONT}`;
+        ctx.fillText('🪄', cx - r * 0.9, cy - r * 0.9 - Math.sin(now / 80) * 6);
+      }
+    } else if (q.penalty === 'khoc') {
+      const ct = t - 0.3;
+      if (ct > 0) drawTears(cx, cy - r * 0.05, r * 0.8, ct, true, cy + r + 8);
+      if (ct > 0 && Math.floor(ct * 1.5) % 2 === 0) {
+        ctx.font = `900 30px ${FONT}`;
+        ctx.fillStyle = '#b3e5fc';
+        ctx.fillText('HU HU!', cx, cy - r - 20);
+      }
+    } else {
       // dùng lại hình phạt nhưng phóng to theo ảnh đại diện
       const fake = { ...p };
       ctx.save();
@@ -2420,7 +2589,7 @@ async function boot() {
 window.__lopHoc = {
   handleEvent, skip, config: () => config,
   state: () => ({ lesson, qIndex, phase: phase.name, kind: q?.kind, correct: q?.correct, penalty: q?.penalty, bank: bank.length, players: players.size, team: { ...team } }),
-  setPenalty: (k) => { lastPenalty = ''; PENALTIES.splice(0, PENALTIES.length, ...(k ? [k] : ['phan', 'sap', 'trung', 'ga', 'set', 'dienThoai', 'mu'])); },
+  setPenalty: (k) => { lastPenalty = ''; PENALTIES.splice(0, PENALTIES.length, ...(k ? [k] : ['phan', 'sap', 'trung', 'ga', 'set', 'dienThoai', 'mu', 'bienHinh', 'khoc', 'bienHinh', 'khoc'])); },
   forceKind: (k) => { if (lessonPlan[qIndex]) lessonPlan[qIndex].kind = k; },
 };
 boot();

@@ -504,3 +504,41 @@ export function umbrella() {
   burst({ t, dur: 0.12, vol: 0.18, freq: 1200, q: 1 });
   tone({ type: 'sine', f0: 400, f1: 1200, t, vol: 0.1, attack: 0.005, decay: 0.15 });
 }
+
+// "bụp" biến hình: khói + tiếng trượt lên
+export function poof() {
+  const a = ctx();
+  if (!a || !throttle('poof', 120)) return;
+  const t = a.currentTime;
+  burst({ t, dur: 0.22, vol: 0.22, type: 'lowpass', freq: 900, q: 0.7 });
+  tone({ type: 'sine', f0: 300, f1: 1400, t: t + 0.04, vol: 0.12, attack: 0.005, decay: 0.22 });
+  tone({ type: 'triangle', f0: 1800, f1: 2400, t: t + 0.2, vol: 0.05, attack: 0.003, decay: 0.15 });
+}
+
+// tiếng khóc "hu hu" (giai điệu trượt xuống, rung rung)
+export function sob() {
+  const a = ctx();
+  if (!a || !throttle('sob', 600)) return;
+  const t = a.currentTime;
+  [0, 0.42].forEach((d, i) => {
+    const o = a.createOscillator();
+    const g = a.createGain();
+    const lfo = a.createOscillator();
+    const lg = a.createGain();
+    o.type = 'triangle';
+    const f = i ? 440 : 520;
+    o.frequency.setValueAtTime(f, t + d);
+    o.frequency.exponentialRampToValueAtTime(f * 0.72, t + d + 0.38);
+    lfo.frequency.value = 11;
+    lg.gain.value = 18;
+    lfo.connect(lg).connect(o.frequency);
+    g.gain.setValueAtTime(0.0001, t + d);
+    g.gain.exponentialRampToValueAtTime(0.13, t + d + 0.04);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.4);
+    o.connect(g).connect(master);
+    o.start(t + d);
+    lfo.start(t + d);
+    o.stop(t + d + 0.42);
+    lfo.stop(t + d + 0.42);
+  });
+}
