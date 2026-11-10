@@ -14,7 +14,8 @@ export function trackingIds(s) {
 export function trackingHead(s) {
   const id = trackingIds(s);
   const out = [];
-  out.push(`<script>window.dataLayer=window.dataLayer||[];window.LG_TRACK=${JSON.stringify(id)};</script>`);
+  const conf = { ...id, capi: Boolean(id.meta && String(s.metaCapiToken || '').trim()) };
+  out.push(`<script>window.dataLayer=window.dataLayer||[];window.LG_TRACK=${JSON.stringify(conf)};</script>`);
   if (id.gtm) out.push(`<!-- Google Tag Manager -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${id.gtm}');</script>`);
   if (id.ga4) out.push(`<script async src="https://www.googletagmanager.com/gtag/js?id=${id.ga4}"></script>

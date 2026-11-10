@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { DB } from './lib/db.js';
 import { createSeo } from './lib/seo.js';
 import { injectTracking } from './lib/tracking.js';
+import { capiReady, requestInfo, buildEvent, sendEvents, cleanCustom } from './lib/capi.js';
 import * as payos from './lib/payos.js';
 import { parseBankEmail, findOrderCode, fetchNewMails } from './lib/bankmail.js';
 import { openSmtp } from './lib/mailer.js';
@@ -156,6 +157,7 @@ function fulfill(order, via) {
   order.licenseKey = key;
   db.save();
   console.log(`[đơn ${order.code}] đã thanh toán (${via}) → key ${key}`);
+  capiPurchase(order);
   return order;
 }
 
@@ -180,7 +182,33 @@ function fulfillUpgrade(order, via) {
   order.status = 'paid'; order.paidAt = now(); order.paidVia = via; order.licenseKey = lic.key;
   db.save();
   console.log(`[đơn ${order.code}] nâng cấp (${via}) key ${lic.key} → ${order.upgradeTarget}`);
+  capiPurchase(order);
   return order;
+}
+
+// ---------- Meta Conversions API ----------
+// Trạng thái gửi gần nhất (hiện trong Quản trị › Cài đặt)
+const capiStatus = { sent: 0, failed: 0, lastOk: 0, lastError: '', lastErrorAt: 0, lastEvent: '' };
+
+// Máy chủ báo "Mua hàng" cho Meta ngay khi đơn được xác nhận (PayOS, email ngân hàng hoặc quản trị bấm),
+// kể cả khi khách đã đóng trang. event_id order_<mã đơn> trùng với Pixel trên trình duyệt nên Meta chỉ tính 1 lần.
+function capiPurchase(order) {
+  if (!capiReady(D.settings) || order.capiAt) return;
+  order.capiAt = now();
+  db.save();
+  const user = D.users.find(u => u.id === order.userId) || { ...order.customer, id: order.userId || '' };
+  const ev = buildEvent({
+    name: 'Purchase', eventId: `order_${order.code}`, url: order.trk?.url || `${(D.settings.publicUrl || '').replace(/\/$/, '')}/don-hang.html`,
+    info: order.trk || {}, user,
+    custom: { value: order.amount, currency: 'VND', content_ids: [order.planId || orderTitle(order)], content_name: orderTitle(order), content_type: 'product', num_items: order.games?.length || 1, order_id: String(order.code) },
+  });
+  sendEvents(D.settings, [ev], capiStatus).catch(() => {});
+}
+
+// Thông tin trình duyệt lưu vào đơn để sau này máy chủ báo "Mua hàng" khớp đúng người bấm quảng cáo
+function orderTrk(req) {
+  const page = clean(req.body?.page, 1000);
+  return { ...requestInfo(req, parseCookies(req), page), url: page.startsWith('http') ? page : '' };
 }
 
 function orderTitle(o) {
@@ -244,7 +272,7 @@ app.post('/api/orders', rateLimit('order', 20, 600000), async (req, res) => {
     code, planId: plan.id, games, amount, firstOff: fo ? plan.price - amount : 0,
     customer: { name, phone, email }, status: 'pending', createdAt: now(),
     transferContent: `LG${code}`, checkoutUrl: '', licenseKey: '', userId: user.id,
-    source: cleanSource(req.body.source),
+    source: cleanSource(req.body.source), trk: orderTrk(req),
   };
   const token = orderToken(code);
   if (payos.isConfigured(D.settings)) {
@@ -509,6 +537,7 @@ app.post('/api/account/upgrade', rateLimit('order', 20, 600000), needUser, async
     code, kind: 'upgrade', upgradeTarget: target, upgradeKey: lic.key, planId, games, amount,
     customer: { name: u.name, phone: u.phone, email: u.email }, status: 'pending', createdAt: now(),
     transferContent: `LG${code}`, checkoutUrl: '', licenseKey: '', userId: u.id, source: cleanSource(req.body.source) || 'account:nang-cap',
+    trk: orderTrk(req),
   };
   const token = orderToken(code);
   if (payos.isConfigured(D.settings)) {
@@ -521,6 +550,21 @@ app.post('/api/account/upgrade', rateLimit('order', 20, 600000), needUser, async
   D.orders.push(order);
   db.save();
   res.json({ ok: true, code, token, checkoutUrl: order.checkoutUrl });
+});
+
+// Trình duyệt báo sự kiện (xem game, mở khung mua, đăng ký, liên hệ) → máy chủ gửi lại cho Meta qua Conversions API
+// với cùng event_id để Meta bỏ trùng. "Mua hàng" do máy chủ tự gửi khi đơn được thanh toán, không nhận từ đây.
+const CAPI_EVENTS = ['PageView', 'ViewContent', 'InitiateCheckout', 'AddPaymentInfo', 'CompleteRegistration', 'Contact', 'Lead'];
+app.post('/api/track', rateLimit('track', 120, 600000), (req, res) => {
+  res.json({ ok: true });
+  const b = req.body || {};
+  const name = String(b.name || '');
+  const eventId = String(b.eventId || '');
+  if (!capiReady(D.settings) || !CAPI_EVENTS.includes(name) || !/^[\w-]{6,80}$/.test(eventId)) return;
+  const page = clean(b.page, 1000);
+  const url = /^https?:\/\//.test(page) ? page : '';
+  const ev = buildEvent({ name, eventId, url, info: requestInfo(req, parseCookies(req), url), user: currentUser(req), custom: cleanCustom(b.params) });
+  sendEvents(D.settings, [ev], capiStatus).catch(() => {});
 });
 
 // Đếm lượt xem / bấm popup (cho báo cáo)
@@ -1309,7 +1353,16 @@ app.patch('/api/admin/licenses/:key/owner', (req, res) => {
 });
 
 app.get('/api/admin/config', (req, res) => {
-  res.json({ ok: true, settings: { ...D.settings, imapPass: '' }, imapPassSet: Boolean(D.settings.imapPass), plans: D.plans, faq: D.faq, publicKey: keys.publicPem });
+  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '' }, imapPassSet: Boolean(D.settings.imapPass), capiTokenSet: Boolean(D.settings.metaCapiToken), capi: capiStatus, plans: D.plans, faq: D.faq, publicKey: keys.publicPem });
+});
+
+// Gửi 1 sự kiện thử tới Meta (hiện ở Trình quản lý sự kiện › Thử nghiệm sự kiện nếu có mã thử)
+app.post('/api/admin/capi/test', async (req, res) => {
+  if (!capiReady(D.settings)) return fail(res, 400, 'Chưa có Pixel ID hoặc Mã truy cập Conversions API.');
+  const ev = buildEvent({ name: 'PageView', url: `${baseUrl(req)}/`, info: requestInfo(req, parseCookies(req)) });
+  const r = await sendEvents(D.settings, [ev], capiStatus, { testCode: clean(req.body?.testCode, 50) || undefined });
+  if (!r.ok) return fail(res, 400, `Meta báo lỗi: ${r.error}`);
+  res.json({ ok: true, received: r.received });
 });
 
 app.put('/api/admin/settings', (req, res) => {
@@ -1319,10 +1372,11 @@ app.put('/api/admin/settings', (req, res) => {
   for (const [k, v] of Object.entries(b)) {
     if (!(k in D.settings)) continue;
     if (k === 'imapPass') { if (String(v).trim()) D.settings.imapPass = String(v).replace(/\s+/g, '').slice(0, 200); continue; }
+    if (k === 'metaCapiToken') { if (String(v).trim()) D.settings.metaCapiToken = String(v).replace(/\s+/g, '').slice(0, 1000); continue; }
     D.settings[k] = typeof D.settings[k] === 'number' ? Math.max(0, Number(v) || 0) : clean(v, 1000);
   }
   db.save();
-  res.json({ ok: true, settings: { ...D.settings, imapPass: '' } });
+  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '' } });
 });
 
 app.put('/api/admin/plans', (req, res) => {

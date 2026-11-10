@@ -607,6 +607,13 @@ function renderSettings() {
       <div class="box-s"><h2>Đo lường quảng cáo (Facebook, Google, TikTok)</h2><p class="note">Mã được chèn vào mọi trang khách xem (không chèn vào trang quản trị). Web tự gửi sự kiện: <b>ViewContent</b> (xem trang game), <b>InitiateCheckout</b> (mở khung mua), <b>CompleteRegistration</b> (đăng ký), <b>Purchase</b> (đơn đã thanh toán, có giá trị VND, mỗi đơn tính 1 lần), <b>Contact</b> (bấm Zalo). Trong GTM các sự kiện có tên view_item, begin_checkout, sign_up, purchase, contact. Nếu đã gắn Meta Pixel ở đây thì <b>không</b> gắn thêm Meta Pixel trong GTM, tránh đếm 2 lần. Để trống ô nào thì tắt mã đó.</p><div class="form-grid">
         ${f('gtmId', 'Google Tag Manager', 'Dạng GTM-XXXXXXX')}${f('ga4Id', 'Google Analytics 4 (tuỳ chọn)', 'Dạng G-XXXXXXXXXX. Bỏ trống nếu GA4 đã cài trong GTM.')}
         ${f('metaPixelId', 'Meta (Facebook) Pixel ID', 'Dãy số, VD 1497281003464233')}${f('tiktokPixelId', 'TikTok Pixel ID (tuỳ chọn)', 'Lấy ở TikTok Ads Manager › Events')}
+      </div>
+      <h3 style="margin:18px 0 6px">Meta Conversions API (máy chủ gửi sự kiện)</h3>
+      <p class="note">Máy chủ gửi thẳng cho Facebook các sự kiện xem game, mở khung mua, đăng ký, liên hệ và <b>mua hàng</b> (gửi ngay khi đơn được xác nhận, kể cả khi khách đã đóng trang). Pixel và máy chủ dùng chung mã sự kiện nên Facebook chỉ tính 1 lần. Lấy mã ở <b>Trình quản lý sự kiện › chọn Pixel › Cài đặt › API Chuyển đổi › Tạo mã truy cập</b>.</p>
+      <div class="form-grid">
+        <div class="field full"><label>Mã truy cập Conversions API</label><input name="metaCapiToken" type="password" autocomplete="new-password" placeholder="${S.config.capiTokenSet ? '•••••••• (đã lưu, để trống = giữ nguyên)' : 'Dán mã bắt đầu bằng EAA…'}"><small>${S.config.capiTokenSet ? '✅ Đang bật.' : 'Chưa có mã: máy chủ chưa gửi sự kiện.'}${S.config.capi?.lastOk ? ` Lần gửi thành công gần nhất: ${fmt(S.config.capi.lastOk)} (${S.config.capi.sent} sự kiện từ lúc web khởi động).` : ''}${S.config.capi?.lastError ? ` <span style="color:#e5484d">Lỗi gần nhất (${fmt(S.config.capi.lastErrorAt)}): ${esc(S.config.capi.lastError)}</span>` : ''}</small></div>
+        ${f('metaTestEventCode', 'Mã thử nghiệm (tuỳ chọn)', 'Chỉ điền khi kiểm tra ở tab Thử nghiệm sự kiện (VD TEST12345). Kiểm tra xong <b>xoá trống</b> để sự kiện được tính thật.')}
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost sm" data-act="capiTest">Gửi 1 sự kiện thử</button><small>Lưu cài đặt trước rồi bấm.</small></div>
       </div></div>
       <div class="box-s"><h2>Liên hệ hỗ trợ</h2><p class="note">Để trống mục nào thì mục đó không hiện. Nút "Chat hỗ trợ" trên web mở fanpage; chưa có fanpage thì mở Zalo.</p><div class="form-grid">
         ${f('messengerUrl', 'Link chat fanpage (Messenger)', 'VD: https://m.me/tenfanpage. Hiện nút chat nổi ở góc màn hình và nút "Chat hỗ trợ".', 'text', true)}
@@ -671,6 +678,11 @@ document.addEventListener('click', async (e) => {
   if (!b) return;
   const { act, code, key, id } = b.dataset;
   const enc = encodeURIComponent;
+  if (act === 'capiTest') {
+    b.disabled = true;
+    try { const r = await call('/api/admin/capi/test', { testCode: $('[name=metaTestEventCode]')?.value || '' }); toast(`Facebook đã nhận ${r.received ?? 1} sự kiện thử`); } catch {} finally { b.disabled = false; }
+    return;
+  }
   if (act === 'bankCheck') { b.disabled = true; try { const r = await call('/api/admin/bank/check', {}); toast(r.error ? `Lỗi: ${r.error}` : `Đã đọc: ${r.added} giao dịch mới, ${r.matched} đơn tự trả key`); } finally { refresh(); } }
   if (act === 'bankParse' || act === 'bankRecord') {
     const text = $('#bankText').value.trim();

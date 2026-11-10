@@ -7,7 +7,7 @@
   "private": true,
   "scripts": {
     "start": "node server.js",
-    "test": "node test/smoke.js && node test/upsell.js"
+    "test": "node test/smoke.js && node test/upsell.js && node test/capi.js"
   },
   "dependencies": {
     "express": "^4.21.2",

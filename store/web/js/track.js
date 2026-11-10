@@ -3,11 +3,29 @@
 const GA = { ViewContent: 'view_item', InitiateCheckout: 'begin_checkout', CompleteRegistration: 'sign_up', Purchase: 'purchase', Contact: 'contact', Lead: 'generate_lead' };
 const TT = { ViewContent: 'ViewContent', InitiateCheckout: 'InitiateCheckout', CompleteRegistration: 'CompleteRegistration', Purchase: 'CompletePayment', Contact: 'Contact', Lead: 'SubmitForm' };
 
+// Sự kiện máy chủ gửi lại cho Meta (Conversions API). "Mua hàng" máy chủ tự gửi khi đơn được thanh toán.
+const SERVER = ['ViewContent', 'InitiateCheckout', 'CompleteRegistration', 'Contact', 'Lead'];
+const newId = (name) => `${name.slice(0, 3).toLowerCase()}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+
+function toServer(name, params, eventId) {
+  try {
+    if (!window.LG_TRACK?.meta || !window.LG_TRACK?.capi || !SERVER.includes(name)) return;
+    const body = JSON.stringify({ name, eventId, page: location.href, params });
+    // sendBeacon vẫn gửi được khi khách chuyển trang ngay sau đó
+    if (!(navigator.sendBeacon && navigator.sendBeacon('/api/track', new Blob([body], { type: 'application/json' })))) {
+      fetch('/api/track', { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true, credentials: 'same-origin' }).catch(() => {});
+    }
+  } catch {}
+}
+
 // p: { value, currency, content_ids, content_name, content_type, num_items, order_id }
 export function track(name, p = {}, eventId) {
   const params = { currency: 'VND', ...p };
   const w = window;
-  try { if (w.fbq) w.fbq('track', name, params, eventId ? { eventID: eventId } : undefined); } catch {}
+  // Pixel trên trình duyệt và máy chủ dùng chung event_id để Meta chỉ tính 1 lần
+  eventId ||= newId(name);
+  toServer(name, params, eventId);
+  try { if (w.fbq) w.fbq('track', name, params, { eventID: eventId }); } catch {}
   try {
     if (w.ttq) w.ttq.track(TT[name] || name, {
       value: params.value, currency: params.currency, content_type: 'product',

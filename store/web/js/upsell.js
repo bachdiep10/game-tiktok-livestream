@@ -152,7 +152,7 @@ async function createOrder(el, body) {
   const btn = $('#upGo', el);
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang tạo đơn…';
   try {
-    const r = await api('/api/account/upgrade', body);
+    const r = await api('/api/account/upgrade', { ...body, page: location.href });
     location.href = r.checkoutUrl || `/don-hang.html?code=${r.code}&t=${r.token}`;
   } catch (e) { $('#upErr', el).textContent = e.message; btn.disabled = false; btn.textContent = 'Thử lại'; }
 }

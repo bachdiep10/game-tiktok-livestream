@@ -185,7 +185,7 @@ $('#buyForm').addEventListener('submit', async e => {
   btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Đang tạo đơn…';
   $('#buyErr').textContent = '';
   try {
-    const r = await api('/api/orders', body);
+    const r = await api('/api/orders', { ...body, page: location.href });
     const orderUrl = `/don-hang.html?code=${r.code}&t=${r.token}`;
     try {
       const list = JSON.parse(localStorage.getItem('lg_orders') || '[]');
