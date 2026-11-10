@@ -1,6 +1,7 @@
 // Website bán game + máy chủ license key.
 // Chạy: npm install && npm start  →  http://localhost:8080 (trang bán), /admin (quản trị)
 import express from 'express';
+import { sendTelegram, telegramStatus, telegramReady, escTg } from './lib/telegram.js';
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -158,6 +159,7 @@ function fulfill(order, via) {
   db.save();
   console.log(`[đơn ${order.code}] đã thanh toán (${via}) → key ${key}`);
   capiPurchase(order);
+  tgOrder(order, 'paid');
   return order;
 }
 
@@ -183,7 +185,34 @@ function fulfillUpgrade(order, via) {
   db.save();
   console.log(`[đơn ${order.code}] nâng cấp (${via}) key ${lic.key} → ${order.upgradeTarget}`);
   capiPurchase(order);
+  tgOrder(order, 'paid');
   return order;
+}
+
+// ---------- Báo đơn về Telegram ----------
+const vnd = (n) => `${Math.round(n || 0).toLocaleString('vi-VN')}đ`;
+function tgOrder(o, kind) {
+  const s = D.settings;
+  if (!telegramReady(s)) return;
+  if (kind === 'new' && !s.telegramNew) return;
+  if (kind === 'paid' && !s.telegramPaid) return;
+  if (kind === 'claim' && !s.telegramClaim) return;
+  const head = { new: '🛒 <b>ĐƠN MỚI</b>', paid: '✅ <b>ĐÃ THANH TOÁN</b>', claim: '💸 <b>KHÁCH BÁO ĐÃ CHUYỂN KHOẢN</b>' }[kind];
+  const c = o.customer || {};
+  const user = D.users.find(u => u.id === o.userId);
+  const games = o.kind === 'upgrade' ? '' : (o.games || []).map(id => D.games.find(g => g.id === id)?.name || id).join(', ');
+  const lines = [
+    `${head} #${o.code}`,
+    `👤 ${escTg(c.name || user?.name || '')}${c.phone || user?.phone ? ` · ${escTg(c.phone || user?.phone)}` : ''}`,
+    `📦 ${escTg(orderTitle(o))}${games ? `: ${escTg(games)}` : ''}`,
+    `💰 <b>${vnd(o.amount)}</b>${o.firstOff ? ` (ưu đãi đơn đầu −${vnd(o.firstOff)})` : ''}`,
+  ];
+  if (o.source) lines.push(`🧭 Nguồn: ${escTg(o.source)}`);
+  if (kind === 'paid') lines.push(`🔑 ${escTg(o.licenseKey)} · qua ${escTg(o.paidVia || '')}`);
+  if (kind === 'new') lines.push('⏳ Chờ khách thanh toán');
+  if (kind === 'claim') lines.push('👉 Kiểm tra tài khoản ngân hàng rồi bấm "Đã nhận tiền" trong Quản trị › Đơn hàng');
+  if (s.publicUrl) lines.push(`${s.publicUrl.replace(/\/$/, '')}/admin/#orders`);
+  sendTelegram(s, lines.join('\n')).catch(() => {});
 }
 
 // ---------- Meta Conversions API ----------
@@ -290,6 +319,7 @@ app.post('/api/orders', rateLimit('order', 20, 600000), async (req, res) => {
   }
   D.orders.push(order);
   db.save();
+  tgOrder(order, 'new');
   res.json({ ok: true, code, token, checkoutUrl: order.checkoutUrl });
 });
 
@@ -320,7 +350,7 @@ app.get('/api/orders/:code', rateLimit('orderview', 120, 60000), async (req, res
 app.post('/api/orders/:code/claim', rateLimit('claim', 10, 600000), (req, res) => {
   const o = authOrder(req, res);
   if (!o) return;
-  if (o.status === 'pending' && !o.claimedAt) { o.claimedAt = now(); db.save(); }
+  if (o.status === 'pending' && !o.claimedAt) { o.claimedAt = now(); db.save(); tgOrder(o, 'claim'); }
   res.json({ ok: true, order: orderView(o) });
 });
 
@@ -549,6 +579,7 @@ app.post('/api/account/upgrade', rateLimit('order', 20, 600000), needUser, async
   }
   D.orders.push(order);
   db.save();
+  tgOrder(order, 'new');
   res.json({ ok: true, code, token, checkoutUrl: order.checkoutUrl });
 });
 
@@ -1373,10 +1404,17 @@ app.patch('/api/admin/licenses/:key/owner', (req, res) => {
 });
 
 app.get('/api/admin/config', (req, res) => {
-  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '' }, imapPassSet: Boolean(D.settings.imapPass), capiTokenSet: Boolean(D.settings.metaCapiToken), capi: capiStatus, plans: D.plans, faq: D.faq, publicKey: keys.publicPem });
+  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '', telegramBotToken: '' }, imapPassSet: Boolean(D.settings.imapPass), capiTokenSet: Boolean(D.settings.metaCapiToken), capi: capiStatus, telegramTokenSet: Boolean(D.settings.telegramBotToken), telegram: telegramStatus, plans: D.plans, faq: D.faq, publicKey: keys.publicPem });
 });
 
 // Gửi 1 sự kiện thử tới Meta (hiện ở Trình quản lý sự kiện › Thử nghiệm sự kiện nếu có mã thử)
+app.post('/api/admin/telegram/test', async (req, res) => {
+  if (!telegramReady(D.settings)) return fail(res, 400, 'Chưa nhập mã bot Telegram hoặc chat id. Lưu cài đặt trước rồi bấm.');
+  const r = await sendTelegram(D.settings, `🔔 <b>Thử báo đơn</b>\nWeb ${escTg(D.settings.publicUrl || 'bán game')} đã kết nối Telegram. Từ giờ có đơn mới sẽ báo về đây.`);
+  if (!r.ok) return fail(res, 400, `Telegram báo lỗi: ${r.error}`);
+  res.json({ ok: true });
+});
+
 app.post('/api/admin/capi/test', async (req, res) => {
   if (!capiReady(D.settings)) return fail(res, 400, 'Chưa có Pixel ID hoặc Mã truy cập Conversions API.');
   const ev = buildEvent({ name: 'PageView', url: `${baseUrl(req)}/`, info: requestInfo(req, parseCookies(req)) });
@@ -1393,10 +1431,13 @@ app.put('/api/admin/settings', (req, res) => {
     if (!(k in D.settings)) continue;
     if (k === 'imapPass') { if (String(v).trim()) D.settings.imapPass = String(v).replace(/\s+/g, '').slice(0, 200); continue; }
     if (k === 'metaCapiToken') { if (String(v).trim()) D.settings.metaCapiToken = String(v).replace(/\s+/g, '').slice(0, 1000); continue; }
+    if (k === 'telegramBotToken') { if (String(v).trim()) D.settings.telegramBotToken = String(v).replace(/\s+/g, '').slice(0, 200); continue; }
     D.settings[k] = typeof D.settings[k] === 'number' ? Math.max(0, Number(v) || 0) : clean(v, 1000);
   }
   db.save();
-  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '' } });
+  if (b.telegramBotTokenClear) D.settings.telegramBotToken = '';
+  db.save();
+  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '', telegramBotToken: '' } });
 });
 
 app.put('/api/admin/plans', (req, res) => {

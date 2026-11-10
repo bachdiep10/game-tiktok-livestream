@@ -331,6 +331,7 @@ const DEFAULT_SETTINGS = {
   gtmId: 'GTM-NZQB5F5V', ga4Id: 'G-33XXV3JKWQ', metaPixelId: '1497281003464233', tiktokPixelId: '',
   // Meta Conversions API: máy chủ gửi sự kiện song song với Pixel (Trình quản lý sự kiện › Cài đặt › Tạo mã truy cập)
   metaCapiToken: '', metaTestEventCode: '',
+  telegramBotToken: '', telegramChatId: '', telegramNew: 1, telegramPaid: 1, telegramClaim: 1,
 };
 
 // Lấy khối JSON hoàn chỉnh đầu tiên trong chuỗi (bỏ phần rác dính phía sau)
