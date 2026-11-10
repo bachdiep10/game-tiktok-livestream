@@ -80,11 +80,25 @@ function rateLimit(name, max, windowMs) {
 }
 setInterval(() => { const t = now(); for (const [k, b] of buckets) if (t > b.reset) buckets.delete(k); }, 60000).unref();
 
+// Ảnh/video trong /media được trình duyệt giữ 7 ngày -> gắn ?v=<giờ sửa file> để khi thay video mới khách thấy ngay
+const MEDIA_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'web', 'media');
+const mediaStamp = new Map();
+function mediaV(url) {
+  if (typeof url !== 'string' || !/^\/media\/[^?#]+$/.test(url)) return url;
+  const hit = mediaStamp.get(url);
+  if (hit && Date.now() - hit.t < 60000) return hit.u;
+  let u = url;
+  try { u = `${url}?v=${Math.floor(fs.statSync(path.join(MEDIA_DIR, decodeURIComponent(url.slice(7)))).mtimeMs / 1000).toString(36)}`; } catch { /* không có file */ }
+  mediaStamp.set(url, { u, t: Date.now() });
+  return u;
+}
+const mediaInHtml = (html) => html.replace(/((?:src|poster|href|content|data-video)=")(\/media\/[^"?#]+)(")/g, (m, a, u, b) => a + mediaV(u) + b);
+
 function publicSettings() {
   const s = D.settings;
   return {
     brandName: s.brandName, tagline: s.tagline, heroEyebrow: s.heroEyebrow, heroTitle: s.heroTitle,
-    heroSubtitle: s.heroSubtitle, heroVideo: s.heroVideo, promo: s.promo,
+    heroSubtitle: s.heroSubtitle, heroVideo: mediaV(s.heroVideo), promo: s.promo,
     contactZalo: s.contactZalo, contactFacebook: s.contactFacebook, contactTiktok: s.contactTiktok, contactPhone: s.contactPhone,
     messengerUrl: s.messengerUrl, zaloGroup: s.zaloGroup,
     guideUrl: s.guideUrl, moveLimit: s.moveLimit, moveWindowDays: s.moveWindowDays, offlineDays: s.offlineDays,
@@ -94,7 +108,7 @@ function publicSettings() {
 
 function publicGame(g) {
   const { id, name, tagline, description, features, image, video, isNew, guide, guideVideo } = g;
-  return { id, name, tagline, description, features, image, video, isNew, guide, guideVideo };
+  return { id, name, tagline, description, features, image: mediaV(image), video: mediaV(video), isNew, guide, guideVideo };
 }
 
 function licenseView(l, { withDownloads = false } = {}) {
@@ -1471,7 +1485,7 @@ const ASSET_V = (() => {
 // nên dùng import map trong HTML (HTML luôn do Node trả) để trỏ mọi file JS sang bản ?v=<mã>
 const JS_FILES = ['js', 'admin'].flatMap(d => fs.readdirSync(path.join(PUBLIC_DIR, d)).filter(f => f.endsWith('.js')).map(f => `/${d}/${f}`));
 const IMPORT_MAP = `<script type="importmap">${JSON.stringify({ imports: Object.fromEntries(JS_FILES.map(f => [f, `${f}?v=${ASSET_V}`])) })}</script>`;
-const versionAssets = (html) => html
+const versionAssets = (html) => mediaInHtml(html)
   .replace(/((?:src|href)=")(\/(?:js|css|admin)\/[^"?#]+\.(?:js|css))(")/g, `$1$2?v=${ASSET_V}$3`)
   .replace(/<head>/i, `<head>\n  ${IMPORT_MAP}`);
 const sendHtml = (res, html) => res.type('html').set('Cache-Control', 'public, max-age=60').send(versionAssets(injectTracking(html, D.settings)));

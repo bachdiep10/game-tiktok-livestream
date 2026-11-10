@@ -31,6 +31,16 @@ function renderHero() {
   $('#heroSub').textContent = s.heroSubtitle;
   const hv = s.heroVideo || C.games.find(g => g.video)?.video;
   if (hv) $('#heroVideo').src = hv; else $('.phone').remove();
+  // Trình duyệt chỉ cho video tự chạy khi tắt tiếng -> nút bật tiếng
+  const hvEl = $('#heroVideo');
+  const snd = $('#heroSound');
+  if (hvEl && snd) {
+    const show = () => { snd.textContent = hvEl.muted ? '🔇 Bấm để nghe nhạc game' : '🔊 Đang bật tiếng'; snd.classList.toggle('on', !hvEl.muted); };
+    const toggle = () => { hvEl.muted = !hvEl.muted; if (!hvEl.muted) { hvEl.currentTime = 0; hvEl.play().catch(() => {}); } show(); };
+    snd.addEventListener('click', (e) => { e.stopPropagation(); toggle(); });
+    hvEl.addEventListener('click', toggle);
+    show();
+  }
   $('#statGames').textContent = C.games.length;
   $('#promo').textContent = s.promo;
   if (!s.promo) $('#promo').remove();

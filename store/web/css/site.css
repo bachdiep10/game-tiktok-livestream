@@ -92,6 +92,10 @@ h1 .hl { background: var(--grad); -webkit-background-clip: text; background-clip
   border: 8px solid #222036; box-shadow: var(--shadow), 0 0 0 1px var(--line), 0 0 120px rgba(255, 61, 127, 0.18); background: #000;
 }
 .phone video { width: 100%; height: 100%; object-fit: cover; }
+.phone video { cursor: pointer; }
+.sound-btn { position: absolute; left: 50%; bottom: 18px; transform: translateX(-50%); z-index: 2; background: rgba(0,0,0,.72); color: #fff; border: 2px solid #ffd54f; border-radius: 999px; padding: 9px 16px; font: inherit; font-weight: 800; font-size: 14px; cursor: pointer; white-space: nowrap; animation: soundPulse 1.6s ease-in-out infinite; }
+.sound-btn.on { animation: none; border-color: rgba(255,255,255,.4); opacity: .75; }
+@keyframes soundPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,213,79,.6); } 50% { box-shadow: 0 0 0 8px rgba(255,213,79,0); } }
 .live-badge { position: absolute; top: 14px; left: 14px; background: #ff2d55; color: #fff; font-weight: 800; font-size: 12px; padding: 3px 10px; border-radius: 6px; letter-spacing: .05em; }
 @media (max-width: 900px) {
   .hero { padding-top: 40px; }
