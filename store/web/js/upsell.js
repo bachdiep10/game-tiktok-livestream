@@ -25,6 +25,13 @@ const css = `
 .cd{margin:8px 0 14px;text-align:center}.cd .t{font-size:13px;font-weight:700;color:#b45309;margin-bottom:8px}
 .cd .u{display:flex;justify-content:center;gap:8px}.cd .u div{min-width:62px;padding:8px 4px 6px;border-radius:12px;background:linear-gradient(180deg,#2a2148,#16132b);color:#fff;box-shadow:0 6px 14px rgba(22,19,43,.2)}
 .cd .u b{display:block;font-size:24px;line-height:1.1;font-variant-numeric:tabular-nums}.cd .u small{font-size:11px;opacity:.75}
+.ofl{display:grid;gap:10px;margin-top:6px}
+.ofl button{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:2px solid var(--line);border-radius:16px;padding:12px 14px;background:#fff;cursor:pointer;font:inherit;color:inherit;transition:.15s}
+.ofl button:hover{border-color:rgba(255,79,109,.5);box-shadow:0 0 0 3px rgba(255,79,109,.1)}
+.ofl .ic{flex:none;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;background:linear-gradient(135deg,#fff0f4,#fff6e8)}
+.ofl .tx{flex:1;min-width:0}.ofl b{display:block;font-size:15.5px}.ofl small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+.ofl .tm{display:inline-block;margin-top:5px;font-size:12.5px;font-weight:700;color:#b45309;background:#fff3e0;border-radius:99px;padding:2px 9px;font-variant-numeric:tabular-nums}
+.ofl .go{flex:none;color:#e8283a;font-size:22px;font-weight:700}
 .up-card{border:2px dashed rgba(255,79,109,.45);border-radius:16px;padding:16px;margin-top:14px;background:linear-gradient(135deg,#fff7f8,#fffaf0)}
 .up-card h4{margin:0 0 4px;font-size:17px}.up-card p{margin:0 0 10px;color:var(--muted);font-size:14px}
 .up-card .btns{display:flex;gap:8px;flex-wrap:wrap}
@@ -56,6 +63,11 @@ function tickCountdowns() {
     const ms = Math.max(0, Number(el.dataset.cd) - Date.now());
     const v = [Math.floor(ms / 86400000), Math.floor(ms / 3600000) % 24, Math.floor(ms / 60000) % 60, Math.floor(ms / 1000) % 60];
     $$('b', el).forEach((b, i) => { b.textContent = i ? String(v[i]).padStart(2, '0') : v[i]; });
+  }
+  for (const el of $$('[data-cdi]')) {
+    const ms = Math.max(0, Number(el.dataset.cdi) - Date.now());
+    const d = Math.floor(ms / 86400000), p = (x) => String(x).padStart(2, '0');
+    el.textContent = `⏰ Còn ${d ? `${d} ngày ` : ''}${p(Math.floor(ms / 3600000) % 24)}:${p(Math.floor(ms / 60000) % 60)}:${p(Math.floor(ms / 1000) % 60)}`;
   }
 }
 setInterval(tickCountdowns, 1000);
@@ -276,7 +288,27 @@ export function bindFirstCard() {
 export function showOffers(d, C) {
   upEvent('bell_click');
   const onPick = location.pathname === '/' ? (id, src) => { sessionStorage.setItem('lg_src', src); location.hash = `mua-${id}`; } : null;
-  if (firstOfferPopup(d, C, onPick, true)) return;
-  if (autoOfferPopup(d, C, true) !== false) return;
-  location.href = '/tai-khoan.html';
+  const o = d.offers || {}, now = Date.now(), items = [];
+  const fo = d.firstOffer;
+  if (fo && fo.until > now) {
+    const deals = C.plans.filter(p => fo.prices[p.id]?.off > 0).map(p => `${p.name} ${money(fo.prices[p.id].price)}`).join(' · ');
+    items.push({ ic: '🎁', t: 'Ưu đãi đơn đầu tiên', s: deals, until: fo.until, open: () => firstOfferPopup(d, C, onPick, true) });
+  }
+  for (const ng of o.newGames || []) if (ng.until > now) {
+    items.push({ ic: '🎉', t: `Game mới: ${ng.name}`, s: `Thêm vào key với giá ưu đãi chỉ ${money(ng.price)}`, until: ng.until, open: () => upgradeDialog(d, C, { target: 'addgame', gameId: ng.id, src: source('popup:game-moi') }) });
+  }
+  for (const l of o.licenses || []) {
+    const timed = [l.combo, l.all].find(x => x && x.until > now);
+    const s = [l.combo && `${l.combo.planName} +${money(l.combo.price)}`, l.all && `${l.all.planName} +${money(l.all.price)}`].filter(Boolean).join(' · ');
+    items.push({ ic: '⬆️', t: `Nâng cấp key ${l.key.slice(-9)}`, s: `Chỉ bù tiền chênh lệch: ${s}`, until: timed?.until, open: () => upgradeDialog(d, C, { key: l.key, target: l.all ? 'all' : 'combo', src: source('popup:nang-cap') }) });
+  }
+  if (!items.length) { location.href = '/tai-khoan.html'; return; }
+  if (items.length === 1) { items[0].open(); return; }
+  const { el, close } = modal(`
+    <div class="uphero">🔔</div>
+    <h3>Ưu đãi của bạn (${items.length})</h3>
+    <p class="msub">Bấm vào từng ưu đãi để xem chi tiết và thanh toán.</p>
+    <div class="ofl">${items.map((x, i) => `<button type="button" data-i="${i}"><span class="ic">${x.ic}</span><span class="tx"><b>${esc(x.t)}</b><small>${esc(x.s)}</small>${x.until ? `<span class="tm" data-cdi="${x.until}"></span>` : ''}</span><span class="go">›</span></button>`).join('')}</div>`);
+  tickCountdowns();
+  $$('[data-i]', el).forEach(b => b.onclick = () => { close(); items[b.dataset.i].open(); });
 }

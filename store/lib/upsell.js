@@ -72,6 +72,19 @@ Chỉ cần quét mã QR, hệ thống tự gửi key và link tải sau 1–3 p
 
 Gặp khó khăn khi chuyển khoản? Bạn trả lời email này hoặc nhắn fanpage, mình hỗ trợ ngay.`,
   },
+  abandonedAgain: {
+    name: 'Nhắc lại đơn chưa thanh toán (lần 2)',
+    subject: '⏳ {ten} ơi, {goi_don} vẫn đang chờ bạn (đơn #{ma_don})',
+    body: `Chào {ten},
+
+Đơn #{ma_don} ({goi_don}: {game_don}) vẫn đang giữ cho bạn nhưng chưa được thanh toán.
+
+Chỉ một lần quét QR là xong: hệ thống tự gửi key và link tải sau 1–3 phút, dùng trọn đời trên máy tính của bạn.
+
+[Hoàn tất đơn #{ma_don}](/don-hang.html?code={ma_don}&t={token_don})
+
+Nếu bạn đổi ý muốn chọn game hoặc gói khác, cứ trả lời email này, mình đổi giúp ngay.`,
+  },
   welcome: {
     name: 'Đăng ký chưa mua: ưu đãi đơn đầu tiên',
     subject: '🎁 {ten} ơi, quà cho đơn đầu tiên: giảm đến {giam_max} (hết hạn {han_dau})',
@@ -125,7 +138,7 @@ export const DEFAULT_UPSELL = {
   newGamePrice: 69000, newGameDays: 3,
   // khách đã đăng ký nhưng chưa mua
   popupFirst: 1, emailWelcome: 1, emailWelcomeReminder: 1, emailAbandoned: 1,
-  firstAfterHours: 24, firstHours: 72, firstOffLe: 0, firstOffCombo: 30000, firstOffAll: 100000, abandonedAfterHours: 2,
+  firstAfterHours: 24, firstHours: 72, firstOffLe: 0, firstOffCombo: 30000, firstOffAll: 100000, abandonedAfterHours: 2, emailAbandonedAgain: 1, abandonedAgainHours: 24,
   smtpHost: 'smtp.gmail.com', smtpPort: 465, smtpUser: '', smtpPass: '', fromEmail: '', fromName: '', replyTo: '',
   maxPerRun: 20,
 };

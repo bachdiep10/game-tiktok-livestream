@@ -615,6 +615,12 @@ function renderSettings() {
         ${f('metaTestEventCode', 'Mã thử nghiệm (tuỳ chọn)', 'Chỉ điền khi kiểm tra ở tab Thử nghiệm sự kiện (VD TEST12345). Kiểm tra xong <b>xoá trống</b> để sự kiện được tính thật.')}
         <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost sm" data-act="capiTest">Gửi 1 sự kiện thử</button><small>Lưu cài đặt trước rồi bấm.</small></div>
       </div></div>
+      <div class="box-s"><h2>📲 Báo đơn hàng về Telegram</h2><p class="note">Mỗi khi khách đặt đơn, báo đã chuyển khoản hoặc đơn được thanh toán, web nhắn ngay về Telegram của bạn.<br><b>Cách lấy:</b> 1) Trong Telegram, mở <b>@BotFather</b>, gõ <code>/newbot</code>, đặt tên, nhận <b>mã bot</b> (dạng 123456:ABC…). 2) Mở bot vừa tạo, bấm <b>Start</b> (hoặc thêm bot vào nhóm). 3) Mở <b>@userinfobot</b> để lấy <b>chat id</b> của bạn (nhóm thì id bắt đầu bằng -100…). Nhiều người nhận: cách nhau bằng dấu phẩy.</p><div class="form-grid">
+        <div class="field"><label>Mã bot (Bot token)</label><input name="telegramBotToken" type="password" autocomplete="new-password" placeholder="${S.config.telegramTokenSet ? '•••••••• (đã lưu, để trống = giữ nguyên)' : 'VD 123456789:AAH…'}"><small>${S.config.telegramTokenSet ? '✅ Đã lưu mã bot.' : 'Chưa có mã bot.'}${S.config.telegram?.lastOk ? ` Gửi được lúc ${fmt(S.config.telegram.lastOk)}.` : ''}${S.config.telegram?.lastError ? ` <span style="color:#e5484d">Lỗi gần nhất: ${esc(S.config.telegram.lastError)}</span>` : ''}</small></div>
+        ${f('telegramChatId', 'Chat id người nhận', 'VD 123456789 hoặc -1001234567890 (nhóm)')}
+        <div class="field"><label>Báo khi có đơn mới</label><select name="telegramNew"><option value="1" ${s.telegramNew ? 'selected' : ''}>Có</option><option value="0" ${s.telegramNew ? '' : 'selected'}>Không</option></select></div><div class="field"><label>Báo khi khách bấm "đã chuyển khoản"</label><select name="telegramClaim"><option value="1" ${s.telegramClaim ? 'selected' : ''}>Có</option><option value="0" ${s.telegramClaim ? '' : 'selected'}>Không</option></select></div><div class="field"><label>Báo khi đơn đã thanh toán</label><select name="telegramPaid"><option value="1" ${s.telegramPaid ? 'selected' : ''}>Có</option><option value="0" ${s.telegramPaid ? '' : 'selected'}>Không</option></select></div>
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost sm" data-act="tgTest">Gửi tin nhắn thử</button><small>Lưu cài đặt trước rồi bấm.</small></div>
+      </div></div>
       <div class="box-s"><h2>Liên hệ hỗ trợ</h2><p class="note">Để trống mục nào thì mục đó không hiện. Nút "Chat hỗ trợ" trên web mở fanpage; chưa có fanpage thì mở Zalo.</p><div class="form-grid">
         ${f('messengerUrl', 'Link chat fanpage (Messenger)', 'VD: https://m.me/tenfanpage. Hiện nút chat nổi ở góc màn hình và nút "Chat hỗ trợ".', 'text', true)}
         ${f('zaloGroup', 'Link nhóm Zalo hỗ trợ', 'VD: https://zalo.me/g/abcxyz. Hiện cho khách sau khi mua và ở mục Hỗ trợ.', 'text', true)}
@@ -678,6 +684,11 @@ document.addEventListener('click', async (e) => {
   if (!b) return;
   const { act, code, key, id } = b.dataset;
   const enc = encodeURIComponent;
+  if (act === 'tgTest') {
+    b.disabled = true;
+    try { await call('/api/admin/telegram/test', {}); toast('Đã gửi tin thử, xem Telegram của bạn'); } catch {} finally { b.disabled = false; }
+    return;
+  }
   if (act === 'capiTest') {
     b.disabled = true;
     try { const r = await call('/api/admin/capi/test', { testCode: $('[name=metaTestEventCode]')?.value || '' }); toast(`Facebook đã nhận ${r.received ?? 1} sự kiện thử`); } catch {} finally { b.disabled = false; }

@@ -4,8 +4,8 @@ import { $, $$, esc, money, moneyFull, toast } from '/js/common.js';
 const fmt = (t) => t ? new Date(t).toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' }) : '—';
 const rate = (a, b) => (b ? Math.round((a / b) * 100) : 0);
 const pct = (a, b) => (b ? `${rate(a, b)}%` : '—');
-const TYPE_LABEL = { receipt: 'Gửi key', offer: 'Mời nâng cấp', reminder: 'Nhắc hết hạn', newgame: 'Game mới (mời mua)', newgameOwned: 'Game mới (đã có)', welcome: 'Ưu đãi đơn đầu', welcomeReminder: 'Nhắc ưu đãi đơn đầu', abandoned: 'Nhắc đơn chưa trả' };
-const TYPE_ICON = { receipt: '🔑', offer: '⬆️', reminder: '⏰', newgame: '🎉', newgameOwned: '🎁', welcome: '👋', welcomeReminder: '⌛', abandoned: '🧾' };
+const TYPE_LABEL = { receipt: 'Gửi key', offer: 'Mời nâng cấp', reminder: 'Nhắc hết hạn', newgame: 'Game mới (mời mua)', newgameOwned: 'Game mới (đã có)', welcome: 'Ưu đãi đơn đầu', welcomeReminder: 'Nhắc ưu đãi đơn đầu', abandoned: 'Nhắc đơn chưa trả', abandonedAgain: 'Nhắc lại đơn chưa trả' };
+const TYPE_ICON = { receipt: '🔑', offer: '⬆️', reminder: '⏰', newgame: '🎉', newgameOwned: '🎁', welcome: '👋', welcomeReminder: '⌛', abandoned: '🧾', abandonedAgain: '⏳' };
 const typeOf = (k) => Object.keys(TYPE_LABEL).find(x => x.toLowerCase() === k) || k;
 const SRC_LABEL = (s) => ({
   'web:mua': '🛒 Mua trực tiếp trên web', 'popup:checkout': '🎁 Popup lúc mua Gói Lẻ', 'popup:nang-cap': '⬆️ Popup nâng cấp',
@@ -112,7 +112,7 @@ export async function renderUpsell(view, call, games, plans) {
         <div class="kpi" style="--c:linear-gradient(90deg,#6a4cf5,#4aa8ff);--bgc:#efeaff"><div class="ic">🧑‍💻</div><span>Chưa mua lần nào</span><b>${f.nonBuyers || 0}</b><small>${f.withEmail || 0} khách có email nhận được</small></div>
         <div class="kpi" style="--c:linear-gradient(90deg,#ff9f43,#ffd23f);--bgc:#fff3e0"><div class="ic">🎁</div><span>Đã nhận ưu đãi đơn đầu</span><b>${f.offered || 0}</b><small>Popup: hiện ${ev.first_shown || 0} · bấm ${ev.first_click || 0}</small></div>
         <div class="kpi" style="--c:linear-gradient(90deg,#10b981,#34d399);--bgc:#e7f8ef"><div class="ic">💰</div><span>Mua nhờ ưu đãi đơn đầu</span><b>${f.orders || 0}</b><small>${moneyFull(f.revenue || 0)}</small></div>
-        <div class="kpi"><div class="ic">🧾</div><span>Đơn chưa thanh toán (7 ngày)</span><b>${f.abandoned || 0}</b><small>${f.recovered || 0} đơn trả tiền sau email nhắc</small></div>
+        <div class="kpi"><div class="ic">🧾</div><span>Đơn chưa thanh toán (7 ngày)</span><b>${f.abandoned || 0}</b><small>${f.recovered || 0} đơn trả tiền sau email nhắc${f.recoveredAgain ? ` (${f.recoveredAgain} sau lần 2)` : ''}</small></div>
       </div></div>
 
     <div class="funnels">
@@ -158,13 +158,13 @@ export async function renderUpsell(view, call, games, plans) {
 
       <div class="card sec"><h2>👋 Kịch bản cho khách đăng ký chưa mua</h2><p class="sub">Ưu đãi chỉ áp cho đơn đầu tiên, tự giảm giá khi khách đăng nhập và mua, không cần mã. Hiện tại: ${offTxt || 'chưa đặt mức giảm'}.</p>
         <div class="flow f3">
-          <div class="step alt"><div class="num">1</div><b>Tạo đơn mà chưa trả tiền</b><p>Sau ${c.abandonedAfterHours} giờ: email nhắc kèm nút mở lại đúng đơn để quét QR.</p>${sw('emailAbandoned', 'Email')}</div>
+          <div class="step alt"><div class="num">1</div><b>Tạo đơn mà chưa trả tiền</b><p>Sau ${c.abandonedAfterHours} giờ: email nhắc kèm nút mở lại đúng đơn để quét QR. Vẫn chưa trả thì ${c.abandonedAgainHours} giờ sau nhắc lại lần 2. Áp dụng cả khách đã từng mua.</p>${sw('emailAbandoned', 'Nhắc lần 1')} &nbsp; ${sw('emailAbandonedAgain', 'Nhắc lần 2')}</div>
           <div class="step alt"><div class="num">2</div><b>Đăng ký ${c.firstAfterHours} giờ chưa mua</b><p>Email + popup tặng giá đơn đầu, hạn ${c.firstHours} giờ tính từ lúc khách nhận.</p>${sw('emailWelcome', 'Email')} &nbsp; ${sw('popupFirst', 'Popup')}</div>
           <div class="step alt"><div class="num">3</div><b>Ưu đãi còn 12 giờ</b><p>Email nhắc sắp hết hạn, sau đó giá trở về bình thường.</p>${sw('emailWelcomeReminder', 'Email')}</div>
         </div>
         <div class="fg" style="margin-top:14px">
           ${num('firstOffLe', 'Đơn đầu: giảm Gói Lẻ', '', 'đ')}${num('firstOffCombo', 'Đơn đầu: giảm Gói Combo', '', 'đ')}${num('firstOffAll', 'Đơn đầu: giảm Trọn Bộ', '0 = không giảm gói đó', 'đ')}
-          ${num('firstAfterHours', 'Tặng ưu đãi sau khi đăng ký', '', 'giờ')}${num('firstHours', 'Ưu đãi đơn đầu kéo dài', '', 'giờ')}${num('abandonedAfterHours', 'Nhắc đơn chưa trả sau', '', 'giờ')}
+          ${num('firstAfterHours', 'Tặng ưu đãi sau khi đăng ký', '', 'giờ')}${num('firstHours', 'Ưu đãi đơn đầu kéo dài', '', 'giờ')}${num('abandonedAfterHours', 'Nhắc đơn chưa trả sau', '', 'giờ')}${num('abandonedAgainHours', 'Nhắc lại lần 2 sau lần 1', '', 'giờ')}
         </div>
       </div>
 

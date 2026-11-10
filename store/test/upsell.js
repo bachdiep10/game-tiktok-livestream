@@ -187,9 +187,11 @@ try {
   as('u4'); await j('POST', '/api/account/register', { name: 'Võ Bốn', phone: '0901000004', email: 'bon@x.vn', password: 'abcdef' });
   const o4 = await j('POST', '/api/orders', { planId: 'combo', games: (await j('GET', '/api/catalog')).games.slice(0, 3).map(g => g.id) });
   assert.equal((await j('GET', `/api/orders/${o4.code}?t=${o4.token}`)).order.amount, 229000);
+  as('u2'); const o2p = await j('POST', '/api/orders', { planId: 'le', games: ['chanh-dien'] });
+  as('u1'); const o1p = await j('POST', '/api/orders', { planId: 'le', games: ['chanh-dien'] }); // Trọn Bộ đã có sẵn game: không nhắc
   editDb(d => {
     for (const u of d.users) if (u.email === 'ba@x.vn' || u.email === 'bon@x.vn') u.createdAt -= 25 * 3600000;
-    d.orders.find(o => o.code === o4.code).createdAt -= 3 * 3600000;
+    for (const c of [o4.code, o2p.code, o1p.code]) d.orders.find(o => o.code === c).createdAt -= 3 * 3600000;
   });
   as('admin');
   let n0 = mails.length;
@@ -201,6 +203,8 @@ try {
   const aBon = fresh.filter(x => x.to === 'bon@x.vn');
   assert.equal(aBon.length, 1); assert.match(aBon[0].subject, new RegExp(`#${o4.code}`));
   assert.match(decodeURIComponent(aBon[0].html), new RegExp(`don-hang\\.html\\?code=${o4.code}&t=${o4.token}`));
+  assert.ok(fresh.some(x => x.to === 'hai@x.vn' && new RegExp(`#${o2p.code}`).test(x.subject)), 'khách đã từng mua cũng được nhắc đơn');
+  assert.ok(!fresh.some(x => x.to === 'mot@x.vn' && /chưa hoàn tất/.test(x.subject)), 'đã có sẵn game: không nhắc');
   n0 = mails.length;
   r = await j('POST', '/api/admin/upsell/run', {});
   assert.equal(mails.length, n0, 'không gửi dồn email ngay sau email nhắc đơn');
@@ -228,6 +232,17 @@ try {
   as('admin');
   n0 = mails.length;
   await j('POST', '/api/admin/upsell/run', {});
+  fresh = mails.slice(n0).map(decode);
+  const again = fresh.filter(x => x.to === 'bon@x.vn');
+  assert.equal(again.length, 1, JSON.stringify(again.map(x => x.subject))); assert.match(again[0].subject, /vẫn đang chờ/); assert.match(again[0].subject, new RegExp(`#${o4.code}`));
+  assert.ok(fresh.some(x => x.to === 'hai@x.vn' && /vẫn đang chờ/.test(x.subject)), 'nhắc lại lần 2 cho khách cũ');
+  n0 = mails.length;
+  await j('POST', '/api/admin/upsell/run', {});
+  assert.equal(mails.slice(n0).map(decode).filter(x => /vẫn đang chờ/.test(x.subject)).length, 0, 'tối đa 2 lần nhắc');
+  step('chưa trả sau 1 ngày: nhắc lại lần 2 (cả khách đã từng mua), không nhắc lần 3');
+  editDb(d => { for (const o of d.orders) if (o.mailedAbandoned2) o.mailedAbandoned2 -= 25 * 3600000; });
+  n0 = mails.length;
+  await j('POST', '/api/admin/upsell/run', {});
   fresh = mails.slice(n0).map(decode).filter(x => x.to === 'bon@x.vn');
   assert.equal(fresh.length, 1, JSON.stringify(fresh.map(x => x.subject))); assert.match(fresh[0].subject, /hết hạn/); assert.match(fresh[0].text, /199K/);
   editDb(d => { d.users.find(x => x.email === 'bon@x.vn').firstStart -= 8 * 3600000; });
@@ -241,7 +256,7 @@ try {
   const rep2 = (await j('GET', '/api/admin/upsell')).report;
   assert.equal(rep2.first.orders, 1); assert.equal(rep2.first.revenue, 199000); assert.equal(rep2.first.nonBuyers, 1); assert.equal(rep2.first.offered, 2);
   assert.equal(rep2.bySource['popup:don-dau'].revenue, 199000);
-  assert.equal(rep2.emails.find(e => e.type === 'welcome').sent, 1); assert.equal(rep2.emails.find(e => e.type === 'abandoned').sent, 1);
+  assert.equal(rep2.emails.find(e => e.type === 'welcome').sent, 1); assert.equal(rep2.emails.find(e => e.type === 'abandoned').sent, 2); assert.equal(rep2.emails.find(e => e.type === 'abandonedAgain').sent, 2);
   const prev2 = await j('POST', '/api/admin/upsell/preview', { type: 'welcome' });
   assert.match(prev2.subject, /giảm đến 100K/); assert.doesNotMatch(prev2.html, /\{gia_dau/);
   step('báo cáo khách chưa mua: đơn nhờ ưu đãi, doanh thu, nguồn popup:don-dau; xem trước email ưu đãi đơn đầu');
