@@ -47,8 +47,6 @@ export const CAU_HOI = [
   ['Tiếng Việt', 2, 2, 'Từ cùng nghĩa với "chăm chỉ" là gì?', 'siêng năng', 'lười biếng', 'thông minh', 'nhanh nhẹn'],
   ['Tiếng Việt', 2, 2, 'Câu "Em là học sinh lớp 2." thuộc kiểu câu nào?', 'Ai là gì?', 'Ai làm gì?', 'Ai thế nào?', 'Câu hỏi'],
   ['Tiếng Việt', 3, 2, 'Từ nào là từ chỉ đặc điểm?', 'thông minh', 'học bài', 'cái bút', 'nhảy dây'],
-  ['Tiếng Việt', 3, 2, 'Điền vào chỗ trống: "Chậm như ..."', 'rùa', 'thỏ', 'sóc', 'chim'],
-  ['Tiếng Việt', 3, 2, 'Điền vào chỗ trống: "Khoẻ như ..."', 'voi', 'mèo', 'chuột', 'gà'],
   ['Tiếng Việt', 3, 2, 'Điền vào chỗ trống: "Nhát như ..."', 'thỏ đế', 'cọp', 'sư tử', 'trâu'],
   ['Tiếng Việt', 3, 3, 'Từ nào viết đúng chính tả?', 'sáng sủa', 'xáng xủa', 'sáng xủa', 'xáng sủa'],
   ['Tiếng Việt', 3, 3, 'Chọn từ viết đúng chính tả:', 'giản dị', 'dản dị', 'giản gị', 'rản rị'],
@@ -171,7 +169,6 @@ export const CAU_HOI = [
 
   // ---------------------------------------------------------------- ĐỐ MẸO (loại "meo": cả lớp cãi nhau)
   ['Đố mẹo', 1, 1, 'Con gì đầu dê mình ốc?', 'Con dốc', 'Con dê', 'Con ốc', 'Con sên', 'Ghép "d" của dê với "ốc" thành "dốc".', 'meo'],
-  ['Đố mẹo', 1, 1, 'Con gì càng to càng nhỏ?', 'Con cua', 'Con voi', 'Con kiến', 'Con cá', 'Càng (chân) cua to thì con cua... vẫn nhỏ!', 'meo'],
   ['Đố mẹo', 1, 2, 'Cái gì càng gọt càng ngắn?', 'Bút chì', 'Sợi dây', 'Cái thước', 'Quyển vở', 'Gọt bút chì nhiều thì bút ngắn dần.', 'meo'],
   ['Đố mẹo', 1, 2, 'Cái gì của bạn nhưng người khác dùng nhiều hơn bạn?', 'Cái tên', 'Cái áo', 'Cái bút', 'Cái cặp', 'Người khác gọi tên bạn nhiều hơn bạn tự gọi.', 'meo'],
   ['Đố mẹo', 1, 2, 'Có 3 quả táo, bạn lấy đi 2 quả. Bạn có mấy quả?', '2 quả', '1 quả', '3 quả', '0 quả', 'Bạn lấy 2 quả thì bạn có 2 quả.', 'meo'],
@@ -202,16 +199,10 @@ export const CAU_HOI = [
   ['Đố dân gian', 3, 2, 'Vừa bằng hạt đỗ, ăn giỗ cả làng. Là con gì?', 'Con ruồi', 'Con kiến', 'Con chuột', 'Con mèo', 'Nhà nào có cỗ là ruồi bay đến "ăn ké".', 'meo'],
   ['Đố dân gian', 3, 2, 'Bỏ ngoài nướng trong, ăn ngoài bỏ trong. Là gì?', 'Bắp ngô', 'Củ khoai', 'Quả trứng', 'Con cá', 'Bóc vỏ ngoài đem nướng, ăn hạt bên ngoài, bỏ lõi bên trong.', 'meo'],
   ['Đố dân gian', 3, 2, 'Cổ cao cao, cẳng cao cao, chân đen đen, mình trắng phau, đứng trong đồng. Là con gì?', 'Con cò', 'Con vịt', 'Con ngỗng', 'Con công', 'Con cò trắng đứng bắt tép ngoài ruộng.', 'meo'],
-  ['Đố dân gian', 3, 2, 'Bốn chân như bốn cột đình, hai tai ve vẩy, cái vòi đung đưa. Là con gì?', 'Con voi', 'Con trâu', 'Con ngựa', 'Con tê giác', 'Chỉ có voi mới có vòi dài.', 'meo'],
-  ['Đố dân gian', 3, 2, 'Con gì ăn no, bụng to mắt híp, mồm kêu ụt ịt, nằm thở phì phò?', 'Con lợn', 'Con trâu', 'Con chó', 'Con gấu', 'Lợn ăn no là lăn ra ngủ.', 'meo'],
-  ['Đố dân gian', 3, 2, 'Con gì đuôi ngắn tai dài, mắt hồng lông mượt, có tài chạy nhanh?', 'Con thỏ', 'Con chuột', 'Con mèo', 'Con sóc', 'Thỏ tai dài, mắt hồng, chạy rất nhanh.', 'meo'],
-  ['Đố dân gian', 3, 2, 'Con gì nhảy nhót leo trèo, mình đầy lông lá, nhăn nheo làm trò?', 'Con khỉ', 'Con sóc', 'Con mèo', 'Con gấu', 'Khỉ leo trèo giỏi và hay làm trò.', 'meo'],
   ['Đố dân gian', 3, 2, 'Hoa gì nở giữa mùa hè, trong đầm thơm ngát, lá xòe tròn xinh?', 'Hoa sen', 'Hoa súng', 'Hoa phượng', 'Hoa cúc', 'Sen nở mùa hè trong đầm, lá tròn to.', 'meo'],
   ['Đố dân gian', 3, 3, 'Cây gì gai mọc đầy mình, tên gọi như thể bồng bềnh bay lên, làm ra bàn ghế đẹp duyên bao người?', 'Cây mây', 'Cây tre', 'Cây xương rồng', 'Cây hoa hồng', '"Mây" như mây bay trên trời, thân có gai, đan bàn ghế.', 'meo'],
   ['Đố dân gian', 3, 3, 'Mình tròn áo xanh, ruột đỏ hạt đen, gắn với sự tích Mai An Tiêm. Là quả gì?', 'Quả dưa hấu', 'Quả thanh long', 'Quả gấc', 'Quả bưởi', 'Mai An Tiêm trồng dưa hấu trên đảo hoang.', 'meo'],
-  ['Đố dân gian', 3, 3, 'Có mắt mà không có mày, không tay không chân mà bơi rất tài. Là con gì?', 'Con cá', 'Con rắn', 'Con ếch', 'Con tôm', 'Cá có mắt nhưng không có lông mày.', 'meo'],
   ['Đố dân gian', 3, 3, 'Mặt tròn mặt méo, mặt đỏ mặt xanh, đứng giữa phố phường, có ba con mắt. Là gì?', 'Cột đèn giao thông', 'Mặt trời', 'Cái đồng hồ', 'Ông Táo', 'Đèn giao thông có 3 "mắt": xanh, vàng, đỏ.', 'meo'],
-  ['Đố dân gian', 3, 3, 'Con gì mào đỏ, lông mượt như tơ, sáng sớm tinh mơ gọi người thức dậy?', 'Con gà trống', 'Con chim sẻ', 'Con vịt', 'Con chim công', 'Gà trống gáy ò ó o mỗi sáng.', 'meo'],
   // ---------------------------------------------------------------- ĐỐ MẸO KHÓ (bẫy suy luận)
   ['Đố mẹo', 4, 3, 'Trong cuộc đua, bạn vượt qua người đang đứng thứ 2. Bây giờ bạn đứng thứ mấy?', 'Thứ 2', 'Thứ 1', 'Thứ 3', 'Cuối cùng', 'Bạn chiếm chỗ của người thứ 2, người thứ 1 vẫn ở trước.', 'meo'],
   ['Đố mẹo', 4, 3, 'Có 5 cây nến đang cháy, gió thổi tắt 2 cây. Cuối cùng còn lại mấy cây nến?', '2 cây', '3 cây', '5 cây', '0 cây', '3 cây còn cháy sẽ cháy hết, chỉ 2 cây bị tắt là còn lại.', 'meo'],
