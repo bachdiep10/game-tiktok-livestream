@@ -190,6 +190,18 @@ export const GUIDE_LOP_HOC = `1. Cài Node.js bản LTS tại nodejs.org (chỉ 
 10. Bấm đúp mo-cua-so-lop-hoc.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_GO_BOM = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\GoBom. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-go-bom.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm A, B, C, D, "Chọn đúng dây", "Thả tim", "đốt", "Chia sẻ"... để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối. Ô vàng cho bạn xem trước dây đúng để dẫn chương trình.
+6. Mỗi quả bom buộc trên một boss (chó, mèo) bị trói trên ghế. Bảng mạch có 3–5 dây rối nối từ chữ A, B, C, D, E xuống các cọc 1, 2, 3... mở lần lượt. Người xem dò dây nối vào cọc đang sáng rồi bình luận chữ của dây đó (gõ "b", "cắt b", "chọn b" đều được). Hết 20 giây bỏ phiếu thì cắt dây nhiều phiếu nhất. Cắt đúng hết các cọc là cứu được boss.
+7. Cắt sai không nổ ngay: đồng hồ chạy nhanh gấp rưỡi, sai lần 2 chạy gấp đôi, sai lần 3 thì nổ. Cắt đúng 2 dây liên tiếp thì đồng hồ chậm lại. Hết giờ cũng nổ. Cứ 5 quả có một BOM TRÙM 5 dây với tấm che.
+8. Boss đổi biểu cảm theo đồng hồ (tự tin, lo lắng, hốt hoảng, khóc, cầu nguyện, thở phào, bị nổ) và mắng gọi đích danh người chơi. Thả tim: cộng giây. Bình luận "đốt": trừ giây (boss chửi đích danh người đốt). Chia sẻ: đèn pin soi đúng dây. Theo dõi: áo giáp + điểm. Quà (không bắt buộc): đóng băng đồng hồ; quà từ 99 xu: kìm vàng tự cắt đúng.
+9. NHỮNG CHỖ BẠN TỰ ĐỔI ĐƯỢC (xem thêm file HUONG-DAN-TUY-CHINH-GO-BOM.txt): thời gian mỗi quả bom, số dây theo cấp, số giây bỏ phiếu, tốc độ khi cắt sai, số tim đổi 1 giây, số giây bị đốt, tên và câu thoại từng boss, giọng nam/nữ: sửa config-go-bom.json bằng Notepad rồi bấm F5. Ảnh boss: mỗi boss một thư mục trong public\\assets\\go-bom với 8 ảnh biểu cảm, chép đè ảnh cùng tên hoặc thêm boss mới. Nhạc: chép MP3 vào public\\assets\\nhac-go-bom (để trống = nhạc hồi hộp tự tạo, nhanh dần khi bom sắp nổ).
+10. Bấm đúp mo-cua-so-go-bom.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 const DEFAULT_GAMES = [
   {
     id: 'chanh-dien', name: 'Chánh Điện Lễ Phật',
@@ -317,6 +329,16 @@ const DEFAULT_GAMES = [
     guide: GUIDE_LOP_HOC, guideVideo: '', rev: 1,
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 14, isNew: true,
+  },
+  {
+    id: 'go-bom', name: 'Gỡ Bom Cứu Boss',
+    tagline: 'Boss chó mèo bị trói với quả bom, cả phòng LIVE dò dây rối và comment chữ để cắt đúng dây',
+    description: 'Mỗi quả bom buộc trên một boss chó mèo bị trói trên ghế. Bảng mạch có 3–5 dây rối, cọc mở lần lượt: người xem dò dây nối vào cọc đang sáng rồi bình luận A, B, C, D để bỏ phiếu cắt. Boss lo lắng, hốt hoảng, khóc lóc theo đồng hồ và mắng gọi tên người chơi. Cắt sai đồng hồ chạy nhanh gấp rưỡi, gấp đôi, sai 3 lần là BÙM. Thả tim cộng giây, comment "đốt" trừ giây, chia sẻ bật đèn pin soi dây, theo dõi được áo giáp. Cứu xong boss này, boss khác bị trói vào.',
+    features: ['4 boss chó mèo, mỗi con 8 biểu cảm', 'Dò dây rối, cọc mở lần lượt, bom trùm có tấm che', 'Boss mắng, cảm ơn, gọi tên người chơi bằng giọng AI', 'Cắt sai đồng hồ chạy nhanh, sai 3 lần là nổ', 'Thả tim +giây, comment "đốt" −giây: đội Cứu đấu đội Phá', 'Chia sẻ = đèn pin, theo dõi = áo giáp, không cần quà'],
+    image: '/media/go-bom.jpg', video: '/media/go-bom.mp4', download: '', version: '2.10.0',
+    guide: GUIDE_GO_BOM, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 15, isNew: true,
   },
 ];
 

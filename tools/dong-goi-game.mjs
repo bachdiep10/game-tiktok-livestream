@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH, GUIDE_LEO_NUI, GUIDE_GIEO_QUE, GUIDE_LOP_HOC } from '../store/lib/db.js';
+import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH, GUIDE_LEO_NUI, GUIDE_GIEO_QUE, GUIDE_LOP_HOC, GUIDE_GO_BOM } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const args = process.argv.slice(2);
@@ -91,6 +91,11 @@ const PRODUCTS = {
     name: 'Bạn Có Giỏi Hơn Học Sinh Lớp 5', folder: 'LopHoc', control: '/lop-hoc-control.html', guide: GUIDE_LOP_HOC,
     files: ['run-lop-hoc.bat', 'mo-cua-so-lop-hoc.bat', 'config-lop-hoc.json', 'HUONG-DAN-TUY-CHINH.txt', 'public/lop-hoc.html', 'public/lop-hoc-control.html', 'public/lop-hoc-de-thi.html',
       'public/js/lop-hoc', 'public/assets/lop-hoc', 'public/assets/nhac-lop-hoc'],
+  },
+  'go-bom': {
+    name: 'Gỡ Bom Cứu Boss', folder: 'GoBom', control: '/go-bom-control.html', guide: GUIDE_GO_BOM,
+    files: ['run-go-bom.bat', 'mo-cua-so-go-bom.bat', 'config-go-bom.json', 'HUONG-DAN-TUY-CHINH-GO-BOM.txt', 'public/go-bom.html', 'public/go-bom-control.html',
+      'public/js/go-bom', 'public/assets/go-bom', 'public/assets/nhac-go-bom'],
   },
 };
 

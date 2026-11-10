@@ -22,6 +22,64 @@ const GAMES = {
   'duoi-hinh': { page: 'duoi-hinh.html', control: 'duoi-hinh-control.html', sec: 40 },
   'leo-nui': { page: 'leo-nui.html', control: 'leo-nui-control.html', sec: 40 },
   'lop-hoc': { page: 'lop-hoc.html', control: 'lop-hoc-control.html', sec: 55 },
+  'go-bom': { page: 'go-bom.html', control: 'go-bom-control.html', sec: 92, script: async () => {
+    // kịch bản demo cố định: cứu được 1 boss (có cắt sai 1 lần), boss sau cắt sai 3 lần thì nổ
+    const G = window.__goBom;
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    const names = ['Tuấn', 'Hoa', 'Nam Béo', 'Linh', 'Minh', 'Lan', 'Quân', 'Thảo', 'Hùng', 'Vy'];
+    const U = (i) => ({ id: `demo${i}`, name: names[i % names.length] });
+    const ev = (e) => G.handleEvent(e);
+    const pickVotes = async (ok, bad, from = 0) => {
+      const list = [...Array(ok).fill('correct'), ...Array(bad).fill('wrong')].sort(() => Math.random() - 0.5);
+      for (let i = 0; i < list.length; i++) { ev({ type: 'simVote', user: U(from + i), opt: list[i] }); await sleep(450); }
+    };
+    // chờ tới lượt bỏ phiếu MỚI (khác bom / cọc / số lần sai so với lượt trước)
+    let lastKey = '';
+    const keyOf = (st) => `${st.bombNo}-${st.stage}-${st.wrongs}`;
+    const nextVote = async (max = 40000) => {
+      const t = Date.now();
+      while (Date.now() - t < max) {
+        const st = G.state();
+        if (st.phase === 'vote' && keyOf(st) !== lastKey) { lastKey = keyOf(st); return; }
+        await sleep(100);
+      }
+    };
+    const cut = async (ms = 800) => { await sleep(ms); if (G.state().phase === 'vote') ev({ type: 'skip' }); };
+    await nextVote();
+    ev({ type: 'join', user: U(9) });
+    for (let i = 0; i < 4; i++) { ev({ type: 'like', user: U(i), count: 10 }); await sleep(300); }
+    await pickVotes(3, 1);
+    ev({ type: 'chat', user: U(8), text: 'đốt' });
+    await sleep(1800);
+    ev({ type: 'share', user: U(5) });
+    await sleep(1200);
+    await pickVotes(1, 0, 6);
+    await cut(1500);
+    await nextVote();
+    await pickVotes(1, 5);
+    await cut(1500);
+    await nextVote();
+    ev({ type: 'follow', user: U(3) });
+    await pickVotes(5, 1);
+    await cut(1200);
+    await nextVote();
+    await pickVotes(6, 0, 2);
+    await cut(800);
+    await nextVote();
+    G.setLeft(40);
+    for (let i = 0; i < 3; i++) { ev({ type: 'like', user: U(i + 4), count: 5 }); await sleep(300); }
+    await pickVotes(1, 5);
+    await cut(800);
+    await nextVote();
+    ev({ type: 'chat', user: U(7), text: 'đốt' });
+    await pickVotes(2, 4, 3);
+    await cut(800);
+    await nextVote();
+    G.setLeft(12);
+    await sleep(2500);
+    await pickVotes(1, 4, 1);
+    await cut(800);
+  } },
 };
 const outDir = path.resolve(process.argv[2] || 'video-demo');
 const pick = process.argv.slice(3);
@@ -91,8 +149,9 @@ try {
     await control.waitForTimeout(500);
     const bulk = control.locator('[data-bulk]').first();
     if (await bulk.count()) await bulk.click();
-    await control.locator('#btnAuto').click();
-    await game.waitForTimeout(6000);
+    if (g.script) game.evaluate(g.script).catch((e) => console.warn('kịch bản demo:', e.message));
+    else await control.locator('#btnAuto').click();
+    await game.waitForTimeout(g.script ? 3000 : 6000);
     const { b64, start } = await game.evaluate(async (sec) => {
       const rec = new MediaRecorder(window.__recAudio, { mimeType: 'audio/webm;codecs=opus', audioBitsPerSecond: 192000 });
       const chunks = [];
@@ -109,7 +168,7 @@ try {
       for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000));
       return { b64: btoa(s), start };
     }, g.sec);
-    await control.locator('#btnAuto').click().catch(() => {});
+    if (!g.script) await control.locator('#btnAuto').click().catch(() => {});
     const vid = await game.video().path();
     await ctx.close();
     await ctxC.close();

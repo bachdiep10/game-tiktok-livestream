@@ -1,0 +1,132 @@
+{
+  "_ghi_chu": "FILE CẤU HÌNH GAME GỠ BOM CỨU BOSS. Sửa bằng Notepad, giữ nguyên dấu ngoặc kép và dấu phẩy, lưu lại rồi bấm F5 ở trang game. Các dòng bắt đầu bằng _ghi_chu chỉ là lời giải thích.",
+  "title": "GỠ BOM CỨU BOSS",
+  "_ghi_chu_thoi_gian": "bombSeconds: tổng số giây của mỗi quả bom theo cấp (cấp 1, 2, 3, 4 trở lên). bossBombSeconds: số giây của bom trùm. wiresByLevel: số dây (= số cọc phải cắt) theo cấp, từ 3 đến 5. voteSeconds: số giây bỏ phiếu cho mỗi cọc. earlyCutVotes: đủ bao nhiêu phiếu và một dây dẫn rõ thì chốt sớm (0 = tắt). suspenseSeconds: số giây hồi hộp trước khi cắt.",
+  "bombSeconds": [
+    120,
+    150,
+    150,
+    180
+  ],
+  "bossBombSeconds": 210,
+  "wiresByLevel": [
+    3,
+    4,
+    4,
+    5
+  ],
+  "voteSeconds": 20,
+  "earlyCutVotes": 6,
+  "suspenseSeconds": 2.2,
+  "_ghi_chu_cat_sai": "wrongSpeeds: tốc độ đồng hồ sau 0, 1, 2 lần cắt sai. maxWrong: cắt sai bao nhiêu lần thì nổ. correctToCalm: cắt đúng liên tiếp bao nhiêu dây thì đồng hồ chậm lại một bậc. bossEvery: cứ bao nhiêu quả thì có một bom trùm (5 dây, có tấm che).",
+  "wrongSpeeds": [
+    1,
+    1.5,
+    2
+  ],
+  "maxWrong": 3,
+  "correctToCalm": 2,
+  "bossEvery": 5,
+  "_ghi_chu_tuong_tac": "likesPerSecond: bao nhiêu tim thì cộng 1 giây. likeMaxSecondsPerUser: mỗi người cộng tối đa bao nhiêu giây mỗi quả bom. burnSeconds: bình luận 'đốt' trừ mấy giây. burnMaxPerUser: mỗi người đốt được mấy lần mỗi quả. burnFloorSeconds: đồng hồ còn ít hơn số này thì không đốt được nữa. flashlightSeconds: chia sẻ bật đèn pin mấy giây. giftFreezeSeconds: quà đóng băng đồng hồ mấy giây. bigGiftCoins: quà từ bao nhiêu xu thì được kìm vàng tự cắt đúng.",
+  "likesPerSecond": 5,
+  "likeMaxSecondsPerUser": 8,
+  "burnSeconds": 3,
+  "burnMaxPerUser": 1,
+  "burnFloorSeconds": 6,
+  "flashlightSeconds": 4,
+  "followPoints": 5,
+  "giftFreezeSeconds": 10,
+  "bigGiftCoins": 99,
+  "points": 10,
+  "firstBonus": 5,
+  "_ghi_chu_boss": "hostages: danh sách boss bị trói, lần lượt từng con. id = tên thư mục ảnh trong public/assets/go-bom (mỗi thư mục 8 ảnh: tu-tin, lo-lang, hot-hoang, mang, khoc, cau-nguyen, tho-phao, bi-no .webp). voice: vi-VN-NamMinhNeural (nam) hoặc vi-VN-HoaiMyNeural (nữ). lines: câu thoại riêng (intro = lúc mới vào, cry = sắp nổ, saved = được cứu). hostageOrder: 'lan-luot' hoặc 'ngau-nhien'.",
+  "hostageOrder": "lan-luot",
+  "hostages": [
+    {
+      "id": "shiba",
+      "name": "Chú Tư Shiba",
+      "voice": "vi-VN-NamMinhNeural",
+      "lines": {
+        "intro": [
+          "Bọn bắt cóc trói chú ở đây từ sáng, chưa kịp chạy cuốc xe nào!",
+          "Chú Tư đây! Cứu chú với, chiều chú còn phải chở khách!"
+        ],
+        "cry": [
+          "Chú còn chưa trả xong tiền góp xe!!!",
+          "Vợ ơi anh xin lỗi vụ trốn đi nhậu!!!"
+        ],
+        "saved": [
+          "Sống rồi! Tối nay chú chở cả phòng miễn phí!",
+          "Chú Tư sống rồi! Đi nhậu ăn mừng thôi!"
+        ]
+      }
+    },
+    {
+      "id": "meo",
+      "name": "Bé Mướp",
+      "voice": "vi-VN-HoaiMyNeural",
+      "lines": {
+        "intro": [
+          "Bé Mướp đây! Ai trói bé thế này, bé cào cho bây giờ!",
+          "Cứu bé với, bé còn chưa ăn pate sáng nay!"
+        ],
+        "cry": [
+          "Bé còn chín mạng mà sao thấy sắp hết mạng rồi!!!",
+          "Huhu bé chưa kịp ngủ trưa!!!"
+        ],
+        "saved": [
+          "Bé sống rồi! Tối nay bé cho mọi người vuốt lông!",
+          "Cảm ơn cả nhà, bé thương lắm luôn!"
+        ]
+      }
+    },
+    {
+      "id": "cun",
+      "name": "Anh Lu Lì Lợm",
+      "voice": "vi-VN-NamMinhNeural",
+      "lines": {
+        "intro": [
+          "Anh Lu đây! Trói anh thế này anh sủa cả xóm dậy bây giờ!",
+          "Gâu! Ai thả anh ra, anh cho gặm xương chung!"
+        ],
+        "cry": [
+          "Anh còn giấu cục xương ngoài vườn chưa kịp gặm!!!",
+          "Gâu gâu… anh sợ quá rồi!!!"
+        ],
+        "saved": [
+          "Gâu! Anh sống rồi! Ra vườn đào xương thôi!",
+          "Ân nhân của anh đây rồi!"
+        ]
+      }
+    },
+    {
+      "id": "golden",
+      "name": "Bếp Trưởng Bơ",
+      "voice": "vi-VN-NamMinhNeural",
+      "lines": {
+        "intro": [
+          "Bếp trưởng Bơ đây! Nồi phở còn đang sôi ở nhà, cứu tôi nhanh lên!",
+          "Tôi chỉ là con chó nấu ăn hiền lành thôi mà!"
+        ],
+        "cry": [
+          "Nồi canh của tôi trào hết rồi!!!",
+          "Tôi chưa kịp dạy ai công thức nước dùng!!!"
+        ],
+        "saved": [
+          "Sống rồi! Tối nay tôi nấu cho cả phòng một nồi lẩu!",
+          "Cảm ơn mọi người, mai ghé quán tôi ăn miễn phí!"
+        ]
+      }
+    }
+  ],
+  "_ghi_chu_am_thanh": "sound: tiếng hiệu ứng. music: nhạc nền (để trống thư mục public/assets/nhac-go-bom = nhạc hồi hộp tự tạo, nhanh dần khi bom sắp nổ). voice: boss nói bằng giọng AI (cần mạng). voiceJoin: chào người mới vào. chatterSeconds: bao lâu boss tự nói một câu.",
+  "sound": true,
+  "music": true,
+  "musicFiles": [],
+  "musicVolume": 0.22,
+  "voice": true,
+  "voiceEngine": "auto",
+  "voiceJoin": true,
+  "chatterSeconds": 9,
+  "_ghi_chu_cau_thoai": "messages: muốn sửa câu thoại chung (mắng, cảm ơn, cầu nguyện...) thì thêm mục messages, ví dụ \"messages\": { \"burn\": [\"{ten}! Đốt giờ của tôi à?!\"] }. {ten} = tên người xem. Xem HUONG-DAN-TUY-CHINH-GO-BOM.txt."
+}

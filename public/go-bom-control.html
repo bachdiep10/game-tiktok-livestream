@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bảng điều khiển · Gỡ bom cứu Boss</title>
+  <link rel="stylesheet" href="css/control.css">
+  <style>
+    body { background: #160f26; color: #f1ecff; }
+    .panel { background: #221838; border-color: #4a3577; }
+    h1 { color: #ffb74d; }
+    h2 { color: #b39ddb; }
+    .status { background: #2e2150; }
+    input, code, .log, select { background: #0e0919; border-color: #4a3577; color: #f1ecff; }
+    button { background: #3b2c66; border-color: #5b46a0; }
+    button:hover { background: #4a3880; }
+    button.primary { background: #c62828; border-color: #ef5350; }
+    .answer { margin: 10px 0; padding: 12px 14px; border-radius: 12px; background: #3b2a00; border: 2px dashed #ffb300; font-size: 18px; }
+    .answer b { color: #ffd54a; font-size: 26px; }
+    .abcd { grid-template-columns: repeat(5, 1fr); }
+    .abcd button { font-size: 20px; font-weight: 800; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="panel">
+      <h1>💣 Gỡ bom cứu Boss · LIVE</h1>
+      <div id="status" class="status">Đang kết nối máy chủ...</div>
+      <div class="answer">🤫 Dây đúng của cọc đang mở (chỉ bạn thấy): <b id="answer">...</b><br><span id="answerInfo" class="hint">chưa mở cửa sổ game</span></div>
+
+      <h2>1. Kết nối TikTok LIVE</h2>
+      <div class="row">
+        <input id="username" placeholder="Tên TikTok, ví dụ: tranvankhai99" autocomplete="off">
+        <button id="btnConnect" class="primary">Kết nối</button>
+        <button id="btnDisconnect">Ngắt</button>
+      </div>
+      <p class="hint">Bạn phải đang phát LIVE thì mới kết nối được. Nhập username (không cần @).</p>
+      <details open>
+        <summary class="hint">Nhật ký sự kiện nhận từ TikTok</summary>
+        <ul id="eventLog" class="log"><li class="hint">Chưa có sự kiện nào.</li></ul>
+      </details>
+
+      <h2>2. Điều khiển</h2>
+      <div class="grid">
+        <button data-sim="skip">✂️ Chốt phiếu cắt ngay</button>
+        <button data-sim="pause">⏯ Tạm dừng / chơi tiếp</button>
+        <button data-sim="nextBomb">💣 Đổi boss + bom mới</button>
+        <button data-sim="testBoom">💥 Thử cho nổ</button>
+        <button data-sim="testSave">🎉 Thử cứu xong</button>
+        <button data-sim="reset" class="danger">🧹 Xoá bảng điểm</button>
+      </div>
+
+      <h2>3. Giả lập (Test Lab)</h2>
+      <div class="row">
+        <input id="simName" placeholder="Tên người xem (để trống = ngẫu nhiên)">
+      </div>
+      <div class="grid abcd">
+        <button data-ans="A">A</button>
+        <button data-ans="B">B</button>
+        <button data-ans="C">C</button>
+        <button data-ans="D">D</button>
+        <button data-ans="E">E</button>
+      </div>
+      <div class="grid">
+        <button data-sim="join">👋 Người vào phòng</button>
+        <button data-sim="correct">✅ Chọn đúng dây</button>
+        <button data-sim="wrong">❌ Chọn sai dây</button>
+        <button data-sim="burn">🔥 Comment "đốt"</button>
+        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="like15">❤️ x15</button>
+        <button data-sim="follow">⭐ Theo dõi (áo giáp)</button>
+        <button data-sim="share">📣 Chia sẻ (đèn pin)</button>
+        <button data-sim="gift1">🌹 Quà nhỏ (đóng băng)</button>
+        <button data-sim="gift100">🏆 Quà 99 xu (kìm vàng)</button>
+        <button data-sim="voiceTest">🔊 Thử giọng boss</button>
+      </div>
+      <div class="row">
+        <input id="customChat" placeholder="Gõ thử một bình luận (vd: cắt b, đốt)...">
+        <button id="btnChat">Gửi</button>
+      </div>
+
+      <h2>4. Thử tải nặng</h2>
+      <div class="grid">
+        <button data-bulk="10">+10 người vào phòng</button>
+        <button id="btnVoteAll">Cả phòng bỏ phiếu ngẫu nhiên</button>
+        <button id="btnAuto">▶ Tự chạy demo</button>
+      </div>
+
+      <h2>5. Thêm vào TikTok LIVE Studio / OBS</h2>
+      <p class="hint">Thêm nguồn <b>Trình duyệt (Browser source / Link)</b> với địa chỉ:</p>
+      <code id="gameUrl"></code>
+      <p class="hint">Kích thước 1080 × 1920 (khung dọc). Hoặc chạy <b>mo-cua-so-go-bom.bat</b> để mở game trong cửa sổ Edge riêng rồi dùng "Chụp cửa sổ" (Window capture).</p>
+      <p class="hint" id="musicInfo">Đang kiểm tra thư mục nhạc...</p>
+      <p class="hint">Chỉnh thời gian bom, số dây, số giây mỗi lượt thả tim / đốt, tên và câu thoại của từng boss trong file <b>config-go-bom.json</b>. Đổi ảnh boss: chép đè ảnh cùng tên trong <b>public/assets/go-bom</b>.</p>
+    </section>
+
+    <section class="preview">
+      <iframe id="preview" title="Xem trước" src="about:blank" allow="autoplay"></iframe>
+      <label class="toggle"><input type="checkbox" id="previewSound"> 🔊 Bật tiếng ở khung xem trước</label>
+      <p class="hint">Khi đã thêm game vào LIVE Studio/OBS thì tắt ô này để không bị phát tiếng hai lần.</p>
+    </section>
+  </main>
+  <script type="module" src="js/go-bom/gbControl.js"></script>
+  <script src="js/amLuongControl.js"></script>
+  <script src="js/guongXemTruoc.js"></script>
+</body>
+</html>

@@ -22,6 +22,7 @@ const DUOI_HINH_CONFIG_PATH = path.join(__dirname, 'config-duoi-hinh.json');
 const LEO_NUI_CONFIG_PATH = path.join(__dirname, 'config-leo-nui.json');
 const GIEO_QUE_CONFIG_PATH = path.join(__dirname, 'config-gieo-que.json');
 const LOP_HOC_CONFIG_PATH = path.join(__dirname, 'config-lop-hoc.json');
+const GO_BOM_CONFIG_PATH = path.join(__dirname, 'config-go-bom.json');
 // Câu hỏi Sếp tự thêm cho game Lớp học: file riêng, KHÔNG nằm trong bản cập nhật nên cập nhật game không mất câu hỏi
 const LOP_HOC_DE_THI_PATH = path.join(__dirname, 'de-thi-lop-hoc.json');
 
@@ -77,7 +78,7 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(loadConfig()));
     return;
   }
-  const MUSIC_FOLDERS = { '/chanh-dien-music.json': 'nhac-chanh-dien', '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca', '/dai-chien-music.json': 'nhac-dai-chien', '/bia-hoi-music.json': 'nhac-bia-hoi', '/dam-cuoi-music.json': 'nhac-dam-cuoi', '/tarot-music.json': 'nhac-tarot', '/duoi-hinh-music.json': 'nhac-duoi-hinh', '/leo-nui-music.json': 'nhac-leo-nui', '/gieo-que-music.json': 'nhac-gieo-que', '/lop-hoc-music.json': 'nhac-lop-hoc' };
+  const MUSIC_FOLDERS = { '/chanh-dien-music.json': 'nhac-chanh-dien', '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca', '/dai-chien-music.json': 'nhac-dai-chien', '/bia-hoi-music.json': 'nhac-bia-hoi', '/dam-cuoi-music.json': 'nhac-dam-cuoi', '/tarot-music.json': 'nhac-tarot', '/duoi-hinh-music.json': 'nhac-duoi-hinh', '/leo-nui-music.json': 'nhac-leo-nui', '/gieo-que-music.json': 'nhac-gieo-que', '/lop-hoc-music.json': 'nhac-lop-hoc', '/go-bom-music.json': 'nhac-go-bom' };
   if (MUSIC_FOLDERS[pathname]) {
     // danh sách bài hát trong thư mục nhạc của game (public/assets/nhac-bar, nhac-tra-da, nhac-rong-ran, nhac-cau-ca, nhac-dai-chien), xếp theo tên file
     const folder = MUSIC_FOLDERS[pathname];
@@ -206,6 +207,11 @@ const server = http.createServer(async (req, res) => {
   if (pathname === '/tarot-config.json') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(loadConfig(TAROT_CONFIG_PATH)));
+    return;
+  }
+  if (pathname === '/go-bom-config.json') {
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(loadConfig(GO_BOM_CONFIG_PATH)));
     return;
   }
   if (pathname === '/lop-hoc-config.json') {
@@ -381,7 +387,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '2.9.2';
+const VERSION = '2.10.0';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 const gate = createGate({
   rootDir: __dirname,
@@ -719,6 +725,7 @@ server.listen(PORT, '0.0.0.0', () => {
   if (has('gieo-que.html')) console.log(`  🎋 Gieo quẻ xin xăm (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/gieo-que.html   ·  điều khiển  http://127.0.0.1:${PORT}/gieo-que-control.html`);
   if (has('tarot.html')) console.log(`  🔮 Bói bài Tarot (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/tarot.html   ·  điều khiển  http://127.0.0.1:${PORT}/tarot-control.html`);
   if (has('duoi-hinh.html')) console.log(`  🧩 Đuổi hình bắt chữ (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/duoi-hinh.html   ·  điều khiển  http://127.0.0.1:${PORT}/duoi-hinh-control.html`);
+  if (has('go-bom.html')) console.log(`  💣 Gỡ bom cứu Boss (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/go-bom.html   ·  điều khiển  http://127.0.0.1:${PORT}/go-bom-control.html`);
   if (has('lop-hoc.html')) console.log(`  🏫 Bạn có giỏi hơn học sinh lớp 5? (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/lop-hoc.html   ·  điều khiển  http://127.0.0.1:${PORT}/lop-hoc-control.html`);
   if (has('bar.html')) console.log(`  🪩 Quán bar (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/bar.html   ·  điều khiển  http://127.0.0.1:${PORT}/bar-control.html`);
   console.log('');

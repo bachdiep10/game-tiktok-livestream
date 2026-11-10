@@ -1,0 +1,45 @@
+﻿HƯỚNG DẪN TỰ CHỈNH GAME GỠ BOM CỨU BOSS
+========================================
+Mọi chỗ chỉnh đều nằm trong file config-go-bom.json (mở bằng Notepad). Sửa xong bấm Lưu rồi bấm F5 ở cửa sổ game.
+Giữ nguyên dấu ngoặc kép " và dấu phẩy , giữa các dòng. Các dòng bắt đầu bằng _ghi_chu chỉ là lời giải thích.
+
+1. THỜI GIAN VÀ ĐỘ KHÓ
+ - bombSeconds: tổng số giây của mỗi quả bom theo cấp. [120, 150, 150, 180] = cấp 1 được 2 phút, cấp 2-3 được 2 phút rưỡi, cấp 4 trở lên 3 phút.
+ - wiresByLevel: số dây (cũng là số cọc phải cắt) theo cấp, từ 3 đến 5.
+ - voteSeconds: số giây bỏ phiếu cho mỗi cọc (mặc định 20).
+ - earlyCutVotes: đủ bao nhiêu phiếu và một dây dẫn rõ thì chốt sớm, 0 = luôn chờ hết giờ.
+ - Cứu được 1 boss thì lên 1 cấp (dây nhiều hơn, rối hơn, màu giống nhau hơn). Bom nổ thì xuống 1 cấp.
+ - bossEvery: cứ bao nhiêu quả thì có 1 BOM TRÙM (5 dây, có tấm che chỉ mở 2 giây mỗi 5 giây). bossBombSeconds: thời gian bom trùm.
+
+2. CẮT SAI
+ - wrongSpeeds: [1, 1.5, 2] = tốc độ đồng hồ sau 0, 1, 2 lần sai.
+ - maxWrong: sai bao nhiêu lần thì nổ (mặc định 3).
+ - correctToCalm: cắt đúng liên tiếp bao nhiêu dây thì đồng hồ chậm lại một bậc.
+
+3. THẢ TIM, ĐỐT GIÂY, CHIA SẺ, THEO DÕI, QUÀ
+ - likesPerSecond: bao nhiêu tim thì cộng 1 giây. likeMaxSecondsPerUser: mỗi người cộng tối đa bao nhiêu giây mỗi quả.
+ - burnSeconds: bình luận "đốt" trừ mấy giây. burnMaxPerUser: mỗi người đốt mấy lần mỗi quả. burnFloorSeconds: còn ít hơn số giây này thì không đốt được nữa.
+ - flashlightSeconds: chia sẻ bật đèn pin soi đúng dây trong mấy giây.
+ - followPoints: theo dõi được cộng mấy điểm (kèm áo giáp: bom nổ không mất chuỗi thắng).
+ - giftFreezeSeconds: quà bất kỳ đóng băng đồng hồ mấy giây. bigGiftCoins: quà từ bao nhiêu xu thì kìm vàng tự cắt đúng dây.
+ - points / firstBonus: điểm mỗi lần chọn đúng dây / thưởng thêm cho 3 người chọn đúng đầu tiên.
+
+4. BOSS (CON TIN)
+ - hostages: danh sách boss, chơi lần lượt (hostageOrder: "lan-luot") hoặc ngẫu nhiên ("ngau-nhien").
+ - Mỗi boss: id = tên thư mục ảnh trong public\assets\go-bom, name = tên hiện trên màn hình, voice = giọng nam vi-VN-NamMinhNeural hoặc nữ vi-VN-HoaiMyNeural.
+ - lines: câu thoại riêng của boss: intro (lúc mới bị trói vào), cry (sắp nổ), saved (được cứu).
+ - THÊM BOSS MỚI: tạo thư mục mới trong public\assets\go-bom (ví dụ "heo"), bỏ vào 8 ảnh nền trong suốt, định dạng .webp, đúng tên:
+   tu-tin.webp, lo-lang.webp, hot-hoang.webp, mang.webp, khoc.webp, cau-nguyen.webp, tho-phao.webp, bi-no.webp
+   rồi thêm một mục { "id": "heo", "name": "Cô Heo", "voice": "vi-VN-HoaiMyNeural" } vào hostages.
+
+5. CÂU THOẠI CHUNG
+ Thêm mục "messages" để thay câu thoại chung, {ten} là tên người xem. Các nhóm câu:
+ intro, calm (bình tĩnh), worried (lo lắng), panic (hốt hoảng), cry (khóc), noVote (không ai chọn), fewVotes, split (phiếu sát nút),
+ likerNoVote (thả tim mà không chọn), flip (đổi ý), burn (bị đốt giây), thankLike, thankShare, thankFollow, thankGift, bigGift,
+ pray (trước khi cắt), correct, wrong, lastChance, saved, boom, timeUp, join, taunt / tauntSaved / tauntBoom / tauntBoss (Tiến sĩ Nổ), reminder.
+ Ví dụ: "messages": { "burn": ["{ten}! Đốt giờ của tôi à, nhớ mặt nhé!"] }
+
+6. NHẠC VÀ GIỌNG
+ - Để trống thư mục public\assets\nhac-go-bom = nhạc hồi hộp tự tạo, nhanh dần khi bom sắp nổ. Chép MP3 vào đó để dùng nhạc riêng.
+ - voice: false để tắt giọng boss. voiceJoin: false để boss không chào người mới vào. chatterSeconds: bao lâu boss tự nói một câu.
+ - Âm lượng nhạc, hiệu ứng, giọng chỉnh ngay ở bảng điều khiển.
