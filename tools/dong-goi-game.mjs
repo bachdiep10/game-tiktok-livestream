@@ -20,7 +20,7 @@ const SERVER = opt('server', 'https://netxioviet.com').replace(/\/$/, '');
 const only = args.filter((a, i) => !a.startsWith('--') && !(i > 0 && args[i - 1].startsWith('--')));
 const VERSION = (fs.readFileSync(path.join(ROOT, 'server.js'), 'utf8').match(/const VERSION = '([^']+)'/) || [])[1] || '1.0';
 
-const COMMON = ['server.js', 'package.json', 'package-lock.json', 'config.json', 'public/css', 'public/js/audio.js', 'public/js/fake.js', 'public/js/amLuong.js', 'public/js/amLuongControl.js',
+const COMMON = ['server.js', 'package.json', 'package-lock.json', 'config.json', 'public/css', 'public/js/audio.js', 'public/js/fake.js', 'public/js/amLuong.js', 'public/js/amLuongControl.js', 'public/js/guongGame.js', 'public/js/guongXemTruoc.js',
   'license/gate.js', 'license/license-client.js', 'license/kich-hoat.html'];
 
 const PRODUCTS = {

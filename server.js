@@ -68,6 +68,10 @@ const server = http.createServer(async (req, res) => {
     handleTts(url, res);
     return;
   }
+  if (pathname === '/anh-dai-dien') {
+    handleAvatar(url, res);
+    return;
+  }
   if (pathname === '/config.json') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(loadConfig()));
@@ -377,7 +381,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '2.9.0';
+const VERSION = '2.9.1';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 const gate = createGate({
   rootDir: __dirname,
@@ -447,6 +451,16 @@ wss.on('connection', (ws) => {
       broadcast({ type: 'gameState', state: msg.state });
     } else if (msg.cmd === 'askState') {
       broadcast({ type: 'askState' });
+    } else if (msg.cmd === 'mirrorWant') {
+      // bảng điều khiển muốn xem màn hình game thật -> báo cửa sổ game gửi hình
+      ws.mirrorWant = Date.now();
+      broadcast({ type: 'mirrorWant' });
+    } else if (msg.cmd === 'mirrorFrame' && typeof msg.page === 'string') {
+      const img = typeof msg.img === 'string' && msg.img.startsWith('data:image/') && msg.img.length < 1500000 ? msg.img : '';
+      const data = JSON.stringify({ type: 'mirrorFrame', page: msg.page.slice(0, 100), img, error: msg.error ? String(msg.error).slice(0, 40) : '' });
+      for (const client of wss.clients) {
+        if (client !== ws && client.readyState === 1 && client.mirrorWant && Date.now() - client.mirrorWant < 6000 && client.bufferedAmount < 3e6) client.send(data);
+      }
     } else if (msg.cmd === 'audio' && msg.settings && typeof msg.settings === 'object') {
       audioSettings = cleanAudio(msg.settings);
       try { fs.writeFileSync(AUDIO_FILE, JSON.stringify(audioSettings)); } catch { /* bỏ qua */ }
@@ -475,6 +489,48 @@ function pickAvatar(user) {
   return candidates.find((u) => typeof u === 'string' && u.startsWith('http')) || '';
 }
 
+// Ảnh đại diện TikTok được tải qua máy chủ game (cùng địa chỉ 127.0.0.1) để khung xem trước ở bảng điều khiển
+// chiếu lại được màn hình game (trình duyệt chặn chụp canvas có ảnh từ trang khác).
+const AVATAR_HOST = /(tiktokcdn|ibyteimg|byteimg|muscdn|tiktokv)/i;
+const avatarCache = new Map();
+function proxyAvatar(u) {
+  try {
+    const t = new URL(u);
+    if (t.protocol === 'https:' && AVATAR_HOST.test(t.hostname)) return `/anh-dai-dien?u=${encodeURIComponent(u)}`;
+  } catch { /* bỏ qua */ }
+  return u;
+}
+async function handleAvatar(url, res) {
+  const u = url.searchParams.get('u') || '';
+  let t = null;
+  try { t = new URL(u); } catch { /* bỏ qua */ }
+  if (!t || t.protocol !== 'https:' || !AVATAR_HOST.test(t.hostname)) {
+    res.writeHead(400);
+    res.end();
+    return;
+  }
+  let hit = avatarCache.get(u);
+  if (!hit) {
+    try {
+      const r = await fetch(u, { signal: AbortSignal.timeout(8000) });
+      const type = r.headers.get('content-type') || 'image/jpeg';
+      if (!r.ok || !type.startsWith('image/')) throw new Error('bad');
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length > 3e6) throw new Error('big');
+      hit = { type, buf };
+      avatarCache.set(u, hit);
+      if (avatarCache.size > 500) avatarCache.delete(avatarCache.keys().next().value);
+    } catch {
+      // tải hộ không được thì để trình duyệt tự tải ảnh gốc như trước
+      res.writeHead(302, { Location: u });
+      res.end();
+      return;
+    }
+  }
+  res.writeHead(200, { 'Content-Type': hit.type, 'Cache-Control': 'max-age=86400' });
+  res.end(hit.buf);
+}
+
 function normUser(user, fallbackId = '') {
   if (!user) return null;
   const real = (v) => (v && String(v) !== '0' ? String(v) : '');
@@ -486,7 +542,7 @@ function normUser(user, fallbackId = '') {
     id,
     uniqueId,
     name: user.nickname || uniqueId || 'Phật tử',
-    avatar: pickAvatar(user),
+    avatar: proxyAvatar(pickAvatar(user)),
   };
 }
 
