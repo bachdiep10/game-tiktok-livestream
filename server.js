@@ -21,6 +21,9 @@ const TAROT_CONFIG_PATH = path.join(__dirname, 'config-tarot.json');
 const DUOI_HINH_CONFIG_PATH = path.join(__dirname, 'config-duoi-hinh.json');
 const LEO_NUI_CONFIG_PATH = path.join(__dirname, 'config-leo-nui.json');
 const GIEO_QUE_CONFIG_PATH = path.join(__dirname, 'config-gieo-que.json');
+const LOP_HOC_CONFIG_PATH = path.join(__dirname, 'config-lop-hoc.json');
+// Câu hỏi Sếp tự thêm cho game Lớp học: file riêng, KHÔNG nằm trong bản cập nhật nên cập nhật game không mất câu hỏi
+const LOP_HOC_DE_THI_PATH = path.join(__dirname, 'de-thi-lop-hoc.json');
 
 function loadConfig(file = CONFIG_PATH) {
   try {
@@ -70,7 +73,7 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(loadConfig()));
     return;
   }
-  const MUSIC_FOLDERS = { '/chanh-dien-music.json': 'nhac-chanh-dien', '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca', '/dai-chien-music.json': 'nhac-dai-chien', '/bia-hoi-music.json': 'nhac-bia-hoi', '/dam-cuoi-music.json': 'nhac-dam-cuoi', '/tarot-music.json': 'nhac-tarot', '/duoi-hinh-music.json': 'nhac-duoi-hinh', '/leo-nui-music.json': 'nhac-leo-nui', '/gieo-que-music.json': 'nhac-gieo-que' };
+  const MUSIC_FOLDERS = { '/chanh-dien-music.json': 'nhac-chanh-dien', '/bar-music.json': 'nhac-bar', '/tra-da-music.json': 'nhac-tra-da', '/rong-ran-music.json': 'nhac-rong-ran', '/cau-ca-music.json': 'nhac-cau-ca', '/dai-chien-music.json': 'nhac-dai-chien', '/bia-hoi-music.json': 'nhac-bia-hoi', '/dam-cuoi-music.json': 'nhac-dam-cuoi', '/tarot-music.json': 'nhac-tarot', '/duoi-hinh-music.json': 'nhac-duoi-hinh', '/leo-nui-music.json': 'nhac-leo-nui', '/gieo-que-music.json': 'nhac-gieo-que', '/lop-hoc-music.json': 'nhac-lop-hoc' };
   if (MUSIC_FOLDERS[pathname]) {
     // danh sách bài hát trong thư mục nhạc của game (public/assets/nhac-bar, nhac-tra-da, nhac-rong-ran, nhac-cau-ca, nhac-dai-chien), xếp theo tên file
     const folder = MUSIC_FOLDERS[pathname];
@@ -201,6 +204,52 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify(loadConfig(TAROT_CONFIG_PATH)));
     return;
   }
+  if (pathname === '/lop-hoc-config.json') {
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(loadConfig(LOP_HOC_CONFIG_PATH)));
+    return;
+  }
+  if (pathname === '/lop-hoc-de-thi.json') {
+    // ngân hàng đề thi tự thêm (trang lop-hoc-de-thi.html đọc/ghi)
+    let data = { cauHoi: [], monChon: [], chiDungCauTuThem: false };
+    try { data = { ...data, ...JSON.parse(fs.readFileSync(LOP_HOC_DE_THI_PATH, 'utf8')) }; } catch { /* chưa có file */ }
+    if (req.method === 'POST') {
+      if (!gate.isOk()) {
+        res.writeHead(403, { 'Content-Type': MIME['.json'] }).end(JSON.stringify({ ok: false, error: 'Chưa kích hoạt bản quyền' }));
+        return;
+      }
+      let body = '';
+      req.on('data', (c) => { body += c; if (body.length > 5_000_000) req.destroy(); });
+      req.on('end', () => {
+        try {
+          const j = JSON.parse(body || '{}');
+          const clean = {
+            cauHoi: (Array.isArray(j.cauHoi) ? j.cauHoi : []).slice(0, 5000).map((c) => ({
+              cauHoi: String(c.cauHoi || '').slice(0, 400), A: String(c.A ?? '').slice(0, 200), B: String(c.B ?? '').slice(0, 200),
+              C: String(c.C ?? '').slice(0, 200), D: String(c.D ?? '').slice(0, 200), dapAn: String(c.dapAn || 'A').toUpperCase().slice(0, 1),
+              mon: String(c.mon || 'Tự thêm').slice(0, 60), lop: String(c.lop ?? '').slice(0, 10), doKho: Math.max(1, Math.min(3, Number(c.doKho) || 2)),
+              giaiThich: String(c.giaiThich || '').slice(0, 400), meo: !!c.meo,
+            })).filter((c) => c.cauHoi.trim()),
+            monChon: (Array.isArray(j.monChon) ? j.monChon : []).map(String).slice(0, 100),
+            chiDungCauTuThem: !!j.chiDungCauTuThem,
+          };
+          // giữ 1 bản sao trước khi ghi đè, phòng khi lỡ tay xoá
+          try { if (fs.existsSync(LOP_HOC_DE_THI_PATH)) fs.copyFileSync(LOP_HOC_DE_THI_PATH, `${LOP_HOC_DE_THI_PATH}.bak`); } catch { /* bỏ qua */ }
+          const tmp = `${LOP_HOC_DE_THI_PATH}.tmp`;
+          fs.writeFileSync(tmp, JSON.stringify(clean, null, 1));
+          fs.renameSync(tmp, LOP_HOC_DE_THI_PATH);
+          broadcast({ type: 'reloadBank' });
+          res.writeHead(200, { 'Content-Type': MIME['.json'] }).end(JSON.stringify({ ok: true, count: clean.cauHoi.length }));
+        } catch (err) {
+          res.writeHead(400, { 'Content-Type': MIME['.json'] }).end(JSON.stringify({ ok: false, error: err.message }));
+        }
+      });
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify(data));
+    return;
+  }
   if (pathname === '/duoi-hinh-config.json') {
     res.writeHead(200, { 'Content-Type': MIME['.json'], 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(loadConfig(DUOI_HINH_CONFIG_PATH)));
@@ -328,7 +377,7 @@ async function handleTts(url, res) {
 
 // ---------------------------------------------------------------- WebSocket
 const wss = new WebSocketServer({ server, path: '/ws' });
-const VERSION = '2.8.0';
+const VERSION = '2.9.0';
 const status = { connected: false, username: '', viewers: 0, version: VERSION, message: 'Chưa kết nối TikTok' };
 const gate = createGate({
   rootDir: __dirname,
@@ -614,6 +663,7 @@ server.listen(PORT, '0.0.0.0', () => {
   if (has('gieo-que.html')) console.log(`  🎋 Gieo quẻ xin xăm (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/gieo-que.html   ·  điều khiển  http://127.0.0.1:${PORT}/gieo-que-control.html`);
   if (has('tarot.html')) console.log(`  🔮 Bói bài Tarot (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/tarot.html   ·  điều khiển  http://127.0.0.1:${PORT}/tarot-control.html`);
   if (has('duoi-hinh.html')) console.log(`  🧩 Đuổi hình bắt chữ (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/duoi-hinh.html   ·  điều khiển  http://127.0.0.1:${PORT}/duoi-hinh-control.html`);
+  if (has('lop-hoc.html')) console.log(`  🏫 Bạn có giỏi hơn học sinh lớp 5? (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/lop-hoc.html   ·  điều khiển  http://127.0.0.1:${PORT}/lop-hoc-control.html`);
   if (has('bar.html')) console.log(`  🪩 Quán bar (phiên bản ${VERSION}): game  http://127.0.0.1:${PORT}/bar.html   ·  điều khiển  http://127.0.0.1:${PORT}/bar-control.html`);
   console.log('');
   const startUser = process.env.TIKTOK_USERNAME || config.tiktokUsername;

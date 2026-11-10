@@ -175,6 +175,18 @@ export const GUIDE_DUOI_HINH = `1. Cài Node.js bản LTS tại nodejs.org (ch�
 Hình emoji 3D: Microsoft Fluent Emoji, giấy phép MIT (xem public\\assets\\duoi-hinh\\BAN-QUYEN-HINH.txt).
 Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
 
+export const GUIDE_LOP_HOC = `1. Cài Node.js bản LTS tại nodejs.org (chỉ làm 1 lần trên mỗi máy).
+2. Giải nén file vừa tải ra một thư mục, ví dụ D:\\LopHoc. Không chạy trực tiếp bên trong file ZIP.
+3. Bấm đúp run-lop-hoc.bat. Lần đầu máy tự cài thư viện, mất 1–2 phút.
+4. Trình duyệt mở trang Kích hoạt: dán license key của bạn rồi bấm Kích hoạt.
+5. Ở Bảng điều khiển: bấm A, B, C, D, "Trả lời đúng", "Thả tim", "Chia sẻ"... để thử. Khi đang LIVE, nhập username TikTok rồi bấm Kết nối. Ô "Câu đang chơi" cho bạn xem trước đáp án đúng để dẫn chương trình.
+6. Mỗi tiết học 10 câu, mỗi câu 20 giây. Người xem gõ A, B, C hoặc D vào bình luận (gõ "chọn b", "đáp án c" cũng được). Ô đáp án hiện số người chọn. Hết giờ đếm ngược 5 giây rồi lật đáp án: nhóm đúng được tuyên dương, nhóm sai bị phạt vui (phấn bay, trứng ngỗng, gà trống, sét đánh, gọi phụ huynh, mũ học lại, ô đáp án sập).
+7. Lớp 5A có 6 bạn do máy điều khiển thi cùng người xem, nên LIVE ít người vẫn vui. Thả tim: đánh thức nhân vật, 15 tim trong 1 câu thì Na nhắc loại 1 đáp án sai. Chia sẻ: thẻ miễn phạt. Theo dõi: khăn quàng đỏ +5 điểm. Quà từ 99 xu: làm Lớp trưởng, nhân đôi điểm cả tiết.
+8. Có sẵn hơn 300 câu (Toán, Tiếng Việt, Khoa học, Lịch sử, Địa lý, Tiếng Anh, Kiến thức chung, Đố mẹo). Thêm câu hỏi riêng: ở Bảng điều khiển bấm "Ngân hàng đề thi", gõ từng câu hoặc dán từ Excel. Câu tự thêm lưu trong file de-thi-lop-hoc.json, khi cập nhật game bản mới hãy chép file này sang thư mục mới.
+9. Đổi thời gian mỗi câu, số câu mỗi tiết, điểm: sửa config-lop-hoc.json rồi bấm F5. Ảnh riêng: chép đè ảnh cùng tên trong public\\assets\\lop-hoc. Nhạc riêng: chép MP3 vào public\\assets\\nhac-lop-hoc.
+10. Bấm đúp mo-cua-so-lop-hoc.bat để mở cửa sổ game, rồi trong TikTok LIVE Studio: Thêm nguồn > Chụp cửa sổ > chọn cửa sổ đó. Nếu không nghe tiếng, bấm chuột vào cửa sổ game một lần.
+Đổi máy tính: vào Tài khoản của tôi trên web, bấm "Chuyển key sang máy khác", rồi kích hoạt lại trên máy mới.`;
+
 const DEFAULT_GAMES = [
   {
     id: 'chanh-dien', name: 'Chánh Điện Lễ Phật',
@@ -292,6 +304,16 @@ const DEFAULT_GAMES = [
     guide: GUIDE_GIEO_QUE, guideVideo: '',
     // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
     visible: false, order: 12, isNew: true,
+  },
+  {
+    id: 'lop-hoc', name: 'Bạn Có Giỏi Hơn Học Sinh Lớp 5?',
+    tagline: 'Lớp học trắc nghiệm A B C D: người xem thi với 6 bạn lớp 5A, đúng được khen, sai bị phạt vui',
+    description: 'Cô giáo đọc câu hỏi trên bảng đen, cả phòng LIVE cùng gõ A, B, C, D để trả lời. Ô đáp án hiện số người chọn, hết giờ đếm ngược 5-4-3-2-1 rồi lật đáp án. Nhóm đúng được tuyên dương, khiêng lên vai; nhóm sai bị phạt vui: phấn bay, trứng ngỗng, gà trống mổ đầu, sét đánh, gọi phụ huynh, mũ học lại. 6 bạn lớp 5A lắm trò thi cùng nên LIVE ít người vẫn vui. Có sẵn hơn 300 câu và trang tự thêm đề, dán từ Excel.',
+    features: ['Hơn 300 câu tiểu học + đố mẹo, tự thêm đề từ Excel', 'Ô đáp án hiện số người chọn, đếm ngược hồi hộp', '7 màn phạt hài cho nhóm sai, tuyên dương nhóm đúng', '6 bạn lớp 5A thi cùng: Na Mọt Sách, Tí Lém, Bin Ngủ Gật...', 'Like, chia sẻ, theo dõi đều có tác dụng, không cần quà'],
+    image: '/media/lop-hoc.jpg', video: '/media/lop-hoc.mp4', download: '', version: '2.9.0',
+    guide: GUIDE_LOP_HOC, guideVideo: '',
+    // ẩn cho tới khi quản trị tải file game lên và bật "Hiện"
+    visible: false, order: 14, isNew: true,
   },
 ];
 

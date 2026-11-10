@@ -786,6 +786,51 @@ def leo_nui():
     return m.render(room=2.2)
 
 
+def lop_hoc():
+    """Lớp học vui: mộc cầm (xylophone) nảy, dây gảy kiểu pizzicato, bass đi bộ, trống nhẹ, chuông trường."""
+    rng = np.random.default_rng(144)
+    bpm = 116
+    b = 60 / bpm
+    bars = 48
+    m = Mix(bars * 4 * b + 2)
+    prog = [(65, False), (62, True), (70, False), (72, False)]  # F Dm Bb C
+    sc = scale_notes(65, MAJ)
+    hook = [(4, 0.5), (4, 0.5), (5, 0.5), (7, 0.5), (7, 0.5), (5, 0.5), (4, 0.5), (2, 0.5)]
+    hook2 = [(0, 0.5), (0, 0.5), (2, 0.5), (4, 0.5), (4, 0.75), (2, 0.25), (2, 1)]
+    for bar in range(bars):
+        t0 = bar * 4 * b
+        r, mn = prog[bar % 4]
+        ch = triad(r, mn)
+        for k in range(4):
+            nt = [r - 24, r - 24 + 7, r - 24 + 12, r - 24 + 7][k]
+            m.add(bass(midi(nt), 0.8 * b), t0 + k * b, 0.5, 0.5, 0)
+        for k in range(8):
+            nt = [ch[0], ch[2], ch[1], ch[2]][k % 4]
+            m.add(pluck(midi(nt), 0.35, 0.7, 6), t0 + k * b / 2, 0.35 + 0.3 * (k % 2), 0.28, 0.2)
+        if bar >= 2:
+            for k in range(4):
+                m.add(kick(0.55), t0 + k * b, 0.5, 0.4, 0)
+                if k in (1, 3):
+                    m.add(snare(0.35), t0 + k * b, 0.5, 0.3, 0.2)
+                m.add(woodblock(1100 if k % 2 else 800, 0.5), t0 + (k + 0.5) * b, 0.3 + 0.4 * (k % 2), 0.25, 0.1)
+                m.add(shaker(0.4), t0 + (k + 0.25) * b, 0.7, 0.2, 0)
+        if bar >= 4 and not (28 <= bar < 30):
+            ph = hook if bar % 2 == 0 else hook2
+            hi = 7 if (bar // 8) % 2 == 0 else 9
+            tt = 0
+            for st, du in ph:
+                nt = sc[int(np.clip(hi + st, 0, len(sc) - 1))]
+                m.add(marimba(midi(nt), 0.6), t0 + tt * b, 0.55, 0.6, 0.25)
+                m.add(bell(midi(nt + 12), 0.8, 0.5), t0 + tt * b, 0.6, 0.1, 0.3)
+                tt += du
+        if bar % 16 == 0:
+            for k, nt in enumerate([77, 81, 84, 89]):
+                m.add(bell(midi(nt), 2.0, 1.2), t0 + k * b / 2, 0.5, 0.3, 0.4)
+        if bar % 8 == 7:
+            m.add(riser(4 * b, 0.4), t0, 0.5, 0.35, 0.3)
+    return m.render(room=1.4)
+
+
 SONGS = {
     'chanh-dien': (chanh_dien, 'nhac-chanh-dien/thien-tinh-tam.mp3'),
     'quan-bar': (quan_bar, 'nhac-bar/dem-bung-no.mp3'),
@@ -798,6 +843,7 @@ SONGS = {
     'tarot': (tarot, 'nhac-tarot/la-bai-huyen-bi.mp3'),
     'duoi-hinh': (duoi_hinh, 'nhac-duoi-hinh/gameshow-vui-ve.mp3'),
     'leo-nui': (leo_nui, 'nhac-leo-nui/chinh-phuc-dinh-cao.mp3'),
+    'lop-hoc': (lop_hoc, 'nhac-lop-hoc/gio-hoc-vui.mp3'),
 }
 
 if __name__ == '__main__':

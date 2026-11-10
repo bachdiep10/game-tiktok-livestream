@@ -21,6 +21,7 @@ const GAMES = {
   'tarot': { page: 'tarot.html', control: 'tarot-control.html', sec: 45 },
   'duoi-hinh': { page: 'duoi-hinh.html', control: 'duoi-hinh-control.html', sec: 40 },
   'leo-nui': { page: 'leo-nui.html', control: 'leo-nui-control.html', sec: 40 },
+  'lop-hoc': { page: 'lop-hoc.html', control: 'lop-hoc-control.html', sec: 55 },
 };
 const outDir = path.resolve(process.argv[2] || 'video-demo');
 const pick = process.argv.slice(3);
