@@ -3,7 +3,7 @@
 //   Người xem dò xem dây nào chạy vào cọc đang sáng rồi bình luận chữ của dây đó. Hết giờ bỏ phiếu thì cắt dây nhiều phiếu nhất.
 // - Cắt đúng hết các cọc = cứu được boss. Cắt sai: đồng hồ chạy nhanh x1.5 rồi x2, sai lần 3 thì nổ. Hết giờ cũng nổ.
 // - Boss đổi biểu cảm theo đồng hồ (tự tin, lo lắng, hốt hoảng, khóc, cầu nguyện, thở phào, bị nổ) và mắng gọi tên người chơi.
-// - Thả tim: cộng giây (đội Cứu). Bình luận "đốt": trừ giây (đội Phá). Chia sẻ: đèn pin soi dây đúng. Theo dõi: áo giáp + điểm.
+// - Bảng mạch tối om: thả tim mới bật đèn thấy dây. Chia sẻ: cộng giây. Bình luận "đốt": trừ giây (đội Phá). Theo dõi: áo giáp + điểm.
 //   Quà (không bắt buộc): đóng băng đồng hồ; quà lớn: kìm vàng tự cắt đúng.
 import * as sfx from './gbAudio.js';
 import * as voice from '../audio.js';
@@ -26,9 +26,21 @@ const EXPR = ['tu-tin', 'lo-lang', 'hot-hoang', 'mang', 'khoc', 'cau-nguyen', 't
 // ------------------------------------------------------------------ cấu hình
 const DEFAULTS = {
   title: 'GỠ BOM CỨU BOSS',
-  bombSeconds: [120, 150, 150, 180],
-  bossBombSeconds: 210,
-  wiresByLevel: [3, 4, 4, 5],
+  // độ khó từng cấp: wires = số dây (3-5), bends = số khúc uốn, wiggle = độ ngoằn ngoèo (0-30), decoys = dây giả không nối vào cọc,
+  // colors = 'khac' (mỗi dây một màu) / 'xanh' / 'tim' (cùng tông, dễ lẫn), cover = tấm che chớp tắt, seconds = thời gian bom
+  levels: [
+    { wires: 3, bends: 4, wiggle: 6, decoys: 0, colors: 'khac', cover: false, seconds: 120 },
+    { wires: 4, bends: 5, wiggle: 10, decoys: 0, colors: 'khac', cover: false, seconds: 150 },
+    { wires: 4, bends: 6, wiggle: 14, decoys: 0, colors: 'xanh', cover: false, seconds: 150 },
+    { wires: 5, bends: 7, wiggle: 16, decoys: 1, colors: 'xanh', cover: false, seconds: 180 },
+    { wires: 5, bends: 8, wiggle: 20, decoys: 1, colors: 'tim', cover: false, seconds: 180 },
+    { wires: 5, bends: 9, wiggle: 22, decoys: 2, colors: 'tim', cover: true, seconds: 180 },
+    { wires: 5, bends: 10, wiggle: 26, decoys: 2, colors: 'tim', cover: true, seconds: 170 },
+    { wires: 5, bends: 11, wiggle: 30, decoys: 3, colors: 'tim', cover: true, seconds: 160 },
+  ],
+  bossLevel: { wires: 5, bends: 10, wiggle: 24, decoys: 2, colors: 'tim', cover: true, seconds: 210 },
+  levelMode: 'tu-dong',
+  startLevel: 1,
   voteSeconds: 20,
   earlyCutVotes: 6,
   suspenseSeconds: 2.2,
@@ -39,8 +51,13 @@ const DEFAULTS = {
   maxWrong: 3,
   correctToCalm: 2,
   bossEvery: 5,
-  likesPerSecond: 5,
-  likeMaxSecondsPerUser: 8,
+  // đèn bảng mạch: mỗi tim cộng bấy nhiêu giây sáng, tối đa lightMaxSeconds; darkness = độ tối khi tắt đèn (0..1)
+  likeLightSeconds: 0.5,
+  lightMaxSeconds: 12,
+  darkness: 0.94,
+  // chia sẻ: cộng giây đồng hồ, mỗi người tối đa shareMaxPerUser lần mỗi quả bom
+  shareSeconds: 10,
+  shareMaxPerUser: 2,
   burnSeconds: 3,
   burnMaxPerUser: 1,
   burnFloorSeconds: 6,
@@ -97,8 +114,9 @@ const DEFAULTS = {
     likerNoVote: ['{ten} thả tim mà không chọn dây, tim để ngắm à?!', '{ten}! Thả tim xong comment chữ dây luôn đi!'],
     flip: ['{ten} đổi ý mấy lần rồi, quyết đi em ơi!', '{ten} ơi, chọn một dây thôi!'],
     burn: ['{ten}! Tôi với bạn thù gì mà đốt giờ của tôi?!', 'Lại là {ten}! Ra đây nói chuyện!', 'Ai đốt nữa là tôi mách mẹ đấy! {ten} nhé!'],
-    thankLike: ['{ten} tử tế quá, thêm giờ cho tôi rồi!', 'Cảm ơn {ten} thả tim, sống thêm được mấy giây!', 'Đấy, thế mới là người tốt chứ, cảm ơn {ten}!'],
-    thankShare: ['{ten} chia sẻ, bật đèn pin soi dây nào!', 'Cảm ơn {ten}! Đèn pin soi đúng dây kìa!'],
+    thankLike: ['{ten} thả tim, đèn sáng rồi! Nhìn dây nhanh lên!', 'Cảm ơn {ten}, sáng rồi, thấy dây rồi!', 'Đấy, thế mới là người tốt chứ, cảm ơn {ten} bật đèn!'],
+    thankShare: ['{ten} chia sẻ, tôi sống thêm mấy giây rồi!', 'Cảm ơn {ten}! Thêm giờ rồi, chia sẻ tiếp đi cả nhà!'],
+    dark: ['Tối thui! Thả tim bật đèn lên, tôi không thấy dây!', 'Cúp điện rồi! Thả tim đi cả nhà, tim là điện đấy!', 'Ai thả tim cho sáng đèn với! Tối thế này cắt bằng niềm tin à?!', 'Đèn tắt rồi kìa! Tim đâu hết rồi?!'],
     thankFollow: ['Cảm ơn {ten} theo dõi, tặng áo giáp chống nổ!', '{ten} theo dõi kênh, được mặc áo giáp rồi!'],
     thankGift: ['{ten} tặng {gift}, đóng băng đồng hồ! Cảm ơn nhiều!', 'Cảm ơn {ten}! Đồng hồ đứng yên rồi!'],
     bigGift: ['{ten} tặng {gift}! Kìm vàng tự cắt đúng dây luôn!', 'Đại gia {ten} ra tay! Kìm vàng cắt đúng rồi!'],
@@ -117,9 +135,9 @@ const DEFAULTS = {
     reminder: [
       'Bình luận chữ A, B, C, D để chọn dây cần cắt',
       'Dò theo dây từ cọc đang sáng ngược lên chữ ở trên',
-      'Thả tim để cộng thêm giây cho đồng hồ',
+      'Thả tim để bật đèn, đèn tắt là không thấy dây',
       'Bình luận chữ đốt để trừ giây, nếu bạn là đội phá',
-      'Chia sẻ LIVE để bật đèn pin soi đúng dây',
+      'Chia sẻ LIVE để cộng thêm giây cho đồng hồ',
       'Theo dõi kênh để được mặc áo giáp chống nổ',
     ],
   },
@@ -385,11 +403,9 @@ function smooth(pts, seg = 14) {
 function makeBomb() {
   bombNo++;
   const isBoss = config.bossEvery > 0 && saved > 0 && (saved + exploded) % config.bossEvery === 0 && !(bomb && bomb.boss);
-  const li = clamp(level - 1, 0, 99);
-  const wl = config.wiresByLevel;
-  const n = isBoss ? 5 : clamp(Number(wl[Math.min(li, wl.length - 1)]) || 4, 3, 5);
-  const bs = config.bombSeconds;
-  const total = isBoss ? Number(config.bossBombSeconds) || 210 : Number(bs[Math.min(li, bs.length - 1)]) || 120;
+  const L = isBoss ? { ...DEFAULTS.bossLevel, ...(config.bossLevel || {}) } : levelSpec();
+  const n = clamp(Math.round(Number(L.wires) || 4), 3, 5);
+  const total = Math.max(30, Number(L.seconds) || 120);
   // hoán vị: dây i nối vào cọc perm[i]; tránh trường hợp dây chạy thẳng xuống quá nhiều
   let perm;
   for (let tries = 0; tries < 50; tries++) {
@@ -397,25 +413,69 @@ function makeBomb() {
     const straight = perm.filter((v, i) => v === i).length;
     if (straight <= (n >= 4 ? 1 : 0)) break;
   }
-  const rows = isBoss ? 7 : clamp(3 + li, 3, 6);
-  const palette = isBoss || li >= 3 ? PALETTE_HARD : li >= 2 ? PALETTE_MID : PALETTE_EASY;
+  const rows = clamp(Math.round(Number(L.bends) || 4), 2, 14);
+  const wig = clamp(Number(L.wiggle) || 0, 0, 40);
+  const palette = L.colors === 'tim' ? PALETTE_HARD : L.colors === 'xanh' ? PALETTE_MID : PALETTE_EASY;
   const cols = [...palette].sort(() => Math.random() - 0.5);
-  const wires = [];
-  for (let i = 0; i < n; i++) {
-    const pts = [{ x: slotX(i, n), y: TOP_Y + 18 }, { x: slotX(i, n), y: WIRE_TOP }];
+  const wigglePath = (pts) => {
+    const path = smooth(pts, 10 + rows);
+    if (!wig) return path;
+    const k = rand(5, 9);
+    const ph = rand(0, TAU);
+    return path.map((pt, j) => {
+      const t = j / (path.length - 1);
+      const fade = Math.min(1, t / 0.12, (1 - t) / 0.12);
+      const a = path[Math.max(0, j - 1)];
+      const b = path[Math.min(path.length - 1, j + 1)];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const off = Math.sin(t * k * TAU + ph) * wig * fade;
+      return { x: clamp(pt.x + (-dy / len) * off, AREA.x - 20, AREA.x + AREA.w + 20), y: pt.y + (dx / len) * off };
+    });
+  };
+  const midPoints = (pts) => {
     for (let r = 1; r <= rows; r++) {
       const y = WIRE_TOP + ((WIRE_BOT - WIRE_TOP) * r) / (rows + 1);
-      pts.push({ x: rand(AREA.x + 20, AREA.x + AREA.w - 20), y: y + rand(-18, 18) });
+      // khúc uốn qua lại hai bên để dây quấn vào nhau
+      const side = (r + Math.floor(Math.random() * 2)) % 2;
+      const x = side ? rand(AREA.x + AREA.w * 0.5, AREA.x + AREA.w - 10) : rand(AREA.x + 10, AREA.x + AREA.w * 0.5);
+      pts.push({ x, y: y + rand(-14, 14) });
     }
+    return pts;
+  };
+  const wires = [];
+  for (let i = 0; i < n; i++) {
+    const pts = midPoints([{ x: slotX(i, n), y: TOP_Y + 18 }, { x: slotX(i, n), y: WIRE_TOP }]);
     pts.push({ x: slotX(perm[i], n), y: WIRE_BOT });
     pts.push({ x: slotX(perm[i], n), y: BOT_Y - 18 });
-    wires.push({ i, term: perm[i], color: cols[i % cols.length], path: smooth(pts), cut: false, wrongCut: false, cutAt: 0, patched: false });
+    wires.push({ i, term: perm[i], color: cols[i % cols.length], path: wigglePath(pts), cut: false, wrongCut: false, cutAt: 0, patched: false });
+  }
+  // dây giả: đầu trên nằm giữa hai chữ, đầu dưới cụt giữa hai cọc, không nối vào cọc nào
+  const decoys = [];
+  const nd = clamp(Math.round(Number(L.decoys) || 0), 0, 4);
+  for (let d = 0; d < nd; d++) {
+    const top = clamp(Math.floor(Math.random() * (n - 1)), 0, n - 2);
+    const bot = clamp(Math.floor(Math.random() * (n - 1)), 0, n - 2);
+    const xt = (slotX(top, n) + slotX(top + 1, n)) / 2;
+    const xb = (slotX(bot, n) + slotX(bot + 1, n)) / 2;
+    const pts = midPoints([{ x: xt, y: WIRE_TOP - 6 }, { x: xt, y: WIRE_TOP + 10 }]);
+    pts.push({ x: xb, y: WIRE_BOT });
+    pts.push({ x: xb, y: WIRE_BOT + 16 });
+    decoys.push({ color: cols[(n + d) % cols.length], path: wigglePath(pts) });
   }
   bomb = {
-    no: bombNo, boss: isBoss, n, wires, total, left: total, stage: 0, wrongs: 0, correctRun: 0, freeze: 0,
+    no: bombNo, boss: isBoss, level: isBoss ? 'TRÙM' : level, cover: !!L.cover, decoys, n, wires, total, left: total, stage: 0, wrongs: 0, correctRun: 0, freeze: 0,
     votes: new Map(), flips: new Map(), likeSec: new Map(), likeBuf: new Map(), burned: new Map(), voters: new Map(),
-    flashlight: 0, cutWire: -1, cutOk: false, cutAt: 0, coverOpen: true, lastBeep: 0, warned: false, mvp: new Map(),
+    light: 0, lightShown: 0, darkSince: 0, shares: new Map(), flashlight: 0, cutWire: -1, cutOk: false, cutAt: 0, coverOpen: true, lastBeep: 0, warned: false, mvp: new Map(),
   };
+}
+const levelList = () => (Array.isArray(config.levels) && config.levels.length ? config.levels : DEFAULTS.levels);
+const levelCount = () => levelList().length;
+const levelAuto = () => config.levelMode !== 'co-dinh';
+function levelSpec() {
+  const list = levelList();
+  return { ...DEFAULTS.levels[0], ...list[clamp(level - 1, 0, list.length - 1)] };
 }
 const speedMult = () => (bomb ? Number(config.wrongSpeeds[Math.min(bomb.wrongs, config.wrongSpeeds.length - 1)]) || 1 : 1);
 const targetWire = () => (bomb ? bomb.wires.find((w) => w.term === bomb.stage) : null);
@@ -452,6 +512,10 @@ function startBomb() {
 }
 
 function startVote() {
+  if (bomb.stage === 0 && !bomb.darkSince) {
+    bomb.darkSince = now;
+    addToast('🌑 Tiến sĩ Nổ cắt điện! Thả tim ❤️ để bật đèn', '#b39ddb');
+  }
   bomb.votes.clear();
   bomb.flips.clear();
   bomb.voteStart = now;
@@ -582,7 +646,7 @@ function doCut() {
 function savedBomb() {
   if (!bomb) return;
   saved++;
-  level++;
+  if (levelAuto()) level = Math.min(levelCount(), level + 1);
   setPhase('saved', Number(config.savedSeconds) || 7);
   sfx.fanfare();
   confetti(330, 620, 140);
@@ -597,7 +661,7 @@ function savedBomb() {
 function explode() {
   if (!bomb || phase.name === 'boom') return;
   exploded++;
-  level = Math.max(1, level - 1);
+  if (levelAuto()) level = Math.max(1, level - 1);
   setPhase('boom', Number(config.boomSeconds) || 8);
   sfx.boom();
   setTimeout(() => sfx.cough(), 2600 / SPEED);
@@ -647,6 +711,14 @@ function handleEvent(ev) {
     if (bomb && !['boom', 'saved'].includes(phase.name)) savedBomb();
     return;
   }
+  if (ev.type === 'setLevel') {
+    // người phát LIVE chọn độ khó ở bảng điều khiển: auto = tự lên/xuống cấp, hoặc cố định một cấp
+    config.levelMode = ev.auto ? 'tu-dong' : 'co-dinh';
+    if (ev.level) level = clamp(Math.round(Number(ev.level)) || 1, 1, levelCount());
+    addToast(ev.auto ? `🎚️ Độ khó tự động (đang cấp ${level})` : `🎚️ Độ khó cố định: cấp ${level}`, '#b39ddb');
+    if (ev.now && !['boom', 'saved'].includes(phase.name)) startBomb();
+    return;
+  }
   if (ev.type === 'voiceTest') {
     say(hLine('panic'), 2, 'mang');
     return;
@@ -659,7 +731,7 @@ function handleEvent(ev) {
     }
     saved = 0;
     exploded = 0;
-    level = 1;
+    level = clamp(Number(config.startLevel) || 1, 1, levelCount());
     return;
   }
   const p = player(ev.user);
@@ -696,9 +768,14 @@ function handleEvent(ev) {
     }
     case 'share': {
       if (!bomb || !['vote', 'suspense', 'cutAnim', 'enter'].includes(phase.name)) break;
-      bomb.flashlight = Math.max(bomb.flashlight, Number(config.flashlightSeconds) || 4);
-      sfx.click();
-      addToast(`🔦 ${p.name} chia sẻ: đèn pin soi dây đúng!`, '#fff59d');
+      const used = bomb.shares.get(p.id) || 0;
+      if (used >= (Number(config.shareMaxPerUser) || 2)) break;
+      bomb.shares.set(p.id, used + 1);
+      const add = Number(config.shareSeconds) || 10;
+      bomb.left = Math.min(bomb.total + 90, bomb.left + add);
+      sfx.plus();
+      floater(`+${add}s 📣 ${p.name}`, '#80d8ff', PANEL.x + PANEL.w - 150 + rand(-20, 20), TIMER_BOX.y + TIMER_BOX.h + 10);
+      addToast(`📣 ${p.name} chia sẻ: +${add} giây!`, '#80d8ff');
       thank('thankShare', p);
       break;
     }
@@ -741,24 +818,18 @@ function thank(kind, p, vars = {}) {
 
 function doLike(p, count) {
   if (!bomb || !['vote', 'suspense', 'cutAnim', 'enter'].includes(phase.name)) return;
-  const buf = (bomb.likeBuf.get(p.id) || 0) + count;
-  const per = Math.max(1, Number(config.likesPerSecond) || 5);
-  const got = Math.floor(buf / per);
-  bomb.likeBuf.set(p.id, buf - got * per);
-  if (got > 0) {
-    const used = bomb.likeSec.get(p.id) || 0;
-    const room = Math.max(0, (Number(config.likeMaxSecondsPerUser) || 8) - used);
-    const add = Math.min(got, room);
-    if (add > 0) {
-      bomb.likeSec.set(p.id, used + add);
-      bomb.left = Math.min(bomb.total + 60, bomb.left + add);
-      sfx.plus();
-      floater(`+${add}s ❤️ ${p.name}`, '#ff80ab', PANEL.x + PANEL.w - 150 + rand(-20, 20), TIMER_BOX.y + TIMER_BOX.h + 10);
-      if (!voiceBusy() && Math.random() < 0.35) thank('thankLike', p);
-    }
-  }
+  // tim = điện: mỗi tim cộng thêm thời gian sáng đèn cho bảng mạch
+  const wasDark = bomb.light <= 0;
+  const max = Number(config.lightMaxSeconds) || 12;
+  bomb.light = Math.min(max, bomb.light + count * (Number(config.likeLightSeconds) || 0.5));
+  bomb.likeSec.set(p.id, (bomb.likeSec.get(p.id) || 0) + count);
+  if (wasDark) {
+    sfx.click();
+    floater(`💡 ${p.name} bật đèn`, '#fff59d', PANEL.x + 150 + rand(-20, 20), TIMER_BOX.y + TIMER_BOX.h + 10);
+    if (!voiceBusy() && Math.random() < 0.5) thank('thankLike', p);
+  } else if (!voiceBusy() && Math.random() < 0.1) thank('thankLike', p);
   // thả tim mà chưa chọn dây -> nhắc
-  if (phase.name === 'vote' && !bomb.votes.has(p.id) && (bomb.likeSec.get(p.id) || 0) >= 3 && !p.nagged && phaseT() > 6 && !voiceBusy() && Math.random() < 0.3) {
+  if (phase.name === 'vote' && !bomb.votes.has(p.id) && (bomb.likeSec.get(p.id) || 0) >= 15 && !p.nagged && phaseT() > 6 && !voiceBusy() && Math.random() < 0.3) {
     p.nagged = true;
     yell(hLine('likerNoVote', { ten: p.name }));
   }
@@ -817,6 +888,8 @@ function update(dt) {
     if (bomb.freeze > 0) bomb.freeze = Math.max(0, bomb.freeze - dt);
     else bomb.left -= dt * speedMult();
     if (bomb.flashlight > 0) bomb.flashlight = Math.max(0, bomb.flashlight - dt);
+    if (bomb.light > 0) bomb.light = Math.max(0, bomb.light - dt);
+    if (bomb.light > 0) bomb.darkSince = now;
     const sec = Math.ceil(bomb.left);
     if (sec !== lastSec) {
       lastSec = sec;
@@ -834,9 +907,19 @@ function update(dt) {
     }
     sfx.setTension(1 - bomb.left / bomb.total + (speedMult() - 1) * 0.5);
     // tấm che của bom trùm: mở 2 giây trong mỗi 5 giây
-    bomb.coverOpen = !bomb.boss || ((now / 1000) % 5) < 2 || bomb.flashlight > 0;
+    bomb.coverOpen = !bomb.cover || ((now / 1000) % 5) < 2 || bomb.flashlight > 0;
   } else sfx.setTension(phase.name === 'boom' ? 0 : 0.1);
 
+  if (bomb) {
+    // lúc boss vừa vào và lúc xong quả bom thì đèn sáng sẵn cho người xem thấy dây
+    const lit = ['enter', 'saved', 'boom'].includes(phase.name) || bomb.light > 0;
+    const k = Math.min(1, dt * (lit ? 6 : 2.5));
+    bomb.lightShown += ((lit ? 1 : 0) - bomb.lightShown) * k;
+  }
+  if (phase.name === 'vote' && bomb.light <= 0 && now - bomb.darkSince > 5000 && now - (bomb.lastDarkNag || 0) > 14000 && !voiceBusy()) {
+    bomb.lastDarkNag = now;
+    yell(hLine('dark'));
+  }
   if (phase.name === 'enter' && phaseLeft() <= 0) startVote();
   else if (phase.name === 'vote') {
     const c = tally();
@@ -1010,7 +1093,7 @@ function drawHeader() {
   ctx.fillStyle = tg;
   ctx.fillText(config.title, W / 2, 56);
   let x = 40;
-  x += chip(x, 104, `💣 Bom số ${bombNo}${bomb && bomb.boss ? ' · TRÙM' : ''}`, bomb && bomb.boss ? '#b71c1c' : 'rgba(255,255,255,0.14)', '#fff', 26) + 12;
+  x += chip(x, 104, `💣 Bom ${bombNo} · ${bomb && bomb.boss ? 'TRÙM' : `Cấp ${bomb ? bomb.level : level}`}`, bomb && bomb.boss ? '#b71c1c' : 'rgba(255,255,255,0.14)', '#fff', 26) + 12;
   x += chip(x, 104, `🐾 Đã cứu ${saved}`, 'rgba(46,125,50,0.85)', '#fff', 26) + 12;
   chip(x, 104, `💥 Nổ ${exploded}`, 'rgba(191,54,12,0.85)', '#fff', 26);
   ctx.restore();
@@ -1267,6 +1350,18 @@ function drawPanel() {
   // dây
   const ws = bomb.wires;
   const target = targetWire();
+  for (const d of bomb.decoys || []) {
+    wireStroke(d.path, 0, d.path.length - 1, d.color, 14);
+    for (const e of [d.path[0], d.path[d.path.length - 1]]) {
+      ctx.fillStyle = '#263238';
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, 11, 0, TAU);
+      ctx.fill();
+      ctx.strokeStyle = '#78909c';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+  }
   for (const w of ws) {
     const n = w.path.length;
     if (w.cut) {
@@ -1306,8 +1401,30 @@ function drawPanel() {
     ctx.fillStyle = g;
     ctx.fillRect(end.x - 260, end.y - 380, 520, 520);
   }
+  // bảng mạch tối: chỉ thấy dây khi có đèn (thả tim)
+  const dark = (1 - bomb.lightShown) * clamp(Number(config.darkness) || 0.94, 0, 1);
+  if (dark > 0.01) {
+    ctx.save();
+    ctx.fillStyle = `rgba(4,5,10,${dark})`;
+    rr(PANEL.x + 24, TOP_Y + 14, PANEL.w - 48, BOT_Y - TOP_Y - 40, 18);
+    ctx.fill();
+    if (dark > 0.5 && ['vote', 'suspense'].includes(phase.name)) {
+      const pulse = 0.75 + 0.25 * Math.sin(now / 160);
+      ctx.globalAlpha = Math.min(1, (dark - 0.5) * 2.2) * pulse;
+      ctx.fillStyle = '#fff';
+      ctx.font = `900 54px ${FONT}`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const cy = (WIRE_TOP + WIRE_BOT) / 2;
+      ctx.fillText('🌑 TỐI THUI!', AREA.x + AREA.w / 2, cy - 40);
+      ctx.fillStyle = '#ff80ab';
+      ctx.font = `900 46px ${FONT}`;
+      ctx.fillText('Thả tim ❤️ để bật đèn', AREA.x + AREA.w / 2, cy + 30);
+    }
+    ctx.restore();
+  }
   // tấm che của bom trùm
-  if (bomb.boss && !bomb.coverOpen) {
+  if (bomb.cover && !bomb.coverOpen) {
     const cy = WIRE_TOP + (WIRE_BOT - WIRE_TOP) * 0.3;
     const ch = (WIRE_BOT - WIRE_TOP) * 0.4;
     ctx.fillStyle = '#37474f';
@@ -1504,14 +1621,26 @@ function drawTimer() {
   if (bomb.freeze > 0) {
     ctx.fillStyle = '#80deea';
     ctx.font = `900 32px ${FONT}`;
-    ctx.textAlign = 'right';
-    ctx.fillText(`🧊 ${Math.ceil(bomb.freeze)}s`, T.x - 24, T.y + 44);
+    ctx.textAlign = 'left';
+    ctx.fillText(`🧊 ${Math.ceil(bomb.freeze)}s`, T.x + T.w + 24, T.y + 44);
   }
-  if (bomb.flashlight > 0) {
-    ctx.fillStyle = '#fff59d';
+  {
+    // đồng hồ pin đèn
+    const max = Number(config.lightMaxSeconds) || 12;
+    const f = clamp(bomb.light / max, 0, 1);
+    const bx = T.x - 190, by = T.y + 78, bw = 150, bh = 26;
+    ctx.fillStyle = bomb.light > 0 ? '#fff59d' : '#9e9e9e';
     ctx.font = `900 32px ${FONT}`;
-    ctx.textAlign = 'right';
-    ctx.fillText('🔦 đèn pin', T.x - 24, T.y + 100);
+    ctx.textAlign = 'left';
+    ctx.fillText(bomb.light > 0 ? '💡 Đèn' : '🌑 Tắt', bx, T.y + 50);
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
+    rr(bx, by, bw, bh, 13);
+    ctx.fill();
+    if (f > 0) {
+      ctx.fillStyle = f < 0.25 && Math.floor(now / 200) % 2 ? '#ff8a65' : '#ffee58';
+      rr(bx, by, Math.max(bh, bw * f), bh, 13);
+      ctx.fill();
+    }
   }
   if (phase.name === 'vote') {
     ctx.fillStyle = 'rgba(255,255,255,0.85)';
@@ -1525,9 +1654,9 @@ function drawTimer() {
 function drawBottom() {
   const tips = [
     '💬 Comment A, B, C, D để cắt dây',
-    '❤️ Thả tim: cộng thêm giây',
+    '❤️ Thả tim: bật đèn để thấy dây',
     '🔥 Comment "đốt": trừ giây (đội Phá)',
-    '📣 Chia sẻ: đèn pin soi dây đúng',
+    '📣 Chia sẻ: cộng thêm giây',
     '⭐ Theo dõi: áo giáp chống nổ',
   ];
   const i = Math.floor(now / 3500) % tips.length;
@@ -1769,7 +1898,7 @@ function sendState() {
   ws.send(JSON.stringify({
     cmd: 'gameState',
     state: {
-      bomb: bombNo, boss: bomb.boss, hostage: hostage ? hostage.name : '', phase: phase.name, stage: bomb.stage + 1, wires: bomb.n,
+      bomb: bombNo, boss: bomb.boss, level, levelMode: config.levelMode, levels: levelCount(), hostage: hostage ? hostage.name : '', phase: phase.name, stage: bomb.stage + 1, wires: bomb.n,
       answer: t ? LETTERS[t.i] : '', left: Math.ceil(bomb.left), wrongs: bomb.wrongs, saved, exploded, counts: tally(), players: players.size,
     },
   }));
@@ -1835,6 +1964,7 @@ async function boot() {
       startMusic();
     }
   }, 3000);
+  level = clamp(Number(config.startLevel) || 1, 1, levelCount());
   startBomb();
   connectWs();
   requestAnimationFrame(frame);
@@ -1842,7 +1972,7 @@ async function boot() {
 
 window.__goBom = {
   handleEvent, config: () => config,
-  state: () => ({ phase: phase.name, bombNo, boss: bomb?.boss, stage: bomb?.stage, n: bomb?.n, answer: targetWire()?.i, left: bomb?.left, wrongs: bomb?.wrongs, saved, exploded, hostage: hostage?.id, expr: currentExpr() }),
+  state: () => ({ phase: phase.name, level, bombNo, boss: bomb?.boss, stage: bomb?.stage, n: bomb?.n, answer: targetWire()?.i, left: bomb?.left, wrongs: bomb?.wrongs, saved, exploded, hostage: hostage?.id, expr: currentExpr() }),
   setLeft: (s) => { if (bomb) bomb.left = s; },
 };
 boot();

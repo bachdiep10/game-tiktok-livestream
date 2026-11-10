@@ -47,7 +47,10 @@ const GAMES = {
     const cut = async (ms = 800) => { await sleep(ms); if (G.state().phase === 'vote') ev({ type: 'skip' }); };
     await nextVote();
     ev({ type: 'join', user: U(9) });
+    await sleep(3500); // bảng mạch tối, boss kêu thả tim
     for (let i = 0; i < 4; i++) { ev({ type: 'like', user: U(i), count: 10 }); await sleep(300); }
+    // người xem thả tim đều đều cho đèn sáng
+    setInterval(() => ev({ type: 'like', user: U(Math.floor(Math.random() * 10)), count: 3 + Math.floor(Math.random() * 4) }), 1300);
     await pickVotes(3, 1);
     ev({ type: 'chat', user: U(8), text: 'đốt' });
     await sleep(1800);

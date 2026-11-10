@@ -49,6 +49,22 @@
         <button data-sim="testSave">🎉 Thử cứu xong</button>
         <button data-sim="reset" class="danger">🧹 Xoá bảng điểm</button>
       </div>
+      <h2>🎚️ Độ khó (dây rối)</h2>
+      <div class="row">
+        <select id="levelSel">
+          <option value="0">Tự động: cứu được thì lên cấp, nổ thì xuống</option>
+          <option value="1">Cấp 1 · 3 dây, ít rối (2 phút)</option>
+          <option value="2">Cấp 2 · 4 dây, rối vừa</option>
+          <option value="3">Cấp 3 · 4 dây cùng tông xanh</option>
+          <option value="4">Cấp 4 · 5 dây + 1 dây giả</option>
+          <option value="5">Cấp 5 · 5 dây cùng tông tím</option>
+          <option value="6">Cấp 6 · 2 dây giả + tấm che</option>
+          <option value="7">Cấp 7 · loằng ngoằng, ít giờ hơn</option>
+          <option value="8">Cấp 8 · siêu rối, 3 dây giả</option>
+        </select>
+        <button id="btnLevel" class="primary">Áp dụng ngay (bom mới)</button>
+      </div>
+      <p class="hint">Chọn xong là lưu lại cho lần sau. Không bấm "Áp dụng ngay" thì quả bom tiếp theo mới đổi cấp. <span id="levelNow"></span></p>
 
       <h2>3. Giả lập (Test Lab)</h2>
       <div class="row">
@@ -66,10 +82,10 @@
         <button data-sim="correct">✅ Chọn đúng dây</button>
         <button data-sim="wrong">❌ Chọn sai dây</button>
         <button data-sim="burn">🔥 Comment "đốt"</button>
-        <button data-sim="like">❤️ Thả tim</button>
+        <button data-sim="like">❤️ Thả tim (bật đèn)</button>
         <button data-sim="like15">❤️ x15</button>
         <button data-sim="follow">⭐ Theo dõi (áo giáp)</button>
-        <button data-sim="share">📣 Chia sẻ (đèn pin)</button>
+        <button data-sim="share">📣 Chia sẻ (+10 giây)</button>
         <button data-sim="gift1">🌹 Quà nhỏ (đóng băng)</button>
         <button data-sim="gift100">🏆 Quà 99 xu (kìm vàng)</button>
         <button data-sim="voiceTest">🔊 Thử giọng boss</button>

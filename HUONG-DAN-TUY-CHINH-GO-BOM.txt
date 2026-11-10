@@ -4,12 +4,14 @@ Mọi chỗ chỉnh đều nằm trong file config-go-bom.json (mở bằng Note
 Giữ nguyên dấu ngoặc kép " và dấu phẩy , giữa các dòng. Các dòng bắt đầu bằng _ghi_chu chỉ là lời giải thích.
 
 1. THỜI GIAN VÀ ĐỘ KHÓ
- - bombSeconds: tổng số giây của mỗi quả bom theo cấp. [120, 150, 150, 180] = cấp 1 được 2 phút, cấp 2-3 được 2 phút rưỡi, cấp 4 trở lên 3 phút.
- - wiresByLevel: số dây (cũng là số cọc phải cắt) theo cấp, từ 3 đến 5.
+ - ĐỘ KHÓ CHỌN NGAY Ở BẢNG ĐIỀU KHIỂN: ô "Độ khó (dây rối)" có "Tự động" hoặc cố định Cấp 1 đến Cấp 8. Bấm "Áp dụng ngay (bom mới)" để đổi luôn, không thì quả bom sau mới đổi.
+ - levelMode: "tu-dong" (cứu được lên cấp, nổ xuống cấp) hoặc "co-dinh" (luôn chơi cấp startLevel). startLevel: cấp lúc mở game.
+ - levels: mỗi dòng là 1 cấp. wires = số dây (3 đến 5), bends = số khúc gấp, wiggle = độ ngoằn ngoèo (0 thẳng, 30 rất loằng ngoằng), decoys = số dây giả, colors = "khac" / "xanh" / "tim" (cùng tông dễ lẫn), cover = tấm che chớp tắt, seconds = thời gian bom. Thêm dòng để có thêm cấp.
+ - Mặc định: cấp 1 = 3 dây 2 phút, cấp 2-3 = 4 dây 2 phút rưỡi, cấp 4-6 = 5 dây 3 phút có dây giả, cấp 7-8 siêu rối và ít giờ hơn.
  - voteSeconds: số giây bỏ phiếu cho mỗi cọc (mặc định 20).
  - earlyCutVotes: đủ bao nhiêu phiếu và một dây dẫn rõ thì chốt sớm, 0 = luôn chờ hết giờ.
- - Cứu được 1 boss thì lên 1 cấp (dây nhiều hơn, rối hơn, màu giống nhau hơn). Bom nổ thì xuống 1 cấp.
- - bossEvery: cứ bao nhiêu quả thì có 1 BOM TRÙM (5 dây, có tấm che chỉ mở 2 giây mỗi 5 giây). bossBombSeconds: thời gian bom trùm.
+ - Ở chế độ Tự động: cứu được 1 boss thì lên 1 cấp (dây nhiều hơn, rối hơn, màu giống nhau hơn). Bom nổ thì xuống 1 cấp.
+ - bossEvery: cứ bao nhiêu quả thì có 1 BOM TRÙM. bossLevel: độ rối và thời gian của bom trùm (mặc định 5 dây, 2 dây giả, tấm che, 210 giây).
 
 2. CẮT SAI
  - wrongSpeeds: [1, 1.5, 2] = tốc độ đồng hồ sau 0, 1, 2 lần sai.
@@ -17,9 +19,9 @@ Giữ nguyên dấu ngoặc kép " và dấu phẩy , giữa các dòng. Các d�
  - correctToCalm: cắt đúng liên tiếp bao nhiêu dây thì đồng hồ chậm lại một bậc.
 
 3. THẢ TIM, ĐỐT GIÂY, CHIA SẺ, THEO DÕI, QUÀ
- - likesPerSecond: bao nhiêu tim thì cộng 1 giây. likeMaxSecondsPerUser: mỗi người cộng tối đa bao nhiêu giây mỗi quả.
+ - BẢNG MẠCH TỐI: Tiến sĩ Nổ cắt điện, phải thả tim thì đèn mới sáng để thấy dây. likeLightSeconds: mỗi tim cho đèn sáng thêm mấy giây (mặc định 0,5). lightMaxSeconds: đèn tích tối đa mấy giây. darkness: độ tối khi tắt đèn (0.94 gần như đen, 0.8 còn thấy lờ mờ, 0 = tắt luật này).
+ - shareSeconds: mỗi lần chia sẻ cộng mấy giây cho đồng hồ (mặc định 10). shareMaxPerUser: mỗi người cộng giây bằng chia sẻ tối đa mấy lần mỗi quả.
  - burnSeconds: bình luận "đốt" trừ mấy giây. burnMaxPerUser: mỗi người đốt mấy lần mỗi quả. burnFloorSeconds: còn ít hơn số giây này thì không đốt được nữa.
- - flashlightSeconds: chia sẻ bật đèn pin soi đúng dây trong mấy giây.
  - followPoints: theo dõi được cộng mấy điểm (kèm áo giáp: bom nổ không mất chuỗi thắng).
  - giftFreezeSeconds: quà bất kỳ đóng băng đồng hồ mấy giây. bigGiftCoins: quà từ bao nhiêu xu thì kìm vàng tự cắt đúng dây.
  - points / firstBonus: điểm mỗi lần chọn đúng dây / thưởng thêm cho 3 người chọn đúng đầu tiên.

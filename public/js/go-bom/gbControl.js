@@ -40,6 +40,8 @@ function connect() {
     if (msg.type === 'gameState' && msg.state) {
       const s = msg.state;
       $('#answer').textContent = s.answer || '...';
+      $('#levelNow').textContent = `Đang chơi: ${s.boss ? 'BOM TRÙM' : 'cấp ' + s.level}${s.levelMode === 'co-dinh' ? ' (cố định)' : ' (tự động)'}.`;
+      syncLevel(s);
       const c = (s.counts || []).map((n, i) => `${'ABCDE'[i]}: ${n}`).join(' · ');
       $('#answerInfo').textContent = `Bom số ${s.bomb}${s.boss ? ' (TRÙM)' : ''} · ${s.hostage} · cọc ${s.stage}/${s.wires} · còn ${s.left}s · sai ${s.wrongs} · ${PHASE[s.phase] || s.phase} · phiếu ${c} · đã cứu ${s.saved}, nổ ${s.exploded}`;
     }
@@ -172,3 +174,29 @@ fetch('/go-bom-music.json', { cache: 'no-store' })
   .catch(() => {
     $('#musicInfo').textContent = '🎵 Không đọc được danh sách nhạc (máy chủ bản cũ?)';
   });
+
+// ---- Độ khó: người phát LIVE chọn tự động hoặc cố định cấp 1–8 ----
+const levelSel = $('#levelSel');
+levelSel.value = localStorage.getItem('goBomLevel') || '0';
+function levelEvent(now) {
+  const v = Number(levelSel.value) || 0;
+  return { type: 'setLevel', auto: v === 0, level: v || undefined, now };
+}
+levelSel.addEventListener('change', () => {
+  localStorage.setItem('goBomLevel', levelSel.value);
+  sim(levelEvent(false));
+});
+$('#btnLevel').addEventListener('click', () => {
+  localStorage.setItem('goBomLevel', levelSel.value);
+  sim(levelEvent(true));
+});
+// cửa sổ game mở lại (hoặc mở ở trình duyệt khác) thì gửi lại lựa chọn đã lưu
+let lastLevelSync = 0;
+function syncLevel(s) {
+  const v = Number(levelSel.value) || 0;
+  const want = v === 0 ? 'tu-dong' : 'co-dinh';
+  const ok = s.levelMode === want && (v === 0 || s.boss || s.level === v);
+  if (ok || Date.now() - lastLevelSync < 5000) return;
+  lastLevelSync = Date.now();
+  sim(levelEvent(false));
+}
