@@ -1,0 +1,56 @@
+﻿HƯỚNG DẪN TÙY CHỈNH GAME "BẠN CÓ GIỎI HƠN HỌC SINH LỚP 5?"
+==========================================================
+
+Dưới đây là TẤT CẢ những chỗ bạn tự đổi được, không cần biết lập trình.
+
+1. CÂU HỎI (thêm, sửa, xoá, nhập từ Excel)
+------------------------------------------
+- Chạy run-lop-hoc.bat, mở Bảng điều khiển, bấm nút vàng "Ngân hàng đề thi".
+- Thêm từng câu: gõ câu hỏi, 4 đáp án A B C D, chọn đáp án đúng, môn, lớp, độ khó (1 dễ, 2 vừa, 3 khó),
+  lời giải thích (cô giáo đọc sau khi lật đáp án), ô "Loại" chọn "Câu đố mẹo" nếu là câu đố.
+- Nhập nhiều câu một lúc: bấm "Tải file mẫu", mở bằng Excel hoặc Google Sheets, mỗi dòng 1 câu theo cột:
+      Câu hỏi | A | B | C | D | Đáp án đúng (A/B/C/D) | Môn | Lớp | Độ khó 1-3 | Giải thích | Mẹo (để trống hoặc ghi meo)
+  Bôi đen các dòng, Ctrl+C, rồi dán vào ô trong trang. Hoặc lưu thành file .csv rồi bấm chọn file.
+- Chọn môn nào được hỏi khi LIVE, hoặc tick "Chỉ dùng câu hỏi tôi tự thêm" để bỏ kho câu có sẵn.
+- Bấm "Xuất ra CSV" để giữ một bản sao bộ đề của bạn.
+- Lưu xong game dùng ngay từ câu tiếp theo, không cần tắt game.
+- Câu bạn thêm nằm trong file de-thi-lop-hoc.json (tự sao lưu ra de-thi-lop-hoc.json.bak).
+  KHI CẬP NHẬT GAME BẢN MỚI: chép file de-thi-lop-hoc.json sang thư mục game mới.
+
+2. CÀI ĐẶT GAME (file config-lop-hoc.json)
+------------------------------------------
+Mở bằng Notepad, chỉ sửa phần giá trị bên phải, giữ nguyên dấu ngoặc kép và dấu phẩy. Lưu lại rồi bấm F5 ở trang game.
+- title ................ tên game hiện trên đầu màn hình
+- className ............ tên lớp của 6 bạn máy (đội đối thủ)
+- questionSeconds ...... số giây trả lời mỗi câu (mặc định 20)
+- speedSeconds ......... số giây câu "siêu tốc"
+- lockSeconds .......... số giây đếm ngược trước khi lật đáp án
+- revealSeconds ........ thời gian xem kết quả và màn phạt
+- questionsPerLesson ... số câu mỗi tiết học (mặc định 10)
+- difficultyOrder ...... độ khó từng câu trong tiết, ví dụ [2,2,2,3,3,3,3,3,3,3]
+- meoPerLesson ......... số câu đố mẹo / đố dân gian mỗi tiết (0 = không có)
+- specialPerLesson ..... số câu đặc biệt (thầy hiệu trưởng x3 điểm, kiểm tra miệng, siêu tốc, thách Na)
+- shuffleAnswers ....... true = xáo thứ tự đáp án của câu có sẵn
+- points, speedBonus ... điểm mỗi câu đúng, điểm thưởng trả lời nhanh
+- likesPerHint ......... số tim trong 1 câu để Na nhắc loại 1 đáp án sai
+- followBonus .......... điểm thưởng khi theo dõi
+- maxUmbrellas ......... số thẻ miễn phạt tối đa một người giữ
+- bigGiftCoins ......... quà từ bao nhiêu xu thì được làm Lớp trưởng (x2 điểm)
+- sleepSeconds ......... bao lâu không tương tác thì nhân vật ngủ gật
+- npc .................. true = có 6 bạn lớp 5A thi cùng, false = chỉ người xem
+- sound, music ......... bật/tắt tiếng hiệu ứng, nhạc nền; musicVolume từ 0 đến 1
+- voice, ttsVoice ...... giọng cô giáo đọc câu hỏi (vi-VN-HoaiMyNeural nữ, vi-VN-NamMinhNeural nam)
+- voiceJoin ............ đọc tên người mới vào LIVE
+- readExplanation ...... đọc lời giải thích sau mỗi câu
+- narration, narrationSeconds ... cô nhắc luật chơi sau mỗi bao nhiêu giây
+
+3. ẢNH VÀ NHẠC
+--------------
+- Ảnh: chép đè file CÙNG TÊN trong public\assets\lop-hoc:
+  nen-lop-hoc.jpg (nền 1080x1920), co-giao.png, thay-hieu-truong.png, hs-nam.png, hs-nu.png,
+  ga-trong.png, giay-khen.jpg. Ảnh PNG nên có nền trong suốt.
+- Ảnh con vật khi "biến hình": public\assets\lop-hoc\bien (ech.png, vit.png, heo.png...).
+- Nhạc nền: chép file MP3 vào public\assets\nhac-lop-hoc (game tự phát lần lượt).
+- Âm lượng từng loại tiếng chỉnh ngay trên Bảng điều khiển.
+
+Gặp khó khăn: nhắn nhóm Zalo hoặc fanpage của shop để được hỗ trợ.

@@ -89,7 +89,7 @@ const PRODUCTS = {
   },
   'lop-hoc': {
     name: 'Bạn Có Giỏi Hơn Học Sinh Lớp 5', folder: 'LopHoc', control: '/lop-hoc-control.html', guide: GUIDE_LOP_HOC,
-    files: ['run-lop-hoc.bat', 'mo-cua-so-lop-hoc.bat', 'config-lop-hoc.json', 'public/lop-hoc.html', 'public/lop-hoc-control.html', 'public/lop-hoc-de-thi.html',
+    files: ['run-lop-hoc.bat', 'mo-cua-so-lop-hoc.bat', 'config-lop-hoc.json', 'HUONG-DAN-TUY-CHINH.txt', 'public/lop-hoc.html', 'public/lop-hoc-control.html', 'public/lop-hoc-de-thi.html',
       'public/js/lop-hoc', 'public/assets/lop-hoc', 'public/assets/nhac-lop-hoc'],
   },
 };
