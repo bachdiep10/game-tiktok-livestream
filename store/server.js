@@ -787,6 +787,7 @@ app.put('/api/admin/upsell', (req, res) => {
     if (k === 'smtpPass') { if (String(v).trim()) U.cfg.smtpPass = String(v).replace(/\s+/g, '').slice(0, 200); continue; }
     U.cfg[k] = typeof U.cfg[k] === 'number' ? Math.max(0, Math.round(Number(v) || 0)) : clean(v, 200);
   }
+  if (req.body.smtpPassClear) U.cfg.smtpPass = '';
   if (U.cfg.emailsOn && !U.startedAt) U.startedAt = now();
   if (req.body.templates) for (const [k, tpl] of Object.entries(req.body.templates)) {
     if (!U.templates[k]) continue;

@@ -175,7 +175,7 @@ export async function renderUpsell(view, call, games, plans) {
       </div></div>
 
       <div class="card sec"><h2>📮 Máy chủ gửi email</h2><p class="sub">Dùng <b>Gmail</b> (mật khẩu ứng dụng 16 ký tự) hoặc <b>Amazon SES</b> (ít vào spam hơn, rẻ). Để trống tên đăng nhập thì dùng luôn Gmail ngân hàng${d.bankMail ? ` (<b>${esc(d.bankMail)}</b>)` : ''}. Web gửi tối đa ${c.maxPerRun} email mỗi 2 phút.</p>
-        <p style="margin:0 0 8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-preset="gmail">Điền sẵn Gmail</button><button type="button" class="btn ghost sm" data-preset="ses">Điền sẵn Amazon SES (Singapore)</button></p>
+        <p style="margin:0 0 8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn ghost sm" data-preset="gmail">Điền sẵn Gmail</button>${d.bankMail ? '<button type="button" class="btn ghost sm" id="upBankMail">Quay lại Gmail ngân hàng</button>' : ''}<button type="button" class="btn ghost sm" data-preset="ses">Điền sẵn Amazon SES (Singapore)</button></p>
         <div class="fg">
           ${txt('smtpHost', 'Máy chủ SMTP', 'Gmail: smtp.gmail.com · SES: email-smtp.ap-southeast-1.amazonaws.com')}${num('smtpPort', 'Cổng', '465 (hoặc 587)')}
           ${txt('smtpUser', 'Tên đăng nhập SMTP', 'Gmail: địa chỉ Gmail · SES: mã AKIA… trong SMTP credentials')}${txt('smtpPass', 'Mật khẩu SMTP', 'Gmail: mật khẩu ứng dụng · SES: SMTP password', 'password')}
@@ -212,6 +212,13 @@ export async function renderUpsell(view, call, games, plans) {
 
   const form = $('#upf', view);
   const PRESETS = { gmail: { smtpHost: 'smtp.gmail.com', smtpPort: 465, fromEmail: '' }, ses: { smtpHost: 'email-smtp.ap-southeast-1.amazonaws.com', smtpPort: 465 } };
+  const back = $('#upBankMail', view);
+  if (back) back.onclick = async () => {
+    if (!confirm('Xoá tài khoản SMTP đang lưu và gửi lại bằng Gmail ngân hàng?')) return;
+    await call('/api/admin/upsell', { cfg: { smtpHost: 'smtp.gmail.com', smtpPort: 465, smtpUser: '', fromEmail: '' }, smtpPassClear: true }, 'PUT');
+    toast('Đã quay lại Gmail ngân hàng');
+    renderUpsell(view, call, games, plans);
+  };
   $$('[data-preset]', view).forEach(b => b.onclick = () => {
     for (const [k, v] of Object.entries(PRESETS[b.dataset.preset])) if (form.elements[k]) form.elements[k].value = v;
     toast(b.dataset.preset === 'ses' ? 'Đã điền máy chủ SES. Nhập tên đăng nhập, mật khẩu SMTP, email người gửi rồi bấm Lưu.' : 'Đã điền Gmail. Bấm Lưu.');

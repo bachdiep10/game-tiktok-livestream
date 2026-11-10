@@ -267,7 +267,10 @@ try {
   assert.match(mails.at(-1), /^From: =\?UTF-8\?B\?[^\r\n]+\?= <hotro@netxioviet\.com>$/m);
   assert.match(mails.at(-1), /^Message-ID: <[0-9a-f]+@netxioviet\.com>$/m);
   assert.equal(envFrom.at(-1), '<hotro@netxioviet.com>');
-  step('Amazon SES: thiếu email người gửi thì báo lỗi; có thì From + MAIL FROM dùng hotro@netxioviet.com');
+  await j('PUT', '/api/admin/upsell', { cfg: { smtpUser: '', fromEmail: '' }, smtpPassClear: true });
+  const up2 = await j('GET', '/api/admin/upsell');
+  assert.equal(up2.smtpPassSet, false); assert.equal(up2.cfg.fromEmail, '');
+  step('Amazon SES: thiếu email người gửi thì báo lỗi; có thì From + MAIL FROM dùng hotro@netxioviet.com; nút quay lại Gmail ngân hàng xoá mật khẩu SMTP');
 
   console.log('\nBÁN THÊM: TẤT CẢ ĐỀU QUA ✅');
 } catch (e) {
