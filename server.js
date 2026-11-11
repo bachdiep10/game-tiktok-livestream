@@ -665,7 +665,10 @@ async function connectTikTok(username) {
   } catch (err) {
     if (connection !== conn) return;
     const reason = err?.message || String(err);
-    setStatus({ connected: false, message: `Không kết nối được @${username}: ${reason}. Kênh có đang LIVE không?` });
+    const hint = /room id/i.test(reason)
+      ? 'Kiểm tra: kênh đã bấm phát LIVE chưa, tài khoản TikTok có đang để RIÊNG TƯ không (phải chuyển sang công khai), người xem LIVE chọn "Mọi người", và đúng ID kênh (chữ sau @). Mở tiktok.com/@' + username + '/live bằng trình duyệt chưa đăng nhập, xem được thì game mới kết nối được.'
+      : 'Kênh có đang LIVE không?';
+    setStatus({ connected: false, message: `Không kết nối được @${username}: ${reason}. ${hint}` });
     scheduleReconnect();
   }
 }
