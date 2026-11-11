@@ -11,6 +11,7 @@ import { DB } from './lib/db.js';
 import { createSeo } from './lib/seo.js';
 import { injectTracking } from './lib/tracking.js';
 import { capiReady, requestInfo, buildEvent, sendEvents, cleanCustom } from './lib/capi.js';
+import { ttReady, ttInfo, ttBuild, ttSend, ttHashedId, TT_NAME } from './lib/ttapi.js';
 import * as payos from './lib/payos.js';
 import { parseBankEmail, findOrderCode, fetchNewMails } from './lib/bankmail.js';
 import { openSmtp } from './lib/mailer.js';
@@ -222,22 +223,29 @@ const capiStatus = { sent: 0, failed: 0, lastOk: 0, lastError: '', lastErrorAt: 
 // Máy chủ báo "Mua hàng" cho Meta ngay khi đơn được xác nhận (PayOS, email ngân hàng hoặc quản trị bấm),
 // kể cả khi khách đã đóng trang. event_id order_<mã đơn> trùng với Pixel trên trình duyệt nên Meta chỉ tính 1 lần.
 function capiPurchase(order) {
-  if (!capiReady(D.settings) || order.capiAt) return;
-  order.capiAt = now();
+  const meta = capiReady(D.settings) && !order.capiAt;
+  const tt = ttReady(D.settings) && !order.ttAt;
+  if (!meta && !tt) return;
+  if (meta) order.capiAt = now();
+  if (tt) order.ttAt = now();
   db.save();
   const user = D.users.find(u => u.id === order.userId) || { ...order.customer, id: order.userId || '' };
-  const ev = buildEvent({
+  const args = {
     name: 'Purchase', eventId: `order_${order.code}`, url: order.trk?.url || `${(D.settings.publicUrl || '').replace(/\/$/, '')}/don-hang.html`,
     info: order.trk || {}, user,
     custom: { value: order.amount, currency: 'VND', content_ids: [order.planId || orderTitle(order)], content_name: orderTitle(order), content_type: 'product', num_items: order.games?.length || 1, order_id: String(order.code) },
-  });
-  sendEvents(D.settings, [ev], capiStatus).catch(() => {});
+  };
+  if (meta) sendEvents(D.settings, [buildEvent(args)], capiStatus).catch(() => {});
+  // TikTok: cùng event_id order_<mã đơn> với TikTok Pixel trên trình duyệt
+  if (tt) ttSend(D.settings, [ttBuild(args)], ttStatus).catch(() => {});
 }
+const ttStatus = { sent: 0, failed: 0, lastOk: 0, lastError: '', lastErrorAt: 0, lastEvent: '' };
 
 // Thông tin trình duyệt lưu vào đơn để sau này máy chủ báo "Mua hàng" khớp đúng người bấm quảng cáo
 function orderTrk(req) {
   const page = clean(req.body?.page, 1000);
-  return { ...requestInfo(req, parseCookies(req), page), url: page.startsWith('http') ? page : '' };
+  const cookies = parseCookies(req);
+  return { ...requestInfo(req, cookies, page), ...ttInfo(cookies, page), url: page.startsWith('http') ? page : '' };
 }
 
 function orderTitle(o) {
@@ -466,6 +474,14 @@ app.post('/api/account/logout', (req, res) => {
   res.json({ ok: true });
 });
 
+// TikTok Pixel cần email/SĐT đã mã hoá SHA-256 (ttq.identify) để khớp khách với tài khoản TikTok. Không trả dữ liệu gốc.
+app.get('/api/track/id', (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const u = ttReady(D.settings) || String(D.settings.tiktokPixelId || '').trim() ? currentUser(req) : null;
+  if (!u) return res.json({ ok: true });
+  res.json({ ok: true, id: ttHashedId(u) });
+});
+
 app.get('/api/account/me', (req, res) => {
   const u = currentUser(req);
   if (!u) return res.json({ ok: true, user: null });
@@ -591,11 +607,14 @@ app.post('/api/track', rateLimit('track', 120, 600000), (req, res) => {
   const b = req.body || {};
   const name = String(b.name || '');
   const eventId = String(b.eventId || '');
-  if (!capiReady(D.settings) || !CAPI_EVENTS.includes(name) || !/^[\w-]{6,80}$/.test(eventId)) return;
+  const meta = capiReady(D.settings), tt = ttReady(D.settings) && TT_NAME[name];
+  if ((!meta && !tt) || !CAPI_EVENTS.includes(name) || !/^[\w-]{6,80}$/.test(eventId)) return;
   const page = clean(b.page, 1000);
   const url = /^https?:\/\//.test(page) ? page : '';
-  const ev = buildEvent({ name, eventId, url, info: requestInfo(req, parseCookies(req), url), user: currentUser(req), custom: cleanCustom(b.params) });
-  sendEvents(D.settings, [ev], capiStatus).catch(() => {});
+  const cookies = parseCookies(req);
+  const args = { name, eventId, url, info: { ...requestInfo(req, cookies, url), ...ttInfo(cookies, url) }, user: currentUser(req), custom: cleanCustom(b.params) };
+  if (meta) sendEvents(D.settings, [buildEvent(args)], capiStatus).catch(() => {});
+  if (tt) ttSend(D.settings, [ttBuild(args)], ttStatus).catch(() => {});
 });
 
 // Đếm lượt xem / bấm popup (cho báo cáo)
@@ -1404,7 +1423,7 @@ app.patch('/api/admin/licenses/:key/owner', (req, res) => {
 });
 
 app.get('/api/admin/config', (req, res) => {
-  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '', telegramBotToken: '' }, imapPassSet: Boolean(D.settings.imapPass), capiTokenSet: Boolean(D.settings.metaCapiToken), capi: capiStatus, telegramTokenSet: Boolean(D.settings.telegramBotToken), telegram: telegramStatus, plans: D.plans, faq: D.faq, publicKey: keys.publicPem });
+  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '', telegramBotToken: '', tiktokApiToken: '' }, imapPassSet: Boolean(D.settings.imapPass), capiTokenSet: Boolean(D.settings.metaCapiToken), capi: capiStatus, ttTokenSet: Boolean(D.settings.tiktokApiToken), tt: ttStatus, telegramTokenSet: Boolean(D.settings.telegramBotToken), telegram: telegramStatus, plans: D.plans, faq: D.faq, publicKey: keys.publicPem });
 });
 
 // Gửi 1 sự kiện thử tới Meta (hiện ở Trình quản lý sự kiện › Thử nghiệm sự kiện nếu có mã thử)
@@ -1423,6 +1442,15 @@ app.post('/api/admin/capi/test', async (req, res) => {
   res.json({ ok: true, received: r.received });
 });
 
+app.post('/api/admin/ttapi/test', async (req, res) => {
+  if (!ttReady(D.settings)) return fail(res, 400, 'Chưa có TikTok Pixel ID hoặc Mã truy cập API Sự kiện.');
+  const cookies = parseCookies(req);
+  const ev = ttBuild({ name: 'ViewContent', url: `${baseUrl(req)}/`, info: { ...requestInfo(req, cookies), ...ttInfo(cookies) }, custom: { content_ids: ['thu-nghiem'], content_name: 'Sự kiện thử từ trang quản trị' } });
+  const r = await ttSend(D.settings, [ev], ttStatus, { testCode: clean(req.body?.testCode, 50) || undefined });
+  if (!r.ok) return fail(res, 400, `TikTok báo lỗi: ${r.error}`);
+  res.json({ ok: true, received: r.received });
+});
+
 app.put('/api/admin/settings', (req, res) => {
   const b = req.body || {};
   // Đổi Gmail/thư mục thì đọc lại từ đầu (2 ngày gần nhất)
@@ -1431,13 +1459,14 @@ app.put('/api/admin/settings', (req, res) => {
     if (!(k in D.settings)) continue;
     if (k === 'imapPass') { if (String(v).trim()) D.settings.imapPass = String(v).replace(/\s+/g, '').slice(0, 200); continue; }
     if (k === 'metaCapiToken') { if (String(v).trim()) D.settings.metaCapiToken = String(v).replace(/\s+/g, '').slice(0, 1000); continue; }
+    if (k === 'tiktokApiToken') { if (String(v).trim()) D.settings.tiktokApiToken = String(v).replace(/\s+/g, '').slice(0, 500); continue; }
     if (k === 'telegramBotToken') { if (String(v).trim()) D.settings.telegramBotToken = String(v).replace(/\s+/g, '').slice(0, 200); continue; }
     D.settings[k] = typeof D.settings[k] === 'number' ? Math.max(0, Number(v) || 0) : clean(v, 1000);
   }
   db.save();
   if (b.telegramBotTokenClear) D.settings.telegramBotToken = '';
   db.save();
-  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '', telegramBotToken: '' } });
+  res.json({ ok: true, settings: { ...D.settings, imapPass: '', metaCapiToken: '', telegramBotToken: '', tiktokApiToken: '' } });
 });
 
 app.put('/api/admin/plans', (req, res) => {

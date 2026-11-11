@@ -614,6 +614,13 @@ function renderSettings() {
         <div class="field full"><label>Mã truy cập Conversions API</label><input name="metaCapiToken" type="password" autocomplete="new-password" placeholder="${S.config.capiTokenSet ? '•••••••• (đã lưu, để trống = giữ nguyên)' : 'Dán mã bắt đầu bằng EAA…'}"><small>${S.config.capiTokenSet ? '✅ Đang bật.' : 'Chưa có mã: máy chủ chưa gửi sự kiện.'}${S.config.capi?.lastOk ? ` Lần gửi thành công gần nhất: ${fmt(S.config.capi.lastOk)} (${S.config.capi.sent} sự kiện từ lúc web khởi động).` : ''}${S.config.capi?.lastError ? ` <span style="color:#e5484d">Lỗi gần nhất (${fmt(S.config.capi.lastErrorAt)}): ${esc(S.config.capi.lastError)}</span>` : ''}</small></div>
         ${f('metaTestEventCode', 'Mã thử nghiệm (tuỳ chọn)', 'Chỉ điền khi kiểm tra ở tab Thử nghiệm sự kiện (VD TEST12345). Kiểm tra xong <b>xoá trống</b> để sự kiện được tính thật.')}
         <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost sm" data-act="capiTest">Gửi 1 sự kiện thử</button><small>Lưu cài đặt trước rồi bấm.</small></div>
+      </div>
+      <h3 style="margin:18px 0 6px">TikTok API Sự kiện (máy chủ gửi sự kiện)</h3>
+      <p class="note">Cần điền <b>TikTok Pixel ID</b> ở trên. Máy chủ gửi thẳng cho TikTok các sự kiện xem game, mở khung mua, đăng ký, liên hệ và <b>mua hàng</b> (giá trị đơn VND, mã đơn, gói/game), kèm email, số điện thoại và mã khách <b>đã mã hoá SHA-256</b> để TikTok khớp đúng người xem quảng cáo (TikTok không xem được dữ liệu gốc). Pixel và máy chủ dùng chung mã sự kiện nên TikTok chỉ tính 1 lần. Lấy mã ở <b>TikTok Ads Manager › Công cụ › Trình quản lý sự kiện › chọn Pixel › Cài đặt › Tạo mã truy cập</b>.</p>
+      <div class="form-grid">
+        <div class="field full"><label>Mã truy cập API Sự kiện TikTok</label><input name="tiktokApiToken" type="password" autocomplete="new-password" placeholder="${S.config.ttTokenSet ? '•••••••• (đã lưu, để trống = giữ nguyên)' : 'Dán mã truy cập (dãy chữ và số)'}"><small>${S.config.ttTokenSet ? '✅ Đang bật.' : 'Chưa có mã: máy chủ chưa gửi sự kiện cho TikTok.'}${S.config.tt?.lastOk ? ` Lần gửi thành công gần nhất: ${fmt(S.config.tt.lastOk)} (${S.config.tt.sent} sự kiện từ lúc web khởi động).` : ''}${S.config.tt?.lastError ? ` <span style="color:#e5484d">Lỗi gần nhất (${fmt(S.config.tt.lastErrorAt)}): ${esc(S.config.tt.lastError)}</span>` : ''}</small></div>
+        ${f('tiktokTestEventCode', 'Mã kiểm thử TikTok (tuỳ chọn)', 'Chỉ điền khi kiểm tra ở mục Sự kiện kiểm thử (VD TEST12345). Kiểm tra xong <b>xoá trống</b> để sự kiện được tính thật.')}
+        <div class="field"><label>&nbsp;</label><button type="button" class="btn ghost sm" data-act="ttTest">Gửi 1 sự kiện thử</button><small>Lưu cài đặt trước rồi bấm.</small></div>
       </div></div>
       <div class="box-s"><h2>📲 Báo đơn hàng về Telegram</h2><p class="note">Mỗi khi khách đặt đơn, báo đã chuyển khoản hoặc đơn được thanh toán, web nhắn ngay về Telegram của bạn.<br><b>Cách lấy:</b> 1) Trong Telegram, mở <b>@BotFather</b>, gõ <code>/newbot</code>, đặt tên, nhận <b>mã bot</b> (dạng 123456:ABC…). 2) Mở bot vừa tạo, bấm <b>Start</b> (hoặc thêm bot vào nhóm). 3) Mở <b>@userinfobot</b> để lấy <b>chat id</b> của bạn (nhóm thì id bắt đầu bằng -100…). Nhiều người nhận: cách nhau bằng dấu phẩy.</p><div class="form-grid">
         <div class="field"><label>Mã bot (Bot token)</label><input name="telegramBotToken" type="password" autocomplete="new-password" placeholder="${S.config.telegramTokenSet ? '•••••••• (đã lưu, để trống = giữ nguyên)' : 'VD 123456789:AAH…'}"><small>${S.config.telegramTokenSet ? '✅ Đã lưu mã bot.' : 'Chưa có mã bot.'}${S.config.telegram?.lastOk ? ` Gửi được lúc ${fmt(S.config.telegram.lastOk)}.` : ''}${S.config.telegram?.lastError ? ` <span style="color:#e5484d">Lỗi gần nhất: ${esc(S.config.telegram.lastError)}</span>` : ''}</small></div>
@@ -687,6 +694,11 @@ document.addEventListener('click', async (e) => {
   if (act === 'tgTest') {
     b.disabled = true;
     try { await call('/api/admin/telegram/test', {}); toast('Đã gửi tin thử, xem Telegram của bạn'); } catch {} finally { b.disabled = false; }
+    return;
+  }
+  if (act === 'ttTest') {
+    b.disabled = true;
+    try { await call('/api/admin/ttapi/test', { testCode: $('[name=tiktokTestEventCode]')?.value || '' }); toast('TikTok đã nhận sự kiện thử'); } catch {} finally { b.disabled = false; }
     return;
   }
   if (act === 'capiTest') {

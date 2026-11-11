@@ -378,7 +378,7 @@ const DEFAULT_SETTINGS = {
   // Đo lường quảng cáo: Google Tag Manager, Google Analytics 4, Meta (Facebook) Pixel, TikTok Pixel
   gtmId: 'GTM-NZQB5F5V', ga4Id: 'G-33XXV3JKWQ', metaPixelId: '1497281003464233', tiktokPixelId: '',
   // Meta Conversions API: máy chủ gửi sự kiện song song với Pixel (Trình quản lý sự kiện › Cài đặt › Tạo mã truy cập)
-  metaCapiToken: '', metaTestEventCode: '',
+  metaCapiToken: '', metaTestEventCode: '', tiktokApiToken: '', tiktokTestEventCode: '',
   telegramBotToken: '', telegramChatId: '', telegramNew: 1, telegramPaid: 1, telegramClaim: 1,
 };
 
