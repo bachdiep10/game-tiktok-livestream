@@ -30,6 +30,7 @@
         <h1>Hướng dẫn cài đặt & sử dụng</h1>
         <p>Các game chạy trên <b>máy tính Windows</b>, cùng lúc với <b>TikTok LIVE Studio</b>. Làm theo 5 bước dưới đây, lần đầu mất khoảng 10 phút.</p>
         <div id="video"></div>
+        <div class="hd-note">📖 Có hình từng bước: <a href="/huong-dan/cai-nodejs-chay-game"><b>Cài Node.js &amp; chạy game bằng CMD</b></a> · <a href="/huong-dan/livestream-game-net-cang"><b>LIVE nét 1080p (thêm nguồn Liên kết)</b></a></div>
 
         <h2 id="mua">1. Mua & nhận key</h2>
         <ol>
@@ -42,7 +43,7 @@
         <h2 id="chuan-bi">2. Chuẩn bị máy tính (làm 1 lần)</h2>
         <ul>
           <li>Windows 10 hoặc 11, có kết nối Internet.</li>
-          <li>Cài <b>Node.js bản LTS</b>: vào <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>, tải bản LTS, bấm Next đến hết. Không cần chỉnh gì.</li>
+          <li>Cài <b>Node.js bản LTS</b>: vào <a href="https://nodejs.org" target="_blank" rel="noopener">nodejs.org</a>, tải bản LTS, bấm Next đến hết. Không cần chỉnh gì. Xem <a href="/huong-dan/cai-nodejs-chay-game">hướng dẫn có hình</a>.</li>
           <li>Trình duyệt <b>Microsoft Edge</b> (có sẵn trên Windows): cửa sổ game mở bằng Edge để có giọng đọc tiếng Việt tự nhiên.</li>
           <li><b>TikTok LIVE Studio</b> trên máy tính, tài khoản TikTok đã được phép LIVE.</li>
         </ul>
@@ -58,11 +59,11 @@
 
         <h2 id="live">4. Dùng khi LIVE</h2>
         <ol>
-          <li>Bấm đúp file <code>mo-cua-so-….bat</code> để mở <b>cửa sổ game</b> (khung dọc).</li>
           <li>Trong Bảng điều khiển, bấm các nút <b>Giả lập</b> (tim, quà, bình luận…) để thử trước khi LIVE.</li>
-          <li>Mở TikTok LIVE Studio: <b>Thêm nguồn › Chụp cửa sổ</b> › chọn cửa sổ game, kéo cho vừa khung.</li>
+          <li>Mở TikTok LIVE Studio: <b>Cài đặt › Video › Chất lượng video</b> chọn <b>1080P60</b> (hoặc Tự động gợi ý).</li>
+          <li><b>Thêm nguồn › Liên kết</b>, dán đường dẫn màn hình game (ví dụ <code>http://127.0.0.1:3000/go-bom.html</code>), bật <b>Bật âm thanh</b> và <b>Độ phân giải tùy chỉnh 1080 × 1920</b>, bấm Áp dụng. Xem <a href="/huong-dan/livestream-game-net-cang">hướng dẫn có hình + đường dẫn từng game</a>.</li>
           <li>Bắt đầu LIVE. Trong Bảng điều khiển, nhập <b>username TikTok</b> của bạn (không có @) rồi bấm <b>Kết nối</b>. Thấy báo đã kết nối là người xem tương tác được.</li>
-          <li>Không nghe tiếng thì bấm chuột vào cửa sổ game một lần (trình duyệt cần một cú bấm để phát âm thanh).</li>
+          <li>Không nghe tiếng: kiểm tra đã bật <b>Bật âm thanh</b> trong nguồn Liên kết. Đã dùng Liên kết thì không cần mở cửa sổ game bằng <code>mo-cua-so-….bat</code> (đang mở thì đóng lại để không lặp tiếng).</li>
         </ol>
         <p>Mỗi game có cách chơi, lệnh bình luận và quà riêng: xem <a href="#tung-game">mục 7</a>.</p>
 
@@ -76,7 +77,8 @@
           <li><b>"Key đang dùng trên máy khác"</b>: chuyển key sang máy này trong Tài khoản của tôi.</li>
           <li><b>Kết nối TikTok không được</b>: phải đang LIVE thật, gõ đúng username. Đợi 10–20 giây sau khi bắt đầu LIVE rồi bấm Kết nối lại.</li>
           <li><b>Cửa sổ game trắng hoặc không mở</b>: kiểm tra cửa sổ đen (máy chủ game) còn chạy không, rồi chạy lại run….bat.</li>
-          <li><b>LIVE Studio không thấy cửa sổ game</b>: đừng thu nhỏ cửa sổ game; có thể để nó phía sau cửa sổ khác.</li>
+          <li><b>Hình LIVE bị mờ, có viền đen</b>: dùng nguồn <b>Liên kết</b> thay cho chụp cửa sổ, xem <a href="/huong-dan/livestream-game-net-cang">bài LIVE nét</a>.</li>
+          <li><b>Kết nối báo "Failed to retrieve Room ID"</b>: tài khoản TikTok phải để công khai, người xem LIVE là Mọi người.</li>
         </ul>
         <p>Vẫn chưa được? Nhắn <span data-help>Zalo hỗ trợ</span> kèm ảnh chụp màn hình.</p>
 

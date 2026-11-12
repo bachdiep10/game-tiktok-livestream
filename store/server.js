@@ -1644,6 +1644,8 @@ app.get('/game/:id', (req, res, next) => { const html = seo.gamePage(req, req.pa
 app.get(['/tin-tuc', '/tin-tuc/'], (req, res) => sendHtml(res, seo.newsList(req)));
 app.get('/tin-tuc/:slug', (req, res, next) => { const html = seo.newsPost(req, req.params.slug); if (!html) return next(); sendHtml(res, html); });
 app.get(['/huong-dan', '/huong-dan.html'], (req, res) => sendHtml(res, seo.guidePage(req)));
+app.get('/huong-dan/livestream-game-net-cang', (req, res) => sendHtml(res, seo.liveNetPage(req)));
+app.get('/huong-dan/cai-nodejs-chay-game', (req, res) => sendHtml(res, seo.nodejsPage(req)));
 app.get(['/tra-cuu', '/tra-cuu.html'], (req, res) => sendHtml(res, seo.lookupPage(req)));
 app.get('/robots.txt', (req, res) => res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(seo.robots(req)));
 app.get('/sitemap.xml', (req, res) => res.type('application/xml').set('Cache-Control', 'public, max-age=3600').send(seo.sitemap(req)));

@@ -4,6 +4,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { renderMarkdown, plainText, firstImage } from '../web/js/markdown.js';
+import { liveStepText, GUIDE_LIVE_NET, GUIDE_NODEJS } from '../web/js/live-guide.js';
+import { LIVE_ARTICLES, liveNetBody, nodejsBody } from './live-guides.js';
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => `${Math.round(n / 1000).toLocaleString('vi-VN')}K`;
@@ -195,7 +197,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
   // ---------- trang từng game: /game/<id> ----------
   function guideHtml(g) {
     if (!g.guide) return '';
-    return `<ol>${g.guide.split('\n').map(l => l.trim()).filter(Boolean).map(l => /^\d+[.)]\s*/.test(l) ? `<li>${esc(l.replace(/^\d+[.)]\s*/, ''))}</li>` : `</ol><p>${esc(l)}</p><ol>`).join('')}</ol>`.replace(/<ol><\/ol>/g, '');
+    return `<ol>${g.guide.split('\n').map(l => liveStepText(g.id, l.trim())).filter(Boolean).map(l => /^\d+[.)]\s*/.test(l) ? `<li>${esc(l.replace(/^\d+[.)]\s*/, ''))}</li>` : `</ol><p>${esc(l)}</p><ol>`).join('')}</ol>`.replace(/<ol><\/ol>/g, '');
   }
 
   function gamePage(req, id) {
@@ -242,7 +244,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
           </div>
         </div>
       </article>
-      ${g.guide ? `<section class="panel policy" style="margin-top:24px"><h2>Cách cài và chơi ${esc(g.name)}</h2>${guideHtml(g)}<p>Xem thêm <a href="/huong-dan.html">hướng dẫn cài đặt chung</a>.</p></section>` : ''}
+      ${g.guide ? `<section class="panel policy" style="margin-top:24px"><h2>Cách cài và chơi ${esc(g.name)}</h2>${liveLinks(g)}${guideHtml(g)}<p>Xem thêm <a href="/huong-dan.html">hướng dẫn cài đặt chung</a>.</p></section>` : ''}
       ${others.length ? `<section style="margin-top:32px"><h2>Game khác</h2><div class="games">${gameCards({ ...ctx, games: others })}</div></section>` : ''}
     </div>
   </main>`;
@@ -255,6 +257,40 @@ export function createSeo({ publicDir, getData, baseUrl }) {
       .replace('<span class="sr" data-brand>LiveGame</span>', `<span class="sr" data-brand>${esc(s.brandName)}</span>`);
     return html;
   }
+
+  // 2 bài hướng dẫn LIVE gắn vào từng game
+  function liveLinks(g) {
+    const q = `?game=${encodeURIComponent(g.id)}`;
+    return `<div class="hd-links"><a class="btn sm" href="${GUIDE_NODEJS}${q}">🖥️ Bước 1: Cài Node.js &amp; chạy game bằng CMD</a><a class="btn sm" href="${GUIDE_LIVE_NET}${q}">📺 Bước 2: LIVE nét 1080p (thêm nguồn Liên kết)</a></div>`;
+  }
+  function liveArticle(req, kind) {
+    const ctx = site(req);
+    const { s, base, games } = ctx;
+    const a = LIVE_ARTICLES[kind];
+    const picked = games.find(g => g.id === String(req.query?.game || '')) || null;
+    const sup = s.messengerUrl || s.contactFacebook || (s.contactZalo ? (/^https?:/.test(s.contactZalo) ? s.contactZalo : `https://zalo.me/${String(s.contactZalo).replace(/\D/g, '')}`) : '');
+    const help = [sup && `<a href="${esc(sup)}" target="_blank" rel="noopener">nhắn fanpage hỗ trợ</a>`, s.zaloGroup && `<a href="${esc(s.zaloGroup)}" target="_blank" rel="noopener">vào nhóm Zalo hỗ trợ</a>`].filter(Boolean).join(' hoặc ') || 'nhắn Zalo hỗ trợ';
+    const url = `${base}${a.path}`;
+    const graph = { '@context': 'https://schema.org', '@graph': [
+      { '@type': 'HowTo', name: a.title, description: a.desc, image: `${base}${a.image}`, inLanguage: 'vi' },
+      { '@type': 'BreadcrumbList', itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Trang chủ', item: `${base}/` },
+        { '@type': 'ListItem', position: 2, name: 'Hướng dẫn', item: `${base}/huong-dan.html` },
+        { '@type': 'ListItem', position: 3, name: a.short, item: url },
+      ] },
+    ] };
+    const inner = (kind === 'net' ? liveNetBody : nodejsBody)({ games, picked, help: `${help.charAt(0).toUpperCase()}${help.slice(1)} kèm ảnh chụp màn hình.` });
+    const body = `
+  <main class="page">
+    <div class="wrap">
+      <nav class="crumbs" aria-label="breadcrumb"><a href="/">Trang chủ</a> › <a href="/huong-dan.html">Hướng dẫn</a> › <span>${esc(a.short)}</span></nav>
+      <article class="panel policy hd-article">${inner}</article>
+    </div>
+  </main>`;
+    return shell(ctx, { title: pageTitle(a.title, s), desc: a.desc, url, image: `${base}${a.image}`, type: 'article', extra: ld(graph) }, body);
+  }
+  const liveNetPage = (req) => liveArticle(req, 'net');
+  const nodejsPage = (req) => liveArticle(req, 'node');
 
   // Giữ header/footer của trang chủ, thay phần thân
   function shell(ctx, head, body) {
@@ -358,7 +394,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
       { '@type': 'HowToStep', name: 'Mua và nhận key', text: 'Đăng ký tài khoản, chọn gói, quét mã QR ngân hàng. Key và link tải hiện trong Tài khoản của tôi.', url: `${ctx.base}/huong-dan.html#mua` },
       { '@type': 'HowToStep', name: 'Chuẩn bị máy tính', text: 'Windows 10/11, Node.js bản LTS, Microsoft Edge, TikTok LIVE Studio.', url: `${ctx.base}/huong-dan.html#chuan-bi` },
       { '@type': 'HowToStep', name: 'Cài game và kích hoạt key', text: 'Giải nén file ZIP, chạy file run….bat, dán license key để kích hoạt.', url: `${ctx.base}/huong-dan.html#cai-dat` },
-      { '@type': 'HowToStep', name: 'Dùng khi LIVE', text: 'Mở cửa sổ game, trong TikTok LIVE Studio chọn Thêm nguồn › Chụp cửa sổ.', url: `${ctx.base}/huong-dan.html#live` },
+      { '@type': 'HowToStep', name: 'Dùng khi LIVE', text: 'Trong TikTok LIVE Studio chọn Thêm nguồn › Liên kết, dán đường dẫn màn hình game, độ phân giải tùy chỉnh 1080 x 1920.', url: `${ctx.base}/huong-dan.html#live` },
     ] })}\n</head>`);
   }
 
@@ -397,6 +433,8 @@ export function createSeo({ publicDir, getData, baseUrl }) {
       { loc: `${base}/`, lastmod: day(latest), priority: '1.0', changefreq: 'weekly' },
       ...games.map(g => ({ loc: `${base}/game/${g.id}`, lastmod: day(g.updatedAt || g.createdAt), priority: '0.9', changefreq: 'monthly', image: g.image })),
       { loc: `${base}/huong-dan.html`, priority: '0.7', changefreq: 'monthly' },
+      { loc: `${base}${GUIDE_NODEJS}`, priority: '0.6', changefreq: 'monthly' },
+      { loc: `${base}${GUIDE_LIVE_NET}`, priority: '0.6', changefreq: 'monthly' },
       { loc: `${base}/tin-tuc`, lastmod: posts[0] ? day(posts[0].updatedAt || posts[0].publishedAt) : undefined, priority: '0.6', changefreq: 'weekly' },
       ...posts.map(p => ({ loc: `${base}/tin-tuc/${p.slug}`, lastmod: day(p.updatedAt || p.publishedAt), priority: '0.6', changefreq: 'monthly', image: postCover(p) || undefined })),
       { loc: `${base}/tra-cuu.html`, priority: '0.4', changefreq: 'yearly' },
@@ -410,5 +448,5 @@ ${urls.map(u => `  <url><loc>${esc(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.last
 `;
   }
 
-  return { home, gamePage, guidePage, policyPage, lookupPage, robots, sitemap, newsList, newsPost };
+  return { home, gamePage, guidePage, liveNetPage, nodejsPage, policyPage, lookupPage, robots, sitemap, newsList, newsPost };
 }
