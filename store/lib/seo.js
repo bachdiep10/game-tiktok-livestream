@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { renderMarkdown, plainText, firstImage } from '../web/js/markdown.js';
-import { liveStepText, GUIDE_LIVE_NET, GUIDE_NODEJS } from '../web/js/live-guide.js';
+import { GUIDE_LIVE_NET, GUIDE_NODEJS, guideSplitHtml } from '../web/js/live-guide.js';
 import { LIVE_ARTICLES, liveNetBody, nodejsBody } from './live-guides.js';
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -197,7 +197,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
   // ---------- trang từng game: /game/<id> ----------
   function guideHtml(g) {
     if (!g.guide) return '';
-    return `<ol>${g.guide.split('\n').map(l => liveStepText(g.id, l.trim())).filter(Boolean).map(l => /^\d+[.)]\s*/.test(l) ? `<li>${esc(l.replace(/^\d+[.)]\s*/, ''))}</li>` : `</ol><p>${esc(l)}</p><ol>`).join('')}</ol>`.replace(/<ol><\/ol>/g, '');
+    return guideSplitHtml(g, esc);
   }
 
   function gamePage(req, id) {
@@ -244,7 +244,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
           </div>
         </div>
       </article>
-      ${g.guide ? `<section class="panel policy" style="margin-top:24px"><h2>Cách cài và chơi ${esc(g.name)}</h2>${liveLinks(g)}${guideHtml(g)}<p>Xem thêm <a href="/huong-dan.html">hướng dẫn cài đặt chung</a>.</p></section>` : ''}
+      ${g.guide ? `<section class="panel policy" style="margin-top:24px"><h2>Cách cài đặt và chơi ${esc(g.name)}</h2>${liveLinks(g)}${guideHtml(g)}<p>Xem thêm <a href="/huong-dan.html">hướng dẫn cài đặt chung</a>.</p></section>` : ''}
       ${others.length ? `<section style="margin-top:32px"><h2>Game khác</h2><div class="games">${gameCards({ ...ctx, games: others })}</div></section>` : ''}
     </div>
   </main>`;

@@ -32,3 +32,56 @@ export function liveStepText(id, line) {
     `Trong TikTok LIVE Studio: Thêm nguồn > Liên kết > dán ${u} > bật "Độ phân giải tùy chỉnh" 1080 x 1920 và "Bật âm thanh" > Áp dụng (hình ảnh nét hơn, không viền đen).`)
     .replace(/ ?Nếu không nghe (tiếng|nhạc), bấm chuột vào cửa sổ game một lần\.?/, ' Không nghe tiếng thì mở lại nguồn Liên kết, kiểm tra đã bật "Bật âm thanh".');
 }
+
+// Tách hướng dẫn của 1 game thành 2 phần: "Cách cài đặt" và "Hướng dẫn chơi" (chỉ đổi cách hiển thị, dữ liệu giữ nguyên)
+const INSTALL = [
+  [/Cài Node\.js/i, '🖥️ Cài Node.js', 'node'],
+  [/Giải nén/i, '📦 Giải nén game'],
+  [/^Bấm đúp run[^ ]*\.bat/i, '▶️ Chạy game'],
+  [/trang Kích hoạt/i, '🔑 Kích hoạt key'],
+  [/^Ở Bảng điều khiển/i, '🧪 Thử game & kết nối TikTok'],
+  [/Liên kết > dán|Chụp cửa sổ/i, '📺 Đưa game lên TikTok LIVE Studio', 'net'],
+  [/^Đổi máy tính/i, '💻 Đổi máy tính'],
+];
+const CUSTOM = /sửa config|NHỮNG CHỖ BẠN TỰ ĐỔI|chép MP3|^Nhạc:|^Ảnh màn LED|^Muốn dùng ảnh/i;
+const NOTE = /^(Lưu ý:|Hình emoji 3D)/i;
+
+export function splitGuide(g) {
+  const install = [], play = [], custom = [], notes = [];
+  let last = null;
+  for (const raw of String(g.guide || '').split('\n')) {
+    const t = raw.trim();
+    if (!t) continue;
+    if (/^[•\-–]\s*/.test(t) && last) { last.subs.push(t.replace(/^[•\-–]\s*/, '')); continue; }
+    if (/^\d+[.)]\s*Bấm đúp mo-cua-so[^ ]*\.bat để mở cửa sổ game[^.]*\.?\s*$/i.test(t)) continue; // đã thay bằng cách Liên kết
+    const line = liveStepText(g.id, t).replace(/^\d+[.)]\s*/, '');
+    const hit = INSTALL.find(([re]) => re.test(line));
+    const item = { text: line.replace(/^Đổi máy tính:\s*/i, '').replace(/^NHỮNG CHỖ BẠN TỰ ĐỔI ĐƯỢC\s*/, 'Xem chi tiết ').replace(/^Xem chi tiết \((xem thêm )?([^)]*)\):?\s*/, (m, a, f) => `Chi tiết trong ${f}. `), subs: [] };
+    if (hit) { item.title = hit[1]; item.link = hit[2]; install.push(item); }
+    else if (NOTE.test(line)) notes.push(item);
+    else if (CUSTOM.test(line)) custom.push(item);
+    else play.push(item);
+    last = item;
+  }
+  return { install, play, custom, notes };
+}
+
+export function guideSplitHtml(g, esc) {
+  const { install, play, custom, notes } = splitGuide(g);
+  const q = `?game=${encodeURIComponent(g.id)}`;
+  const art = { node: [GUIDE_NODEJS, 'Xem hướng dẫn có hình'], net: [GUIDE_LIVE_NET, 'Xem hướng dẫn có hình + LIVE nét 1080p'] };
+  // In đậm phần đầu câu (trước dấu ":" hoặc câu đầu) để dễ đọc lướt
+  const lead = (s) => {
+    const m = s.match(/^([^:.]{3,60}):\s*(.*)$/) || s.match(/^([^.]{8,90}\.)\s+(.*)$/);
+    return m ? `<b>${esc(m[1])}${s.charAt(m[1].length) === ':' ? ':' : ''}</b> ${esc(m[2])}` : esc(s);
+  };
+  const subs = (it) => it.subs.length ? `<ul>${it.subs.map(x => `<li>${lead(x)}</li>`).join('')}</ul>` : '';
+  const steps = install.map(it => `<li><b class="gs-t">${esc(it.title)}</b><span>${esc(it.text)}${it.link ? ` <a href="${art[it.link][0]}${q}">${art[it.link][1]} ›</a>` : ''}</span>${subs(it)}</li>`).join('');
+  const cards = (list) => list.map(it => `<li>${lead(it.text)}${subs(it)}</li>`).join('');
+  return `<div class="gsplit">
+    <div class="gs-part"><h3>Phần 1 · Cách cài đặt</h3><ol class="gs-steps">${steps}</ol></div>
+    ${play.length ? `<div class="gs-part"><h3>Phần 2 · Hướng dẫn chơi</h3><ul class="gs-cards">${cards(play)}</ul>
+      ${custom.length ? `<h4>⚙️ Tự đổi theo ý bạn</h4><ul class="gs-cards soft">${cards(custom)}</ul>` : ''}
+      ${notes.length ? `<p class="gs-note">${notes.map(n => esc(n.text)).join('<br>')}</p>` : ''}</div>` : ''}
+  </div>`;
+}

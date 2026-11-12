@@ -1,4 +1,4 @@
-import { liveStepText, GUIDE_LIVE_NET, GUIDE_NODEJS } from './live-guide.js';
+import { GUIDE_LIVE_NET, GUIDE_NODEJS, guideSplitHtml } from './live-guide.js';
 import { footerHtml } from '/js/policies.js';
 // Dùng chung cho các trang bán hàng
 export const $ = (s, el = document) => el.querySelector(s);
@@ -146,7 +146,7 @@ export function gameList(games, { canDownload = true } = {}) {
       <div class="hd-links sm"><a href="${GUIDE_NODEJS}?game=${encodeURIComponent(g.id)}">🖥️ Cài Node.js &amp; chạy game bằng CMD</a><a href="${GUIDE_LIVE_NET}?game=${encodeURIComponent(g.id)}">📺 LIVE nét 1080p (nguồn Liên kết)</a></div>
       ${g.guide || g.guideVideo ? `<details class="guide"><summary>📖 Hướng dẫn cài ${esc(g.name)}</summary>
         ${g.guideVideo ? `<p><a href="${esc(g.guideVideo)}" target="_blank" rel="noopener">▶ Xem video hướng dẫn</a></p>` : ''}
-        ${g.guide ? `<ol>${g.guide.split('\n').map(l => liveStepText(g.id, l.trim())).filter(Boolean).map(l => /^\d+[.)]\s*/.test(l) ? `<li>${esc(l.replace(/^\d+[.)]\s*/, ''))}</li>` : `</ol><p>${esc(l)}</p><ol>`).join('')}</ol>` : ''}
+        ${g.guide ? guideSplitHtml(g, esc) : ''}
       </details>` : ''}
     </div>`).join('')}</div>${canDownload ? '<div data-support-box></div>' : ''}`;
 }
