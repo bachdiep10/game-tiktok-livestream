@@ -244,7 +244,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
           </div>
         </div>
       </article>
-      ${g.guide ? `<section class="panel policy" style="margin-top:24px"><h2>Cách cài đặt và chơi ${esc(g.name)}</h2>${liveLinks(g)}${guideHtml(g)}<p>Xem thêm <a href="/huong-dan.html">hướng dẫn cài đặt chung</a>.</p></section>` : ''}
+      ${g.guide ? `<section class="panel policy" id="cach-cai-dat" style="margin-top:24px;scroll-margin-top:80px"><h2>Cách cài đặt và chơi ${esc(g.name)}</h2>${liveLinks(g)}${guideHtml(g)}<p>Xem thêm <a href="/huong-dan.html">hướng dẫn cài đặt chung</a>.</p></section>` : ''}
       ${others.length ? `<section style="margin-top:32px"><h2>Game khác</h2><div class="games">${gameCards({ ...ctx, games: others })}</div></section>` : ''}
     </div>
   </main>`;

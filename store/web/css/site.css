@@ -397,3 +397,18 @@ input:focus, textarea:focus, select:focus { border-color: var(--brand); box-shad
 .gs-note { font-size: 13.5px; color: var(--muted); margin-top: 10px; }
 .guide .gsplit { padding-bottom: 6px; }
 .guide .gs-part h3 { font-size: 16px; }
+/* Trong danh sách game (.dl), bỏ kiểu ô xám chung của ".dl a, .dl div" cho phần hướng dẫn */
+.dl .hd-links.sm, .dl .gsplit, .dl .gs-part { padding: 0; background: none; border: 0; border-radius: 0; align-items: stretch; }
+.dl .hd-links.sm { display: flex; flex-wrap: wrap; padding: 8px 14px; border-top: 1px solid var(--line); }
+.dl .gsplit { display: grid; gap: 14px; }
+.dl .gs-part { display: block; }
+.dl .hd-links.sm a, .dl .gsplit a { display: inline; padding: 0; background: none; border: 0; border-radius: 0; }
+.dl .gs-steps > li, .dl .gs-cards > li { background: #fff; margin: 0; }
+
+/* Trang Hướng dẫn: danh sách game, bấm vào để xem hướng dẫn riêng ở trang game */
+.gl-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 10px; }
+.gl-card { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 14px; background: var(--soft); border: 1px solid var(--line); text-decoration: none; color: inherit; }
+.gl-card:hover { border-color: var(--accent); background: #fff; }
+.gl-card img { width: 44px; height: 58px; object-fit: cover; object-position: top; border-radius: 8px; }
+.gl-card span { display: flex; flex-direction: column; gap: 2px; }
+.gl-card small { color: var(--accent); font-weight: 600; font-size: 13px; }

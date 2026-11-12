@@ -56,7 +56,7 @@ export function splitGuide(g) {
     if (/^\d+[.)]\s*Bấm đúp mo-cua-so[^ ]*\.bat để mở cửa sổ game[^.]*\.?\s*$/i.test(t)) continue; // đã thay bằng cách Liên kết
     const line = liveStepText(g.id, t).replace(/^\d+[.)]\s*/, '');
     const hit = INSTALL.find(([re]) => re.test(line));
-    const item = { text: line.replace(/^Đổi máy tính:\s*/i, '').replace(/^NHỮNG CHỖ BẠN TỰ ĐỔI ĐƯỢC\s*\((?:xem thêm )?([^)]*)\):?\s*(.*)$/, (m, f, r) => r ? `${r.charAt(0).toUpperCase()}${r.slice(1)} (Xem thêm ${f}.)` : `Xem thêm ${f}.`), subs: [] };
+    const item = { text: line.replace(/^Đổi máy tính:\s*(.)/i, (m, c) => c.toUpperCase()).replace(/^NHỮNG CHỖ BẠN TỰ ĐỔI ĐƯỢC\s*\((?:xem thêm )?([^)]*)\):?\s*(.*)$/, (m, f, r) => r ? `${r.charAt(0).toUpperCase()}${r.slice(1)} (Xem thêm ${f}.)` : `Xem thêm ${f}.`), subs: [] };
     if (hit) { item.title = hit[1]; item.link = hit[2]; install.push(item); }
     else if (NOTE.test(line)) notes.push(item);
     else if (CUSTOM.test(line)) custom.push(item);

@@ -65,7 +65,7 @@
           <li>Bắt đầu LIVE. Trong Bảng điều khiển, nhập <b>username TikTok</b> của bạn (không có @) rồi bấm <b>Kết nối</b>. Thấy báo đã kết nối là người xem tương tác được.</li>
           <li>Không nghe tiếng: kiểm tra đã bật <b>Bật âm thanh</b> trong nguồn Liên kết. Đã dùng Liên kết thì không cần mở cửa sổ game bằng <code>mo-cua-so-….bat</code> (đang mở thì đóng lại để không lặp tiếng).</li>
         </ol>
-        <p>Mỗi game có cách chơi, lệnh bình luận và quà riêng: xem <a href="#tung-game">mục 7</a>.</p>
+        <p>Mỗi game có cách chơi, lệnh bình luận và quà riêng: bấm vào game ở <a href="#tung-game">mục 7</a> để xem hướng dẫn riêng của game đó.</p>
 
         <h2 id="doi-may">5. Đổi máy tính</h2>
         <p>Mỗi key chạy trên <b>1 máy tại một thời điểm</b>. Khi đổi máy hoặc cài lại Windows: vào <a href="/tai-khoan.html">Tài khoản của tôi</a>, bấm <b>"Chuyển key sang máy khác"</b>, rồi kích hoạt lại trên máy mới. Bạn tự chuyển được <span data-move></span>.</p>
@@ -83,6 +83,7 @@
         <p>Vẫn chưa được? Nhắn <span data-help>Zalo hỗ trợ</span> kèm ảnh chụp màn hình.</p>
 
         <h2 id="tung-game">7. Hướng dẫn từng game</h2>
+        <p>Bấm vào game bạn mua để xem hướng dẫn cài đặt và cách chơi riêng của game đó.</p>
         <div id="games"></div>
       </article>
     </div>
@@ -90,7 +91,7 @@
   <footer><div class="wrap"><div><b data-brand></b> · <span data-tagline></span></div><div>© <span data-year></span> <span data-brand></span></div></div></footer>
 
   <script type="module">
-    import { $, $$, esc, applyBrand, gameList, supportLink } from '/js/common.js';
+    import { $, $$, esc, applyBrand, supportLink } from '/js/common.js';
     const c = await applyBrand();
     const s = c.settings;
     $$('[data-move]').forEach(el => { el.textContent = `${s.moveLimit} lần trong ${s.moveWindowDays} ngày`; });
@@ -98,8 +99,9 @@
     if (supportLink(s)) $$('[data-help]').forEach(el => { el.innerHTML = `<a href="${esc(supportLink(s))}" target="_blank" rel="noopener">fanpage hỗ trợ</a>`; });
     if (s.zaloGroup) $$('[data-help]').forEach(el => el.insertAdjacentHTML('afterend', ` hoặc vào <a href="${esc(s.zaloGroup)}" target="_blank" rel="noopener">nhóm Zalo hỗ trợ</a>`));
     if (s.guideUrl) $('#video').innerHTML = `<p><a class="btn sm" href="${esc(s.guideUrl)}" target="_blank" rel="noopener">▶ Xem video hướng dẫn</a></p>`;
-    $('#games').innerHTML = gameList(c.games, { canDownload: false }).replaceAll('<details class="guide">', '<details class="guide" open>');
-    $$('#games .dl-row small').forEach(el => { el.textContent = 'Tải trong Tài khoản của tôi sau khi mua'; });
+    // Mỗi game có trang riêng chứa hướng dẫn cài đặt + cách chơi; ở đây chỉ để link tới đúng trang game
+    $('#games').innerHTML = `<div class="gl-grid">${c.games.map(g => `<a class="gl-card" href="/game/${encodeURIComponent(g.id)}#cach-cai-dat">
+      <img src="${esc(g.image)}" alt="" loading="lazy"><span><b>${esc(g.name)}</b><small>Cách cài đặt & hướng dẫn chơi ›</small></span></a>`).join('')}</div>`;
     if (location.hash) document.querySelector(location.hash)?.scrollIntoView();
   </script>
 </body>
