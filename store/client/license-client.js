@@ -17,11 +17,16 @@ export function getMachineId() {
     if (process.platform === 'win32') {
       const out = execFileSync('reg', ['query', 'HKLM\\SOFTWARE\\Microsoft\\Cryptography', '/v', 'MachineGuid'], { encoding: 'utf8', windowsHide: true });
       raw = (out.match(/MachineGuid\s+REG_SZ\s+([\w-]+)/i) || [])[1] || '';
+    } else if (process.platform === 'darwin') {
+      // Máy Mac: mã phần cứng IOPlatformUUID (không đổi khi đổi tên máy / đổi mạng)
+      const bin = fs.existsSync('/usr/sbin/ioreg') ? '/usr/sbin/ioreg' : 'ioreg';
+      try {
+        const out = execFileSync(bin, ['-rd1', '-c', 'IOPlatformExpertDevice'], { encoding: 'utf8' });
+        raw = (out.match(/"IOPlatformUUID" = "([^"]+)"/) || [])[1] || '';
+      } catch { /* thử cách khác */ }
+      if (!raw) raw = execFileSync('/usr/sbin/sysctl', ['-n', 'kern.uuid'], { encoding: 'utf8' }).trim();
     } else if (fs.existsSync('/etc/machine-id')) {
       raw = fs.readFileSync('/etc/machine-id', 'utf8').trim();
-    } else if (process.platform === 'darwin') {
-      const out = execFileSync('ioreg', ['-rd1', '-c', 'IOPlatformExpertDevice'], { encoding: 'utf8' });
-      raw = (out.match(/"IOPlatformUUID" = "([^"]+)"/) || [])[1] || '';
     }
   } catch { /* dùng phương án dự phòng */ }
   if (!raw) raw = [os.hostname(), os.cpus()[0]?.model, os.totalmem(), os.userInfo().username].join('|');

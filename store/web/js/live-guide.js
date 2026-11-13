@@ -2,6 +2,7 @@
 // Dùng chung cho máy chủ (lib/seo.js) và trình duyệt (common.js).
 export const GUIDE_LIVE_NET = '/huong-dan/livestream-game-net-cang';
 export const GUIDE_NODEJS = '/huong-dan/cai-nodejs-chay-game';
+export const GUIDE_MAC = '/huong-dan/choi-game-livestream-tren-mac';
 
 const SPECIAL = {
   'chanh-dien': { page: 'game.html', run: 'run.bat', win: 'mo-cua-so-game.bat', folder: 'ChanhDien' },
@@ -18,6 +19,8 @@ export function liveInfo(id) {
     run: sp ? sp.run : `run-${id}.bat`,
     win: sp ? sp.win : `mo-cua-so-${id}.bat`,
     folder: sp ? sp.folder : (FOLDER[id] || 'TenGame'),
+    macRun: (sp ? sp.run : `run-${id}.bat`).replace(/\.bat$/, '.command'),
+    macWin: (sp ? sp.win : `mo-cua-so-${id}.bat`).replace(/\.bat$/, '.command'),
   };
 }
 

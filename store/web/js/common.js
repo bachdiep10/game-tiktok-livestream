@@ -1,4 +1,4 @@
-import { GUIDE_LIVE_NET, GUIDE_NODEJS, guideSplitHtml } from './live-guide.js';
+import { GUIDE_LIVE_NET, GUIDE_NODEJS, GUIDE_MAC, guideSplitHtml } from './live-guide.js';
 import { footerHtml } from '/js/policies.js';
 // Dùng chung cho các trang bán hàng
 export const $ = (s, el = document) => el.querySelector(s);
@@ -141,9 +141,12 @@ export function gameList(games, { canDownload = true } = {}) {
       <div class="dl-row">
         <img src="${esc(g.image)}" alt="">
         <span class="grow"><b>${esc(g.name)}</b><br><small class="note">${g.download ? `Bản ${esc(g.version || 'mới nhất')}${size(g.fileSize)}` : 'Link tải sẽ được gửi qua Zalo'}</small></span>
-        ${g.download && canDownload ? `<a class="btn sm" href="${esc(g.download)}">⬇ Tải về</a>` : ''}
+        ${g.download && canDownload ? `<span class="dl-btns">
+          <a class="btn sm" href="${esc(g.download)}" title="Bản cho máy tính Windows 10/11">⬇ Tải cho Windows</a>
+          ${g.downloadMac ? `<a class="btn sm mac" href="${esc(g.downloadMac)}" title="Bản cho máy Mac (macOS)">⬇ Tải cho Mac</a>` : ''}
+        </span>` : ''}
       </div>
-      <div class="hd-links sm"><a href="${GUIDE_NODEJS}?game=${encodeURIComponent(g.id)}">🖥️ Cài Node.js &amp; chạy game bằng CMD</a><a href="${GUIDE_LIVE_NET}?game=${encodeURIComponent(g.id)}">📺 LIVE nét 1080p (nguồn Liên kết)</a></div>
+      <div class="hd-links sm"><a href="${GUIDE_NODEJS}?game=${encodeURIComponent(g.id)}">🖥️ Windows: cài Node.js &amp; chạy game</a><a href="${GUIDE_LIVE_NET}?game=${encodeURIComponent(g.id)}">📺 LIVE nét 1080p (nguồn Liên kết)</a><a href="${GUIDE_MAC}?game=${encodeURIComponent(g.id)}">🍎 Máy Mac: chạy game &amp; LIVE bằng OBS</a></div>
       ${g.guide || g.guideVideo ? `<details class="guide"><summary>📖 Hướng dẫn cài ${esc(g.name)}</summary>
         ${g.guideVideo ? `<p><a href="${esc(g.guideVideo)}" target="_blank" rel="noopener">▶ Xem video hướng dẫn</a></p>` : ''}
         ${g.guide ? guideSplitHtml(g, esc) : ''}

@@ -5,12 +5,15 @@
 //   Tuỳ chọn: --server https://netxioviet.com   (máy chủ key, mặc định netxioviet.com)
 //             --pem duong-dan/license-public.pem (nếu không có sẽ tải từ máy chủ)
 //
+// Kèm bản Mac: dist/<Tên>-<phiên bản>-Mac.zip (bỏ .bat, thêm file bấm đúp .command). Cửa hàng cũng tự tạo bản Mac
+// từ bản Windows khi khách bấm "Tải cho Mac", nên chỉ cần tải bản Windows lên trang quản trị.
 // Kết quả: dist/ChanhDien-<phiên bản>.zip, dist/QuanBar-..., dist/TraDa-..., dist/CauCa-..., dist/RongRan-..., dist/DaiChien-....zip
 // Sau đó vào Quản trị > Game > Sửa > "Tải file lên" để khách có key tải về.
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { buildMacZip, macFileName } from '../store/lib/mac-pack.js';
 import { GUIDE_CHANH_DIEN, GUIDE_QUAN_BAR, GUIDE_TRA_DA, GUIDE_CAU_CA, GUIDE_RONG_RAN, GUIDE_DAI_CHIEN, GUIDE_BIA_HOI, GUIDE_DAM_CUOI, GUIDE_TAROT, GUIDE_DUOI_HINH, GUIDE_LEO_NUI, GUIDE_GIEO_QUE, GUIDE_LOP_HOC, GUIDE_GO_BOM } from '../store/lib/db.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -145,4 +148,7 @@ for (const [id, p] of Object.entries(PRODUCTS)) {
   const out = path.join(dist, `${p.folder}-${VERSION}.zip`);
   zip(dir, out);
   console.log(`✓ ${p.name}: ${out} (${(fs.statSync(out).size / 1048576).toFixed(1)} MB)`);
+  const mac = macFileName(out);
+  fs.writeFileSync(mac, buildMacZip(fs.readFileSync(out), { gameId: id, name: p.name }));
+  console.log(`  + bản Mac: ${mac}`);
 }

@@ -16,6 +16,7 @@ import * as payos from './lib/payos.js';
 import { parseBankEmail, findOrderCode, fetchNewMails } from './lib/bankmail.js';
 import { openSmtp } from './lib/mailer.js';
 import { DEFAULT_TEMPLATES, offersFor, upgradeQuote, activeLaunches, countEvent, fillTemplate, renderEmail, fmtMoney, fmtTime, offerWindow, EVENT_KEYS, firstOffer, hasPaid } from './lib/upsell.js';
+import { buildMacZip, macFileName, MAC_PACK_REV } from './lib/mac-pack.js';
 import { newKey, normalizeKey, loadKeyPair, signTicket, entitledGames, fillEmptySlots, movesInWindow } from './lib/license.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -120,6 +121,7 @@ function licenseView(l, { withDownloads = false } = {}) {
     id: g.id, name: g.name, image: g.image,
     ...(withDownloads ? {
       download: g.file || g.download ? `/tai-ve/${g.id}` : '', version: g.version || '',
+      downloadMac: /\.zip$/i.test(g.file?.stored || '') ? `/tai-ve/${g.id}?os=mac` : '',
       fileSize: g.file?.size || 0, guide: g.guide || '', guideVideo: g.guideVideo || '',
     } : {}),
   }));
@@ -270,7 +272,7 @@ function orderView(o) {
     checkoutUrl: o.status === 'pending' ? (o.checkoutUrl || '') : '',
     bank: o.status === 'pending' ? bank : null,
     claimedAt: o.claimedAt || null,
-    license: lic ? (v => ({ ...v, games: v.games.map(g => ({ ...g, download: g.download ? `${g.download}?code=${o.code}&t=${orderToken(o.code)}` : '' })) }))(licenseView(lic, { withDownloads: true })) : null,
+    license: lic ? (v => ({ ...v, games: v.games.map(g => ({ ...g, download: g.download ? `${g.download}?code=${o.code}&t=${orderToken(o.code)}` : '', downloadMac: g.downloadMac ? `${g.downloadMac}&code=${o.code}&t=${orderToken(o.code)}` : '' })) }))(licenseView(lic, { withDownloads: true })) : null,
     guideUrl: s.guideUrl,
   };
 }
@@ -1360,6 +1362,12 @@ app.patch('/api/admin/games/:id', (req, res) => {
   res.json({ ok: true, game: g, filledCombo: filled });
 });
 
+// Xoá file game cũ + các bản Mac đã tạo từ nó
+function removeGameFile(stored) {
+  try { fs.unlinkSync(path.join(FILES_DIR, stored)); } catch { /* đã xoá */ }
+  try { for (const f of fs.readdirSync(FILES_DIR)) if (f.startsWith(`${stored}.mac`)) fs.unlinkSync(path.join(FILES_DIR, f)); } catch { /* bỏ qua */ }
+}
+
 app.post('/api/admin/games/:id/file', express.raw({ type: () => true, limit: '500mb' }), (req, res) => {
   const g = D.games.find(x => x.id === req.params.id);
   if (!g) return fail(res, 404, 'Không có game.');
@@ -1368,7 +1376,7 @@ app.post('/api/admin/games/:id/file', express.raw({ type: () => true, limit: '50
   if (!req.body?.length) return fail(res, 400, 'File rỗng.');
   const stored = `${g.id}-${Date.now().toString(36)}${ext}`;
   fs.writeFileSync(path.join(FILES_DIR, stored), req.body);
-  if (g.file?.stored) try { fs.unlinkSync(path.join(FILES_DIR, g.file.stored)); } catch { /* đã xoá */ }
+  if (g.file?.stored) removeGameFile(g.file.stored);
   g.file = { stored, name: path.basename(String(req.query.name)).slice(0, 120), size: req.body.length, uploadedAt: now() };
   db.save();
   res.json({ ok: true, file: g.file });
@@ -1377,7 +1385,7 @@ app.post('/api/admin/games/:id/file', express.raw({ type: () => true, limit: '50
 app.delete('/api/admin/games/:id/file', (req, res) => {
   const g = D.games.find(x => x.id === req.params.id);
   if (!g?.file) return fail(res, 404, 'Không có file.');
-  try { fs.unlinkSync(path.join(FILES_DIR, g.file.stored)); } catch { /* đã xoá */ }
+  removeGameFile(g.file.stored);
   delete g.file;
   db.save();
   res.json({ ok: true });
@@ -1573,6 +1581,22 @@ app.get('/tai-ve/:id', (req, res) => {
   }
   if (!allowed) return res.redirect(`/tai-khoan.html?next=${encodeURIComponent(req.originalUrl)}`);
   if (g.file?.stored && fs.existsSync(path.join(FILES_DIR, g.file.stored))) {
+    if (req.query.os === 'mac') {
+      // Bản Mac tạo từ bản Windows: bỏ .bat, thêm file bấm đúp .command (lưu lại để lần sau tải nhanh)
+      if (!/\.zip$/i.test(g.file.stored)) return res.status(404).send('Game này chưa có bản cho Mac. Vui lòng liên hệ người bán qua Zalo.');
+      const macPath = path.join(FILES_DIR, `${g.file.stored}.mac${MAC_PACK_REV}.zip`);
+      try {
+        if (!fs.existsSync(macPath)) {
+          const tmp = `${macPath}.${process.pid}.${Date.now()}.tmp`;
+          fs.writeFileSync(tmp, buildMacZip(fs.readFileSync(path.join(FILES_DIR, g.file.stored)), { gameId: g.id, name: g.name }));
+          fs.renameSync(tmp, macPath);
+        }
+      } catch (e) {
+        console.error('[mac]', g.id, e.message);
+        return res.status(500).send('Chưa tạo được bản cho Mac. Vui lòng liên hệ người bán qua Zalo.');
+      }
+      return res.download(macPath, macFileName(g.file.name || `${g.id}.zip`));
+    }
     return res.download(path.join(FILES_DIR, g.file.stored), g.file.name || `${g.id}.zip`);
   }
   if (g.download) return res.redirect(g.download);
@@ -1646,6 +1670,7 @@ app.get('/tin-tuc/:slug', (req, res, next) => { const html = seo.newsPost(req, r
 app.get(['/huong-dan', '/huong-dan.html'], (req, res) => sendHtml(res, seo.guidePage(req)));
 app.get('/huong-dan/livestream-game-net-cang', (req, res) => sendHtml(res, seo.liveNetPage(req)));
 app.get('/huong-dan/cai-nodejs-chay-game', (req, res) => sendHtml(res, seo.nodejsPage(req)));
+app.get('/huong-dan/choi-game-livestream-tren-mac', (req, res) => sendHtml(res, seo.macPage(req)));
 app.get(['/tra-cuu', '/tra-cuu.html'], (req, res) => sendHtml(res, seo.lookupPage(req)));
 app.get('/robots.txt', (req, res) => res.type('text/plain').set('Cache-Control', 'public, max-age=3600').send(seo.robots(req)));
 app.get('/sitemap.xml', (req, res) => res.type('application/xml').set('Cache-Control', 'public, max-age=3600').send(seo.sitemap(req)));

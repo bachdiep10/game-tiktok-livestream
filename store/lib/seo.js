@@ -4,8 +4,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { renderMarkdown, plainText, firstImage } from '../web/js/markdown.js';
-import { GUIDE_LIVE_NET, GUIDE_NODEJS, guideSplitHtml } from '../web/js/live-guide.js';
-import { LIVE_ARTICLES, liveNetBody, nodejsBody } from './live-guides.js';
+import { GUIDE_LIVE_NET, GUIDE_NODEJS, GUIDE_MAC, guideSplitHtml } from '../web/js/live-guide.js';
+import { LIVE_ARTICLES, liveNetBody, nodejsBody, macBody } from './live-guides.js';
 
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const money = (n) => `${Math.round(n / 1000).toLocaleString('vi-VN')}K`;
@@ -261,7 +261,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
   // 2 bài hướng dẫn LIVE gắn vào từng game
   function liveLinks(g) {
     const q = `?game=${encodeURIComponent(g.id)}`;
-    return `<div class="hd-links"><a class="btn sm" href="${GUIDE_NODEJS}${q}">🖥️ Bước 1: Cài Node.js &amp; chạy game bằng CMD</a><a class="btn sm" href="${GUIDE_LIVE_NET}${q}">📺 Bước 2: LIVE nét 1080p (thêm nguồn Liên kết)</a></div>`;
+    return `<div class="hd-links"><a class="btn sm" href="${GUIDE_NODEJS}${q}">🖥️ Bước 1: Cài Node.js &amp; chạy game bằng CMD</a><a class="btn sm" href="${GUIDE_LIVE_NET}${q}">📺 Bước 2: LIVE nét 1080p (thêm nguồn Liên kết)</a><a class="btn sm" href="${GUIDE_MAC}${q}">🍎 Dùng máy Mac: chạy game + LIVE bằng OBS</a></div>`;
   }
   function liveArticle(req, kind) {
     const ctx = site(req);
@@ -279,7 +279,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
         { '@type': 'ListItem', position: 3, name: a.short, item: url },
       ] },
     ] };
-    const inner = (kind === 'net' ? liveNetBody : nodejsBody)({ games, picked, help: `${help.charAt(0).toUpperCase()}${help.slice(1)} kèm ảnh chụp màn hình.` });
+    const inner = ({ net: liveNetBody, node: nodejsBody, mac: macBody }[kind])({ games, picked, help: `${help.charAt(0).toUpperCase()}${help.slice(1)} kèm ảnh chụp màn hình.` });
     const body = `
   <main class="page">
     <div class="wrap">
@@ -291,6 +291,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
   }
   const liveNetPage = (req) => liveArticle(req, 'net');
   const nodejsPage = (req) => liveArticle(req, 'node');
+  const macPage = (req) => liveArticle(req, 'mac');
 
   // Giữ header/footer của trang chủ, thay phần thân
   function shell(ctx, head, body) {
@@ -435,6 +436,7 @@ export function createSeo({ publicDir, getData, baseUrl }) {
       { loc: `${base}/huong-dan.html`, priority: '0.7', changefreq: 'monthly' },
       { loc: `${base}${GUIDE_NODEJS}`, priority: '0.6', changefreq: 'monthly' },
       { loc: `${base}${GUIDE_LIVE_NET}`, priority: '0.6', changefreq: 'monthly' },
+      { loc: `${base}${GUIDE_MAC}`, priority: '0.6', changefreq: 'monthly' },
       { loc: `${base}/tin-tuc`, lastmod: posts[0] ? day(posts[0].updatedAt || posts[0].publishedAt) : undefined, priority: '0.6', changefreq: 'weekly' },
       ...posts.map(p => ({ loc: `${base}/tin-tuc/${p.slug}`, lastmod: day(p.updatedAt || p.publishedAt), priority: '0.6', changefreq: 'monthly', image: postCover(p) || undefined })),
       { loc: `${base}/tra-cuu.html`, priority: '0.4', changefreq: 'yearly' },
@@ -448,5 +450,5 @@ ${urls.map(u => `  <url><loc>${esc(u.loc)}</loc>${u.lastmod ? `<lastmod>${u.last
 `;
   }
 
-  return { home, gamePage, guidePage, liveNetPage, nodejsPage, policyPage, lookupPage, robots, sitemap, newsList, newsPost };
+  return { home, gamePage, guidePage, liveNetPage, nodejsPage, macPage, policyPage, lookupPage, robots, sitemap, newsList, newsPost };
 }
